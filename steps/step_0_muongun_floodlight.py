@@ -13,6 +13,7 @@ from icecube import sim_services, MuonGun
 
 from utils import create_random_services, get_run_folder
 from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
+from muon_split import angle_pos
 
 
 @click.command()
@@ -58,6 +59,9 @@ def main(cfg, run_number, scratch):
                    "TheSource",
                    Prefix=cfg['gcd'],
                    Stream=icetray.I3Frame.DAQ)
+
+    ##### Add change of angle and position	
+    tray.AddModule(angle_pos, 'insertAnglePos', angle=[0.2, 0.3], pos=[20, 30, -100], Streams=[icetray.I3Frame.DAQ])
 
     tray.AddSegment(
         segments.GenerateSingleMuons,
