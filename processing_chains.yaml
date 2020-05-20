@@ -1,3 +1,10 @@
+split_muongun_floodlight:
+  default_config: configs/default_muongun_floodlight_2012_pass2.yaml
+  job_template: job_templates/muongun_general_template.sh
+  steps:
+    0: step_0_split_muongun_floodlight
+    1: step_1_general_photon_propagation
+
 muongun_general_2012_pass2_distance_split:
   default_config: configs/default_muongun_general.yaml
   job_template: job_templates/general_py2-v3.0.1.sh

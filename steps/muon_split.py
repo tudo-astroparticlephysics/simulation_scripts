@@ -1,13 +1,19 @@
 ### Define functions for muon splitting ###
 
 
+def muon_splitter(tray, name):
+    from icecube import dataclasses, icetray
 
-def angle_pos(frame, angle, pos):
-    from icecube import dataclasses
+    def dir_pos(frame):
+        frame.Put('NewDirection', dataclasses.I3Direction())
+        frame.Put('NewPosition', dataclasses.I3Position())		
+    
+    def new_tree(frame):
+        frame.Put('NewTree', dataclasses.I3MCTree())
 
-    frame.Put('ChangeAngleZe', dataclasses.I3Double(angle[0]))
-    frame.Put('ChangeAngleAz', dataclasses.I3Double(angle[1]))
-    frame.Put('ChangePosX', dataclasses.I3Double(pos[0]))
-    frame.Put('ChangePosY', dataclasses.I3Double(pos[1])) 	
-    frame.Put('ChangePosZ', dataclasses.I3Double(pos[2])) 
-    print(frame)
+
+    tray.AddModule(dir_pos, 'addDirPos', Streams=[icetray.I3Frame.DAQ])
+    tray.AddModule(new_tree, 'addTree', Streams=[icetray.I3Frame.DAQ])
+	
+
+   

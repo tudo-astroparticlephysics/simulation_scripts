@@ -14,6 +14,8 @@ from icecube import sim_services, MuonGun
 from utils import create_random_services, get_run_folder
 from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
 
+# import muon split
+from muon_split import muon_splitter
 
 
 @click.command()
@@ -60,7 +62,7 @@ def main(cfg, run_number, scratch):
                    Prefix=cfg['gcd'],
                    Stream=icetray.I3Frame.DAQ)
 
-       
+    
     tray.AddSegment(
         segments.GenerateSingleMuons,
         "GenerateCosmicRayMuons",
@@ -80,8 +82,8 @@ def main(cfg, run_number, scratch):
 
 
 
-
-
+	# Add muon split segment
+    tray.AddSegment(muon_splitter, 'MuonSplit')
 
 
 		
