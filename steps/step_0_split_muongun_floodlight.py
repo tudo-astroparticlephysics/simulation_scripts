@@ -15,7 +15,8 @@ from utils import create_random_services, get_run_folder
 from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
 
 # import muon split
-from muon_split import muon_splitter
+from muon_functions import muon_splitter, muon_plotter, max_energy_depo_new_tree, max_energy_new_tree 
+
 
 
 @click.command()
@@ -83,9 +84,9 @@ def main(cfg, run_number, scratch):
 
 
 	# Add muon split segment
-    tray.AddSegment(muon_splitter, 'MuonSplit')
-
-
+    # tray.AddSegment(muon_splitter, 'MuonSplit')
+    # tray.AddModule(muon_plotter, 'PlotTrack', Streams=[icetray.I3Frame.DAQ])
+    tray.AddModule(max_energy_new_tree, 'InsertMaxEnergyTree', Streams=[icetray.I3Frame.DAQ])
 		
     if scratch:
         outfile = cfg['scratchfile_pattern'].format(**cfg)
