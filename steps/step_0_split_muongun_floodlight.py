@@ -1,5 +1,5 @@
-#!/bin/sh /cvmfs/icecube.opensciencegrid.org/py2-v2/icetray-start
-#METAPROJECT simulation/V05-01-01
+#!/bin/sh /cvmfs/icecube.opensciencegrid.org/py3-v4.1.0/icetray-start
+#METAPROJECT /mnt/lfs7/user/mhuennefeld/software/icecube/py3-v4.1.0/combo_V01-00-00-RC0/build
 import click
 import yaml
 
@@ -15,7 +15,7 @@ from utils import create_random_services, get_run_folder
 from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
 
 # import muon split
-from muon_functions import muon_splitter, muon_plotter, max_energy_depo_new_tree, max_energy_new_tree 
+from server_new_tree import build_tree_with_muon_split
 
 
 
@@ -53,7 +53,8 @@ def main(cfg, run_number, scratch):
         dataset_number=cfg['dataset_number'],
         run_number=cfg['run_number'],
         seed=cfg['seed'],
-        n_services=2)
+        n_services=2,
+        use_gslrng=True)
 
     random_service, random_service_prop = random_services
     tray.context['I3RandomService'] = random_service
@@ -83,11 +84,10 @@ def main(cfg, run_number, scratch):
 
 
 
-	# Add muon split segment
-    # tray.AddSegment(muon_splitter, 'MuonSplit')
-    # tray.AddModule(muon_plotter, 'PlotTrack', Streams=[icetray.I3Frame.DAQ])
-    tray.AddModule(max_energy_new_tree, 'InsertMaxEnergyTree', Streams=[icetray.I3Frame.DAQ])
-		
+	# Add muon split module 
+    tray.AddModule(build_tree_with_muon_split, 'BuildTreeMuon2', new_psi=2, random_seed=42, Streams=[icetray.I3Frame.DAQ])	
+
+
     if scratch:
         outfile = cfg['scratchfile_pattern'].format(**cfg)
     else:

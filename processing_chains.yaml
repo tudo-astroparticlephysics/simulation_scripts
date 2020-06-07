@@ -1,9 +1,10 @@
 split_muongun_floodlight:
   default_config: configs/default_muongun_floodlight_2012_pass2.yaml
-  job_template: job_templates/muongun_general_template.sh
+  job_template: job_templates/py3-v4.1.0.sh 
   steps:
     0: step_0_split_muongun_floodlight
-    1: step_1_general_photon_propagation
+    1: step_1_snowstorm_propagation
+    2: step_2_snowstorm_detector_simulation
 
 muongun_general_2012_pass2_distance_split:
   default_config: configs/default_muongun_general.yaml
