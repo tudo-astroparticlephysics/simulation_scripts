@@ -85,7 +85,7 @@ def main(cfg, run_number, scratch):
 
 
 	# Add muon split module 
-    tray.AddModule(build_tree_with_muon_split, 'BuildTreeMuon2', new_psi=2, random_seed=42, Streams=[icetray.I3Frame.DAQ])	
+    tray.AddModule(build_tree_with_muon_split, 'BuildTreeMuon2', new_psi=10, random_seed=42, Streams=[icetray.I3Frame.DAQ])	
 
 
     if scratch:
