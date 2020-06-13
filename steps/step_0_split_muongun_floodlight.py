@@ -15,7 +15,7 @@ from utils import create_random_services, get_run_folder
 from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
 
 # import muon split
-from server_new_tree2 import build_tree_with_muon_split, selection
+from server_new_tree import build_tree_with_muon_split, selection
 
 
 
@@ -83,7 +83,7 @@ def main(cfg, run_number, scratch):
         **cfg['muon_propagation_config'])
 
     # Muon selection
-    tray.Add(selection, 'Selector', Streams=[icetray.I3Frames.DAQ])
+    tray.Add(selection, 'Selector', Streams=[icetray.I3Frame.DAQ])
 
 	# Add muon split module 
     tray.AddModule(build_tree_with_muon_split, 'BuildTreeMuon2', new_psi=10, random_seed=42, Streams=[icetray.I3Frame.DAQ])	

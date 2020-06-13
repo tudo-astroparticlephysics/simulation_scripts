@@ -606,8 +606,8 @@ def selection(frame):
     if min_length > tree[1].length:
         return False
 
-    # Check for minimum energy loss
-    min_energy_loss = 0.3 * tree[1].energy
+    # Check for minimum energy loss, 3% of events are left with a cut of 30% of the maximum energy
+    min_energy_loss = 0.5 * tree[1].energy
     # print('min_energy_loss: {}'.format(min_energy_loss))
     # print('max_energy_loss: {}'.format(get_max_energy_loss_id(tree)[1]))
     if min_energy_loss > get_max_energy_loss_id(tree)[1]:

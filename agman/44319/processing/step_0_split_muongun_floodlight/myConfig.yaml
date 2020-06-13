@@ -1,0 +1,73 @@
+L1_2012_dom_simulator: false
+L1_2012_qify: false
+L1_2012_retrigger: false
+L1_min_bias_prescale: null
+L1_pass2_run_gfu: true
+chain_name: split_muongun_floodlight
+clsim_dom_oversize: 5.0
+clsim_hybrid_mode: false
+clsim_ignore_muon_light: false
+clsim_keep_mcpe: false
+clsim_unshadowed_fraction: 0.99
+clsim_usegpus: true
+data_folder: /home/pgutjahr/simulation_scripts/agman
+dataset_folder: /home/pgutjahr/simulation_scripts/agman/44319
+dataset_number: 44319
+default_config: /home/pgutjahr/simulation_scripts/configs/default_muongun_floodlight_2012_pass2.yaml
+det_add_beacon_launches: true
+det_filter_trigger: true
+det_keep_mc_hits: false
+det_keep_mc_pulses: false
+det_keep_propagated_mc_tree: true
+det_low_mem: false
+det_pass2_keep_all_upto: 1000
+det_skip_noise_generation: false
+distance_splits: null
+e_max: 1000000.0
+e_min: 10000.0
+gamma: 1.0
+gcd: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_IC86_Merged.i3.gz
+gcd_2012: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_2012.56063_V1.i3.gz
+gcd_pass2: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_2015.57161_V0.i3.gz
+generator: muongun
+icemodel: SpiceLea
+icemodel_location: null
+infile_pattern: /home/pgutjahr/simulation_scripts/agman/44319/None/{run_folder}/Level0.-1_split_muongun_floodlight_IC86.2012_pass2.044319.{run_number:6d}.i3.bz2
+input_folder: /home/pgutjahr/simulation_scripts/agman/44319/None
+job_template: /home/pgutjahr/simulation_scripts/job_templates/py3-v4.1.0.sh
+keep_crashed_files: 0
+muon_propagation_config: {}
+muongun_e_break: 0.0
+n_events_per_run: 10000
+n_runs: 10000
+outfile_pattern: /home/pgutjahr/simulation_scripts/agman/44319/step_0_split_muongun_floodlight/{run_folder}/Level0.0_split_muongun_floodlight_IC86.2012_pass2.044319.{run_number:6d}.i3.bz2
+output_folder: /home/pgutjahr/simulation_scripts/agman/44319/step_0_split_muongun_floodlight
+output_pattern: '{run_folder}/Level0.{step}_split_muongun_floodlight_IC86.2012_pass2.{dataset_number:6d}.{run_number}.i3.bz2'
+previous_step: -1
+previous_step_name: null
+processing_folder: /home/pgutjahr/simulation_scripts/agman/44319/processing/step_0_split_muongun_floodlight
+resources:
+  cpus: null
+  gpus:
+    1: 1
+  memory:
+    1: 6gb
+    2: 3gb
+    3: 3gb
+    4: 3gb
+    12: 3gb
+    13: 3gb
+    14: 3gb
+    15: 3gb
+  walltime: null
+run_folder: '{run_folder}'
+run_number: '{run_number:6d}'
+scratchfile_pattern: Level0.0_split_muongun_floodlight_IC86.2012_pass2.044319.{run_number:6d}.i3.bz2
+script_folder: /home/pgutjahr/simulation_scripts
+script_name: '{step_name}{name_addition}_{run_number}.sh'
+seed: 1337
+step: 0
+step_name: step_0_split_muongun_floodlight
+yaml_copy: /home/pgutjahr/simulation_scripts/agman/44319/processing/step_0_split_muongun_floodlight/myConfig.yaml
+zenith_max: 180.0
+zenith_min: 0.0
