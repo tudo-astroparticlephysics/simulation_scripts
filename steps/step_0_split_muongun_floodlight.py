@@ -3,6 +3,8 @@
 import click
 import yaml
 
+import time
+
 import numpy as np
 
 from icecube.simprod import segments
@@ -15,8 +17,23 @@ from utils import create_random_services, get_run_folder
 from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
 
 # import muon split
-from server_new_tree import build_tree_with_muon_split, selection
+from resources.muon_split_module import SplitModule
+from resources.muon_split_functions import selection
+# from resources.server_new_tree_hull import SelectionModule
 
+def start_timer(frame):
+    frame['starttime'] = dataclasses.I3Double(time.time())
+
+def end_timer(frame):
+    frame['endtime'] = dataclasses.I3Double(time.time())
+    print('selection time {}'.format(frame['endtime'].value - frame['starttime'].value))
+
+def start_timer2(frame):
+    frame['starttime2'] = dataclasses.I3Double(time.time())
+
+def end_timer2(frame):
+    frame['endtime2'] = dataclasses.I3Double(time.time())
+    print('split time {}'.format(frame['endtime2'].value - frame['starttime2'].value))
 
 
 @click.command()
@@ -46,6 +63,10 @@ def main(cfg, run_number, scratch):
     click.echo('Gamma: {}'.format(cfg['gamma']))
     click.echo('ZenithMin: {}'.format(cfg['zenith_min']))
     click.echo('ZenithMax: {}'.format(cfg['zenith_max']))
+    click.echo('NewPsi: {}'.format(cfg['new_psi']))
+    click.echo('PercentagEnergyLoss: {}'.format(cfg['percentage_energy_loss']))
+
+    starttime = time.time()
 
     tray = I3Tray()
 
@@ -64,7 +85,6 @@ def main(cfg, run_number, scratch):
                    Prefix=cfg['gcd'],
                    Stream=icetray.I3Frame.DAQ)
 
-    
     tray.AddSegment(
         segments.GenerateSingleMuons,
         "GenerateCosmicRayMuons",
@@ -75,7 +95,7 @@ def main(cfg, run_number, scratch):
         GammaIndex=cfg['gamma'],
         ZenithRange=[cfg['zenith_min'] * icetray.I3Units.deg,
                      cfg['zenith_max'] * icetray.I3Units.deg])
-
+    
     tray.AddSegment(
         segments.PropagateMuons,
         "PropagateMuons",
@@ -83,10 +103,15 @@ def main(cfg, run_number, scratch):
         **cfg['muon_propagation_config'])
 
     # Muon selection
-    tray.Add(selection, 'Selector', Streams=[icetray.I3Frame.DAQ])
+    # tray.Add(start_timer, 'stimer', Streams=[icetray.I3Frame.DAQ])
+    tray.Add(selection, 'Selector', percentage_energy_loss=cfg['percentage_energy_loss'], Streams=[icetray.I3Frame.DAQ])
+    # tray.AddModule(SelectionModule, 'selectmodule', ELoss=0.01)
+    # tray.Add(end_timer, 'etimer', Streams=[icetray.I3Frame.DAQ])
 
 	# Add muon split module 
-    tray.AddModule(build_tree_with_muon_split, 'BuildTreeMuon2', new_psi=10, random_seed=42, Streams=[icetray.I3Frame.DAQ])	
+    # tray.AddModule(start_timer2, 'stimer2', Streams=[icetray.I3Frame.DAQ])
+    tray.AddModule(SplitModule, 'SplitMuonTrack', NewPsi=cfg['new_psi'], RandomSeed=42)	
+    # tray.AddModule(end_timer2, 'etimer2', Streams=[icetray.I3Frame.DAQ])
 
 
     if scratch:
@@ -137,8 +162,12 @@ def main(cfg, run_number, scratch):
                                 icetray.I3Frame.Stream('S'),
                                 icetray.I3Frame.Stream('M')])
     click.echo('Scratch: {}'.format(scratch))
+    
     tray.AddModule("TrashCan", "the can")
     tray.Execute()
+    Endtime = time.time()
+    print('time after execute: {}'.format(Endtime - starttime))
+
     tray.Finish()
 
 
