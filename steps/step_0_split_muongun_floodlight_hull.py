@@ -18,7 +18,8 @@ from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
 
 # import muon split
 from resources.muon_split_module import SplitModule
-from resources.muon_split_functions import selection
+# from resources.muon_split_functions import selection
+from trash.server_new_tree_hull import SelectionModule
 
 def start_timer(frame):
     frame['starttime'] = dataclasses.I3Double(time.time())
@@ -103,7 +104,8 @@ def main(cfg, run_number, scratch):
 
     # Muon selection
     # tray.Add(start_timer, 'stimer', Streams=[icetray.I3Frame.DAQ])
-    tray.Add(selection, 'Selector', percentage_energy_loss=cfg['percentage_energy_loss'], Streams=[icetray.I3Frame.DAQ])
+    # tray.Add(selection, 'Selector', percentage_energy_loss=cfg['percentage_energy_loss'], Streams=[icetray.I3Frame.DAQ])
+    tray.AddModule(SelectionModule, 'selectmodule', percentage_energy_loss=cfg['percentage_energy_loss'])
     # tray.Add(end_timer, 'etimer', Streams=[icetray.I3Frame.DAQ])
 
 	# Add muon split module 

@@ -173,7 +173,7 @@ def selection(self, frame):
         return False
     
     # Check for minimum energy loss: 30% loss -> 3% left, 50% loss -> 1.3% left
-    min_energy_loss = 0.01 * tree[1].energy
+    min_energy_loss = self._E_loss * tree[1].energy
     if min_energy_loss > id_E_dist[1]:
         return False
     
@@ -209,7 +209,7 @@ class SelectionModule(icetray.I3ConditionalModule):
         # self.AddOutBox('OutBox') ?? whats this ??
         self.AddParameter('MinDist', 
                         'minimum distance of highest energy loss in detector', -100)
-        self.AddParameter('ELoss',
+        self.AddParameter('percentage_energy_loss',
                         'percentage energy loss',
                         0.3)
 
@@ -217,7 +217,7 @@ class SelectionModule(icetray.I3ConditionalModule):
         """Set 
         """
         self._min_dist = self.GetParameter('MinDist')
-        self._E_loss = self.GetParameter('ELoss')
+        self._E_loss = self.GetParameter('percentage_energy_loss')
 
     def Geometry(self, frame):
         """Summary
