@@ -196,9 +196,9 @@ det_dom_eff_resmapling_sample_efficiency: 0.
 det_dom_eff_resmapling_generated_efficiency: 0.
 
 # ------------------
-# Step 3: Get Pulses
+# Step 3: L1 
 # ------------------
 # Simplified version of L1 processing
 
 # Keep untriggered events substream and keys
-L1_keep_untriggered: True
+L1_keep_untriggered: False

@@ -69,7 +69,7 @@ def main(cfg, run_number, scratch):
                 SPLINE_TABLES, 'InfBareMu_mie_abs_z20a10.fits'),
             'SplineRecoTimingTable': os.path.join(
                 SPLINE_TABLES, 'InfBareMu_mie_prob_z20a10.fits'),
-            'hese_followup_base_GCD_filename': cfg['gcd_pass2'],
+            # 'hese_followup_base_GCD_filename': cfg['gcd_pass2'],
         })
     if cfg['L1_pass2_run_gfu'] is not None:
         online_kwargs['gfu_enabled'] = cfg['L1_pass2_run_gfu']
