@@ -260,6 +260,8 @@ class SelectionModule(icetray.I3ConditionalModule):
         
         if selection(self, frame) == False:
             return False
+        
+        build_tree_with_muon_split(frame, self.new_psi, self.random_seed)
 
         self.PushFrame(frame)
 

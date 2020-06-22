@@ -6,6 +6,10 @@ from egenerator.utils.angles import get_delta_psi_vector, get_delta_psi_vector_d
 
 from resources.geometry import distance_to_icecube_hull
 
+from ic3_labels.labels.utils.general import particle_is_inside 
+
+from scipy.spatial import ConvexHull
+
 
 def get_max_energy_loss_id(tree):
     '''Find maximum energy loss in the tree.
@@ -168,7 +172,7 @@ def build_tree_with_muon_split(frame, new_psi, random_seed):
     # print('----------- next one -------------')
 
 
-def selection(frame, percentage_energy_loss):
+def selection(self, frame):
     '''select events with a minimum energy loss in the detector.
     
     Parameters
@@ -181,8 +185,12 @@ def selection(frame, percentage_energy_loss):
     ------
     Bool : False, if event does not fullfill the conditions
     '''
-    
+
     tree = frame['I3MCTree']
+
+    # Check if particle moves through detector
+    if particle_is_inside(tree[1], self._convex_hull) != True:
+        return False
 
     # Save output of get_max_energy_loss_id (id, energy, negative distance to hull)
     id_E_dist = get_max_energy_loss_id(tree)
@@ -192,7 +200,7 @@ def selection(frame, percentage_energy_loss):
         return False
     
     # Check for minimum energy loss: 30% loss -> 3% left, 50% loss -> 1.3% left
-    min_energy_loss = percentage_energy_loss * tree[1].energy
+    min_energy_loss = self._percentage_energy_loss * tree[1].energy
     if min_energy_loss > id_E_dist[1]:
         return False
     
@@ -201,7 +209,7 @@ def selection(frame, percentage_energy_loss):
     min_distance_to_hull = -100
     if min_distance_to_hull < hull_distance_of_max_e_loss:
         return False
-
+    
     # Save data in tree 
     frame.Put('I3MapSplit', dataclasses.I3MapStringDouble())
     frame['I3MapSplit']['max_E_id'] = id_E_dist[0]
