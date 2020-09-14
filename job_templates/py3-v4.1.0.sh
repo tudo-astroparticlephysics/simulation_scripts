@@ -22,6 +22,9 @@ echo 'Using PYTHONUSERBASE: '${PYTHONUSERBASE}
 export PATH=$PYTHONUSERBASE/bin:$PATH
 export PYTHONPATH=$PYTHONUSERBASE/lib/python3.7/site-packages:$PYTHONPATH
 
+# get cpu info
+# grep flags /proc/cpuinfo
+
 # export CUDA
 export CUDA_HOME=/usr/local/cuda-10.0;
 export PATH=$PATH:$CUDA_HOME/bin

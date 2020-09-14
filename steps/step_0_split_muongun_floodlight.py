@@ -18,8 +18,6 @@ from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
 
 # import muon split
 from resources.select_split_module import SelectSplitModule
-# from resources.muon_split_functions import selection
-# from trash.server_new_tree_hull import SelectionModule
 
 def start_timer(frame):
     frame['starttime'] = dataclasses.I3Double(time.time())
@@ -70,7 +68,7 @@ def main(cfg, run_number, scratch):
 
     tray = I3Tray()
 
-    random_services, _ = create_random_services(
+    random_services, int_run_number = create_random_services(
         dataset_number=cfg['dataset_number'],
         run_number=cfg['run_number'],
         seed=cfg['seed'],
@@ -102,20 +100,16 @@ def main(cfg, run_number, scratch):
         RandomService=random_service_prop,
         **cfg['muon_propagation_config'])
 
-    # Muon selection
-    # tray.Add(start_timer, 'stimer', Streams=[icetray.I3Frame.DAQ])
-    # tray.Add(selection, 'Selector', percentage_energy_loss=cfg['percentage_energy_loss'], Streams=[icetray.I3Frame.DAQ])
-    # tray.AddModule(SelectionModule, 'selectmodule', percentage_energy_loss=cfg['percentage_energy_loss'])
-    # tray.Add(end_timer, 'etimer', Streams=[icetray.I3Frame.DAQ])
 
-	# Add muon split module 
+	# Add selection and muon split module 
     # tray.AddModule(start_timer2, 'stimer2', Streams=[icetray.I3Frame.DAQ])
     tray.AddModule(
         SelectSplitModule, 
         'SelectAndSplitMuonTrack',
         percentage_energy_loss=cfg['percentage_energy_loss'], 
         NewPsi=cfg['new_psi'], 
-        RandomSeed=42)	
+        MinDist=cfg['min_dist'],
+        RandomSeed=int_run_number)	
     # tray.AddModule(end_timer2, 'etimer2', Streams=[icetray.I3Frame.DAQ])
 
 
@@ -169,7 +163,7 @@ def main(cfg, run_number, scratch):
     click.echo('Scratch: {}'.format(scratch))
     
     tray.AddModule("TrashCan", "the can")
-    tray.Execute()
+    tray.Execute(20)
     Endtime = time.time()
     print('time after execute: {}'.format(Endtime - starttime))
 

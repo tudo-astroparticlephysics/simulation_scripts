@@ -1,5 +1,5 @@
 split_muongun_floodlight:
-  default_config: configs/default_muongun_floodlight_2012_pass2.yaml
+  default_config: configs/default_split_muongun_floodlight.yaml
   job_template: job_templates/py3-v4.1.0.sh 
   steps:
     0: step_0_split_muongun_floodlight

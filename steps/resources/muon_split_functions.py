@@ -2,14 +2,12 @@ from icecube import dataclasses, icetray, dataio
 from I3Tray import *
 import numpy as np
 
-from egenerator.utils.angles import get_delta_psi_vector, get_delta_psi_vector_dir
-
 from resources.geometry import distance_to_icecube_hull
 
 from ic3_labels.labels.utils.general import particle_is_inside 
 
 from scipy.spatial import ConvexHull
-
+   
 
 def get_max_energy_loss_id(tree):
     '''Find maximum energy loss in the tree.
@@ -27,6 +25,13 @@ def get_max_energy_loss_id(tree):
 
     '''
     # Create energy array with two energies for the first two particles (unkown and muon)
+    distances = [0, 0]
+    
+    distances = distances + [distance_to_icecube_hull(d.pos) for d in tree[2:]]
+    energies = [d.energy if d.type_string != 'MuMinus' and distances[l] < 0 else 0 for d,l in zip(tree, range(len(distances)))]
+    
+    '''Long loop instead of list comprehension
+    # Create energy array with two energies for the first two particles (unkown and muon)
     energies = [0, 0]
     distances = [0, 0]
     
@@ -38,6 +43,7 @@ def get_max_energy_loss_id(tree):
             energies.append(d.energy)
         else:
             energies.append(0)
+    '''
     
     max_e_loss = max(energies)
     max_index = energies.index(max_e_loss)   
@@ -47,7 +53,8 @@ def get_max_energy_loss_id(tree):
 
 
 def build_tree_with_muon_split(frame, new_psi, random_seed):
-    '''Change direction of particles after maximum energy loss happens. First save the old tree, the existing tree will 
+    '''Change direction of particles after maximum energy loss happens. First save the old tree, 
+    the existing tree will 
     be deleted and replaced with a new tree.
 
     Paramters
@@ -58,6 +65,7 @@ def build_tree_with_muon_split(frame, new_psi, random_seed):
     random_seed : int
         Random service for generating the new direction.
     '''
+
 
     tree = frame['I3MCTree']
 
@@ -88,10 +96,14 @@ def build_tree_with_muon_split(frame, new_psi, random_seed):
     # max_index = get_max_energy_loss_id(oldTree)[0]
     max_index = int(frame['I3MapSplit']['max_E_id'])
     
-    # Create two variables to fill the tree
+    # Create variables to fill the tree
     found_max = False
     daughter_counter = 0
     daughter_direction_change = False
+    daughter_daughter_counter = 0
+    daughter_daughter_direction_change = False
+    daughter_daughter_daughter_counter = 0
+    daughter_daughter_daughter_direction_change = False
 
     # Loop through particles in oldTree except the first two particles because they already exist in tree
     for d in oldTree[2:]:
@@ -103,12 +115,16 @@ def build_tree_with_muon_split(frame, new_psi, random_seed):
             # Set parameter: maximum loss found, now muon2 has to be inserted, change direction of the following daughter particles
             found_max = True
             daughter_direction_change = True
+            daughter_daughter_direction_change = True
+            daughter_daughter_daughter_direction_change = True
 
             muon_split_helper = d
+
 
                        
             # Get new zenith and azimuth value for splitted particles with given delta_angle
             random_service = np.random.RandomState(random_seed)
+            new_psi = np.exp(random_service.uniform(np.log(0.1), np.log(new_psi)) 
             new_zenith_azimuth = get_delta_psi_vector(muon.dir.zenith, muon.dir.azimuth, random_service=random_service, delta_psi=new_psi, is_degree=True)
 
             # Insert key to frame
@@ -116,14 +132,44 @@ def build_tree_with_muon_split(frame, new_psi, random_seed):
             i3map = frame['I3MapSplit']
             # Save opening angle and new direction
             i3map['delta_psi_in_degree'] = new_psi 
-            i3map['new_dir_x'] = new_zenith_azimuth[0][0]
-            i3map['new_dir_y'] = new_zenith_azimuth[1][0]
-            i3map['old_dir_x'] = d.dir.zenith
-            i3map['old_dir_y'] = d.dir.azimuth
+            i3map['new_zenith'] = new_zenith_azimuth[0][0]
+            i3map['new_azimuth'] = new_zenith_azimuth[1][0]
+            i3map['old_zenith'] = d.dir.zenith
+            i3map['old_azimuth'] = d.dir.azimuth
             i3map['time'] = d.time
+            i3map['pre_length'] = (oldTree[0].pos - oldTree[max_index].pos).magnitude
+            i3map['post_length'] = (oldTree[max_index].pos - oldTree[-1].pos).magnitude
 
             # Insert pos key to frame
             frame.Put('I3PosOfMaxEnergyLoss', dataclasses.I3Position(d.pos))
+                             
+        # Inser daughter daughter daughter particles
+        if daughter_daughter_daughter_counter != 0:
+            if daughter_daughter_daughter_direction_change == True:
+                d.dir = dataclasses.I3Direction(new_zenith_azimuth[0][0], new_zenith_azimuth[1][0])
+                d.pos = muon_split_helper.pos + muon_split_helper.dir * (muon_split_helper.pos - d.pos).magnitude 
+                tree.append_child(daughter_daughter_daughter_id, d)
+            else:
+                tree.append_child(daughter_daughter_daughter_id, d)
+            daughter_daughter_daughter_counter -= 1
+            continue
+
+        # Insert daughter daughter particles
+        if daughter_daughter_counter != 0:
+            if daughter_daughter_direction_change == True:
+                d.dir = dataclasses.I3Direction(new_zenith_azimuth[0][0], new_zenith_azimuth[1][0])
+                d.pos = muon_split_helper.pos + muon_split_helper.dir * (muon_split_helper.pos - d.pos).magnitude 
+                tree.append_child(daughter_daughter_id, d)
+            else:
+                tree.append_child(daughter_daughter_id, d)
+            daughter_daughter_counter -= 1
+            
+            # Check for daughter daughter daughter
+            daughter_daughter_daughter_counter = len(oldTree.get_daughters(d))
+            if daughter_daughter_daughter_counter != 0:
+                daughter_daughter_daughter_id = d.id
+            continue                    
+                          
 
         # Insert daughter particles
         if daughter_counter != 0:
@@ -137,6 +183,12 @@ def build_tree_with_muon_split(frame, new_psi, random_seed):
             else:
                 tree.append_child(daughter_id, d)
             daughter_counter -= 1
+            
+            # Check for daughter daughter
+            daughter_daughter_counter = len(oldTree.get_daughters(d))
+            if daughter_daughter_counter != 0:
+                daughter_daughter_id = d.id
+                             
             continue
 
         if found_max == False:
@@ -206,8 +258,7 @@ def selection(self, frame):
     
     # Energy loss should be in the middle of the detector
     hull_distance_of_max_e_loss = id_E_dist[2] # this value is negative
-    min_distance_to_hull = -100
-    if min_distance_to_hull < hull_distance_of_max_e_loss:
+    if self._min_dist < hull_distance_of_max_e_loss:
         return False
     
     # Save data in tree 
@@ -215,3 +266,137 @@ def selection(self, frame):
     frame['I3MapSplit']['max_E_id'] = id_E_dist[0]
     frame['I3MapSplit']['max_E_loss'] = id_E_dist[1]
     frame['I3MapSplit']['hull_dist'] = id_E_dist[2]
+
+def get_delta_psi_vector(zenith, azimuth, delta_psi,
+                         random_service=None,
+                         randomize_for_each_delta_psi=True,
+                         is_degree=True,
+                         return_angles=True):
+    """Get new angles with an opening angle of delta_psi.
+    Parameters
+    ----------
+    zenith : array_like
+        The zenith angle of the input vector for which to compute a random
+        new vector with an opening angle of delta_psi.
+    azimuth : TYPE
+        The azimuth angle of the input vector for which to compute a random
+        new vector with an opening angle of delta_psi.
+    delta_psi : float or array_like
+        The opening angle. If 'is_degree' is True, then the unit is in degree,
+        otherwise it is in radians.
+        If an array is provided, broadcasting will be applied.
+    random_service : None, optional
+        An optional random number service to use for reproducibility.
+    randomize_for_each_delta_psi : bool, optional
+        If True, a random orthogonal vector is sampled for each specified
+        delta_psi.
+        If False, the direction vectors for the delta_psi opening angles
+        are computed along along the same (random) geodesic.
+    is_degree : bool, optional
+        This specifies the input unit of 'delta_psi'.
+        If True, the input unit of 'delta_psi' is degree.
+        If False, it is radians.
+    return_angles : bool, optional
+        If True, the new random vector will be returned as zenith and azimuth
+        angles: shape:  tuple([..., 1], [..., 1]).
+        If False, it will be returned as a direction vector: shape: [..., 3].
+    Returns
+    -------
+    array_like or tuple of array_like
+        If return_angles is True:
+            Return values are (zenith, azimuth)
+            Shape:  tuple([..., 1], [..., 1])
+        If return_angles is False:
+            Return values are the new direction vectors in cartesian
+            coordinates.
+            Shape: [..., 3]
+    """
+    vec = np.array([np.sin(zenith) * np.cos(azimuth),
+                    np.sin(zenith) * np.sin(azimuth),
+                    np.cos(zenith)]).T
+    vec = np.atleast_2d(vec)
+    delta_vec = get_delta_psi_vector_dir(
+        vec,
+        delta_psi=delta_psi,
+        random_service=random_service,
+        randomize_for_each_delta_psi=randomize_for_each_delta_psi,
+        is_degree=is_degree)
+    if return_angles:
+        # calculate zenith
+        d_zenith = np.arccos(np.clip(delta_vec[..., 2], -1, 1))
+
+        # calculate azimuth
+        d_azimuth = (np.arctan2(delta_vec[..., 1], delta_vec[..., 0])
+                     + 2 * np.pi) % (2 * np.pi)
+        return d_zenith, d_azimuth
+    else:
+        return delta_vec
+
+
+def get_delta_psi_vector_dir(vec, delta_psi,
+                             randomize_for_each_delta_psi=True,
+                             random_service=None,
+                             is_degree=True):
+    """Get a new direction vector with an opening angle of delta_psi to vec.
+    Parameters
+    ----------
+    vec : array_like
+        The vector for which to calculate a new random vector with an opening
+        angle of delta_psi.
+        Shape: [..., 3]
+    delta_psi : float or array_like
+        The opening angle. If 'is_degree' is True, then the unit is in degree,
+        otherwise it is in radians.
+        If an array is provided, broadcasting will be applied.
+    randomize_for_each_delta_psi : bool, optional
+        If True, a random orthogonal vector is sampled for each specified
+        delta_psi.
+        If False, the direction vectors for the delta_psi opening angles
+        are computed along along the same (random) geodesic.
+    random_service : None, optional
+        An optional random number service to use for reproducibility.
+    is_degree : bool, optional
+        This specifies the input unit of 'delta_psi'.
+        If True, the input unit of 'delta_psi' is degree.
+        If False, it is radians.
+    Returns
+    -------
+    array_like
+        The new random vectors with an opening angle of 'delta_psi'.
+        Shape: [..., 3]
+    Raises
+    ------
+    ValueError
+        If the specified opening angle is larger or equal to 90 degree.
+        This calculation only supports angles up to 90 degree.
+    """
+    if random_service is None:
+        random_service = np.random
+
+    if is_degree:
+        delta_psi = np.deg2rad(delta_psi)
+
+    # allow broadcasting
+    delta_psi = np.expand_dims(delta_psi, axis=-1)
+
+    # This calculation is only valid if delta_psi < 90 degree
+    if np.any(delta_psi >= np.deg2rad(90)):
+        msg = 'Delta Psi angle must be smaller than 90 degrees, but it is {!r}'
+        raise ValueError(msg.format(np.rad2deg(delta_psi)))
+
+    # get a random orthogonal vector
+    if randomize_for_each_delta_psi:
+        num_temp_vecs = max(len(vec), len(delta_psi))
+    else:
+        num_temp_vecs = len(vec)
+
+    temp_vec = random_service.uniform(low=-1, high=1, size=(num_temp_vecs, 3))
+
+    vec_orthogonal = np.cross(vec, temp_vec)
+    vec_orthogonal /= np.linalg.norm(vec_orthogonal, axis=-1, keepdims=True)
+
+    # calculate new vector with specified opening angle
+    new_vec = vec + np.tan(delta_psi) * vec_orthogonal
+    new_vec /= np.linalg.norm(new_vec, axis=-1, keepdims=True)
+    return new_vec
+
