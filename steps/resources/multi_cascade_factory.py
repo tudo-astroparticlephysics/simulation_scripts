@@ -561,6 +561,9 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
 
         assert len(distances) == self.n_cascades - 1, distances
 
+        # sort distances
+        distances = sorted(distances)
+
         direction = dataclasses.I3Direction(zenith, azimuth)
         vertices = []
         times = []
