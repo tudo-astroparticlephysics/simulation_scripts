@@ -676,7 +676,7 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
             for primary_j, daughter_j, hadrons_j in zip(
                     sub_primaries, sub_daughters, sub_hadrons):
                 primary_copy_j = dataclasses.I3Particle(primary_j)
-                mctree.add_primary(primary_copy_j)
+                mctree.append_child(primary_copy, primary_copy_j)
                 mctree.append_child(
                     primary_copy_j, dataclasses.I3Particle(daughter_j))
                 mctree.append_child(
