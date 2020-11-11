@@ -1,10 +1,11 @@
 chain_name: split_muongun_floodlight 
-output_pattern: '{run_folder}/Level0.{step}_split_muongun_floodlight_IC86.2012_pass2.{dataset_number:6d}.{run_number}.i3.bz2'
+output_pattern: '{run_folder}/Level0.{step}_split_muongun_floodlight.{dataset_number:6d}.{run_number}.i3.bz2'
 seed: 1337
 dataset_number: 44319
-gcd_2012: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_2012.56063_V1.i3.gz
-gcd_pass2: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_2015.57161_V0.i3.gz
-gcd: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_IC86_Merged.i3.gz
+gcd_2012: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_AVG_55697-57531_PASS2_SPE_withScaledNoise.i3.gz
+gcd_pass2: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_AVG_55697-57531_PASS2_SPE_withScaledNoise.i3.gz
+# gcd: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_IC86_Merged.i3.gz
+gcd: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_AVG_55697-57531_PASS2_SPE_withScaledNoise.i3.gz
 generator: muongun
 n_events_per_run: 100000 
 n_runs: 100000
@@ -24,6 +25,7 @@ clsim_usegpus: True
 clsim_keep_mcpe: False
 clsim_dom_oversize: 5.
 clsim_hybrid_mode: False
-new_psi: 5
+new_psi: 0
 percentage_energy_loss: 0.4
 min_dist: -100 
+

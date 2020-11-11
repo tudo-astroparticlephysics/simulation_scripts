@@ -15,18 +15,19 @@ additional_keep_keys: [
 ]
 
 # Pattern for the outputfile
-output_pattern: '{run_folder}/Level0.{step}_muongun_floodlight_IC86.2012_pass2.{dataset_number:6d}.{run_number}.i3.bz2'
+output_pattern: '{run_folder}/Level0.{step}_muongun_floodlight_IC86.{dataset_number:6d}.{run_number}.i3.bz2'
 # sub-dict to indicate need resources
 resources:
   # Indication which steps need GPUs, default is 0
   gpus:
     1: 1
   # Indication of needed memory for each step if nothing is set 1GB is assumed as default
-  memory:
+  memory: 
+    0: 4gb
     1: 6gb
-    2: 3gb
-    3: 3gb
-    4: 3gb
+    2: 5gb
+    3: 5gb
+    4: 5gb
     12: 3gb
     13: 3gb
     14: 3gb
@@ -44,7 +45,7 @@ seed: 1337
 keep_crashed_files: 0
 
 # PATH to the GCD File
-gcd: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_IC86_Merged.i3.gz
+gcd: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_AVG_55697-57531_PASS2_SPE_withScaledNoise.i3.gz
 
 # Name of the generator; only used for naming of the output folder
 generator: muongun

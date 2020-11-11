@@ -4,10 +4,87 @@ import numpy as np
 
 from resources.geometry import distance_to_icecube_hull
 
-from ic3_labels.labels.utils.general import particle_is_inside 
+
+
+
+# from ic3_labels.labels.utils.general import particle_is_inside 
+from ic3_labels.labels.utils import geometry
 
 from scipy.spatial import ConvexHull
    
+    
+def build_tree_with_muon_split(frame, new_psi, random_service):
+    '''Change direction of particles after maximum energy loss happens. First save the old tree, 
+    the existing tree will 
+    be deleted and replaced with a new tree.
+
+    Paramters
+    ---------
+    frame : I3Frame
+    new_psi : angle in degree
+        Set new direction of following particles of the maximum energy loss.
+    random_service : np.random.RandomState
+        Random service for generating the new direction.
+    '''
+
+    
+    tree = frame['I3MCTree']
+
+    # Create a tree and initialize it with the old I3MCTree 
+    frame.Put('OldTree', dataclasses.I3MCTree(tree))
+
+    # Initialize tree with the new I3MCTree and set primary and muon
+    muon = tree[1]
+
+    max_index = int(frame['I3MapSplit']['max_E_id'])
+
+    # Create variables to fill the tree
+    found_max = False
+
+    
+    # Loop through particles in oldTree except the first two particles because they already exist in tree
+    for i in range(len(tree)):
+        d = tree[i]
+        # Check for maximum energy loss
+        if d == tree[max_index]:
+            # print('maximum energy loss: {}'.format(oldTree[max_index]))
+            
+            # Set parameter: maximum loss found, now muon2 has to be inserted, change direction of the following daughter particles
+            found_max = True
+            muon_split_helper = d
+               
+            # Get new zenith and azimuth value for splitted particles with given delta_angle
+            # random_service = np.random.RandomState(random_seed)
+            
+            ### For linear analysis
+            if new_psi != 0:    
+                new_psi = np.exp(random_service.uniform(np.log(0.1), np.log(new_psi))) 
+            new_zenith_azimuth = get_delta_psi_vector(muon.dir.zenith, muon.dir.azimuth, random_service=random_service, delta_psi=new_psi, is_degree=True)
+
+            # Insert key to frame
+            # frame.Put('I3MapSplit', dataclasses.I3MapStringDouble())
+            i3map = frame['I3MapSplit']
+            # Save opening angle and new direction
+            i3map['delta_psi_in_degree'] = new_psi 
+            i3map['new_zenith'] = new_zenith_azimuth[0][0]
+            i3map['new_azimuth'] = new_zenith_azimuth[1][0]
+            i3map['old_zenith'] = d.dir.zenith
+            i3map['old_azimuth'] = d.dir.azimuth
+            i3map['time'] = d.time
+            i3map['pre_length'] = (tree[0].pos - tree[max_index].pos).magnitude
+            i3map['post_length'] = (tree[max_index].pos - tree[-1].pos).magnitude
+
+            # Insert pos key to frame
+            frame.Put('I3PosOfMaxEnergyLoss', dataclasses.I3Position(d.pos))
+
+        if found_max == True:
+            # Set new direction
+            tree[i].dir = dataclasses.I3Direction(new_zenith_azimuth[0][0], new_zenith_azimuth[1][0])
+
+            # Set new position
+            tree[i].pos = muon_split_helper.pos + muon_split_helper.dir * (muon_split_helper.pos - d.pos).magnitude
+    
+    
 
 def get_max_energy_loss_id(tree):
     '''Find maximum energy loss in the tree.
@@ -25,9 +102,9 @@ def get_max_energy_loss_id(tree):
 
     '''
     # Create energy array with two energies for the first two particles (unkown and muon)
-    distances = [0, 0]
+    # distances = [0, 0]
     
-    distances = distances + [distance_to_icecube_hull(d.pos) for d in tree[2:]]
+    distances = [distance_to_icecube_hull(d.pos) for d in tree]
     energies = [d.energy if d.type_string != 'MuMinus' and distances[l] < 0 else 0 for d,l in zip(tree, range(len(distances)))]
     
     '''Long loop instead of list comprehension
@@ -52,7 +129,7 @@ def get_max_energy_loss_id(tree):
     return [max_index, max_e_loss, hull_distance_of_max_e_loss]
 
 
-def build_tree_with_muon_split(frame, new_psi, random_seed):
+def build_tree_with_muon_split_oldversion(frame, new_psi, random_seed):
     '''Change direction of particles after maximum energy loss happens. First save the old tree, 
     the existing tree will 
     be deleted and replaced with a new tree.
@@ -124,7 +201,9 @@ def build_tree_with_muon_split(frame, new_psi, random_seed):
                        
             # Get new zenith and azimuth value for splitted particles with given delta_angle
             random_service = np.random.RandomState(random_seed)
-            new_psi = np.exp(random_service.uniform(np.log(0.1), np.log(new_psi)) 
+            
+            
+            new_psi = np.exp(random_service.uniform(np.log(0.1), np.log(new_psi))) 
             new_zenith_azimuth = get_delta_psi_vector(muon.dir.zenith, muon.dir.azimuth, random_service=random_service, delta_psi=new_psi, is_degree=True)
 
             # Insert key to frame
@@ -400,3 +479,54 @@ def get_delta_psi_vector_dir(vec, delta_psi,
     new_vec /= np.linalg.norm(new_vec, axis=-1, keepdims=True)
     return new_vec
 
+
+def particle_is_inside(particle, convex_hull):
+    '''Checks if a particle is inside the convex hull.
+    The particle is considered inside if any part of its track is inside
+    the convex hull. In the case of point like particles with length zero,
+    the particle will be considered to be inside if the vertex is inside
+    the convex hull.
+
+    Parameters
+    ----------
+    particle : I3Particle
+        The Particle to check.
+    convex_hull : scipy.spatial.ConvexHull
+        Defines the desired convex volume.
+
+    Returns
+    -------
+    bool
+        True if particle is inside, otherwise False.
+    '''
+    v_pos = (particle.pos.x, particle.pos.y, particle.pos.z)
+    v_dir = (particle.dir.x, particle.dir.y, particle.dir.z)
+    intersection_ts = geometry.get_intersections(convex_hull, v_pos, v_dir)
+
+    # particle didn't hit convex_hull
+    if intersection_ts.size == 0:
+        return None
+
+    # particle hit convex_hull:
+    #   Expecting two intersections
+    #   What happens if track is exactly along edge of hull?
+    #   If only one ts: track exactly hit a corner of hull?
+    # assert len(intersection_ts) == 2, 'Expected exactly 2 intersections'
+    if len(intersection_ts) != 2:
+        print('intersection_ts != 2')
+        return False
+    
+    
+    min_ts = min(intersection_ts)
+    max_ts = max(intersection_ts)
+    if min_ts <= 0 and max_ts >= 0:
+        # starting event
+        return True
+    if max_ts < 0:
+        # particle created after the convex hull
+        return False
+    if min_ts > particle.length + 1e-8:
+        # particle stops before convex hull
+        return False
+    # everything else
+    return True

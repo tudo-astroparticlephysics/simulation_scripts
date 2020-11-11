@@ -39,7 +39,8 @@ class SelectSplitModule(icetray.I3ConditionalModule):
         self._min_dist = self.GetParameter('MinDist')
         self._percentage_energy_loss = self.GetParameter('percentage_energy_loss')
         self._new_psi = self.GetParameter('NewPsi')
-        self._random_seed = self.GetParameter('RandomSeed')
+        # self._random_seed = self.GetParameter('RandomSeed')
+        self._random_service = np.random.RandomState(self.GetParameter('RandomSeed'))
 
     def Geometry(self, frame):
         """Summary
@@ -83,7 +84,7 @@ class SelectSplitModule(icetray.I3ConditionalModule):
         if selection(self, frame) == False:
             return False
         
-        build_tree_with_muon_split(frame, self._new_psi, self._random_seed)
+        build_tree_with_muon_split(frame, self._new_psi, self._random_service)
 
         self.PushFrame(frame)
 

@@ -11,13 +11,13 @@ from icecube.simprod import segments
 
 from I3Tray import I3Tray
 from icecube import icetray, dataclasses
-from icecube import sim_services, MuonGun
+from icecube import sim_services
 
 from utils import create_random_services, get_run_folder
 from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
 
 # import muon split
-from resources.select_split_module import SelectSplitModule
+# from resources.select_split_module import SelectSplitModuleEnergy
 
 def start_timer(frame):
     frame['starttime'] = dataclasses.I3Double(time.time())
@@ -57,12 +57,24 @@ def main(cfg, run_number, scratch):
     click.echo('NEvents: {}'.format(cfg['n_events_per_run']))
     click.echo('EMin: {}'.format(cfg['e_min']))
     click.echo('EMax: {}'.format(cfg['e_max']))
-    click.echo('EBreak: {}'.format(cfg['muongun_e_break']))
+    # click.echo('EBreak: {}'.format(cfg['muongun_e_break']))
     click.echo('Gamma: {}'.format(cfg['gamma']))
     click.echo('ZenithMin: {}'.format(cfg['zenith_min']))
     click.echo('ZenithMax: {}'.format(cfg['zenith_max']))
-    click.echo('NewPsi: {}'.format(cfg['new_psi']))
-    click.echo('PercentagEnergyLoss: {}'.format(cfg['percentage_energy_loss']))
+    # click.echo('NewPsi: {}'.format(cfg['new_psi']))
+    # click.echo('PercentagEnergyLoss: {}'.format(cfg['percentage_energy_loss']))
+    # ---------------------------------------
+    click.echo('AzimuthMin: {}'.format(cfg['azimuth_min']))
+    click.echo('AzimuthMax: {}'.format(cfg['azimuth_max']))
+    if cfg['neutrino_flavor'] is None:
+        click.echo('NeutrinoTypes: {}'.format(cfg['neutrino_types']))
+        click.echo('PrimaryTypeRatio: {}'.format(cfg['primary_type_ratio']))
+    else:
+        click.echo('NeutrinoFlavor: {}'.format(cfg['neutrino_flavor']))
+    click.echo('CrossSections: {}'.format(cfg['cross_sections']))
+    if not cfg['cross_sections_path'] is None:
+        click.echo('CrossSectionsPath: {}'.format(cfg['cross_sections_path']))
+    # --------------------------------------
 
     starttime = time.time()
 
@@ -82,17 +94,35 @@ def main(cfg, run_number, scratch):
                    "TheSource",
                    Prefix=cfg['gcd'],
                    Stream=icetray.I3Frame.DAQ)
-
+    
     tray.AddSegment(
-        segments.GenerateSingleMuons,
-        "GenerateCosmicRayMuons",
+        segments.GenerateNeutrinos, "GenerateNeutrinos",
+        RandomService=random_service,
         NumEvents=cfg['n_events_per_run'],
-        FromEnergy=cfg['e_min'] * icetray.I3Units.GeV,
-        ToEnergy=cfg['e_max'] * icetray.I3Units.GeV,
-        BreakEnergy=cfg['muongun_e_break'] * icetray.I3Units.GeV,
+        SimMode=cfg['simulation_mode'],
+        VTXGenMode=cfg['vertex_generation_mode'],
+        InjectionMode=cfg['injection_mode'],
+        CylinderParams=cfg['cylinder_params'],
+        AutoExtendMuonVolume=cfg['auto_extend_muon_volume'],
+        Flavor=cfg['neutrino_flavor'],
+        # NuTypes = cfg['neutrino_types'], # Only in newer simprod versions
+        # PrimaryTypeRatio = cfg['primary_type_ratio'], # Only in newer simprod versions
         GammaIndex=cfg['gamma'],
+
+        FromEnergy=cfg['e_min']*icetray.I3Units.GeV,
+        ToEnergy=cfg['e_max']*icetray.I3Units.GeV,
+
         ZenithRange=[cfg['zenith_min'] * icetray.I3Units.deg,
-                     cfg['zenith_max'] * icetray.I3Units.deg])
+                     cfg['zenith_max'] * icetray.I3Units.deg],
+        AzimuthRange=[cfg['azimuth_min'] * icetray.I3Units.deg,
+                      cfg['azimuth_max'] * icetray.I3Units.deg],
+
+        # UseDifferentialXsection = cfg['use_diff_cross_section'], # Only in newer simprod versions
+        CrossSections=cfg['cross_sections'],
+        CrossSectionsPath=cfg['cross_sections_path'],
+        # ZenithSamplingMode = cfg['zenith_sampling_mode'], # Only in newer simprod versions
+        )
+    
     
     tray.AddSegment(
         segments.PropagateMuons,
@@ -103,13 +133,13 @@ def main(cfg, run_number, scratch):
 
 	# Add selection and muon split module 
     # tray.AddModule(start_timer2, 'stimer2', Streams=[icetray.I3Frame.DAQ])
-    tray.AddModule(
-        SelectSplitModule, 
-        'SelectAndSplitMuonTrack',
-        percentage_energy_loss=cfg['percentage_energy_loss'], 
-        NewPsi=cfg['new_psi'], 
-        MinDist=cfg['min_dist'],
-        RandomSeed=int_run_number)	
+    # tray.AddModule(
+        # SelectSplitModuleEnergy, 
+        # 'SelectAndSplitMuonTrack',
+        # percentage_energy_loss=cfg['percentage_energy_loss'], 
+        # NewPsi=cfg['new_psi'], 
+        # MinDist=cfg['min_dist'],
+        # RandomSeed=int_run_number)	
     # tray.AddModule(end_timer2, 'etimer2', Streams=[icetray.I3Frame.DAQ])
 
 
