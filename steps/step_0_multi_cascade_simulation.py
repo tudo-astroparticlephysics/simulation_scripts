@@ -12,7 +12,7 @@ from icecube import icetray, dataclasses
 
 from utils import create_random_services, get_run_folder
 from resources import geometry
-from resources.neutrino_factory import NeutrinoFactory
+from resources.multi_cascade_factory import MultiCascadeFactory
 from resources.oversampling import DAQFrameMultiplier
 
 
@@ -59,6 +59,11 @@ def main(cfg, run_number, scratch):
 
     click.echo('Run: {}'.format(run_number))
     click.echo('Outfile: {}'.format(outfile))
+    click.echo('N Cascades: {}'.format(cfg['n_cascades']))
+    click.echo('Distance Range: [{},{}]'.format(
+        *cfg['cascade_distance_range']))
+    click.echo('Distributino Mode: {}'.format(
+        cfg['cascade_distribution_mode']))
     click.echo('Azimuth: [{},{}]'.format(*cfg['azimuth_range']))
     click.echo('Zenith: [{},{}]'.format(*cfg['zenith_range']))
     click.echo('Energy: [{},{}]'.format(*cfg['primary_energy_range']))
@@ -87,8 +92,6 @@ def main(cfg, run_number, scratch):
                    # Prefix=gcdfile,
                    Stream=icetray.I3Frame.DAQ)
 
-    if 'sample_uniformly_on_sphere' not in cfg:
-        cfg['sample_uniformly_on_sphere'] = False
     if 'oversample_after_proposal' in cfg and \
             cfg['oversample_after_proposal']:
         oversampling_factor_injection = None
@@ -97,7 +100,10 @@ def main(cfg, run_number, scratch):
         oversampling_factor_injection = cfg['oversampling_factor']
         oversampling_factor_photon = None
     tray.AddModule(
-        NeutrinoFactory, 'make_neutrinos',
+        MultiCascadeFactory, 'make_cascades',
+        n_cascades=cfg['n_cascades'],
+        cascade_distribution_mode=cfg['cascade_distribution_mode'],
+        cascade_distance_range=cfg['cascade_distance_range'],
         azimuth_range=cfg['azimuth_range'],
         zenith_range=cfg['zenith_range'],
         sample_uniformly_on_sphere=cfg[

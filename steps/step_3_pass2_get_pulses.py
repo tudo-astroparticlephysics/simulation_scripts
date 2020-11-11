@@ -333,6 +333,8 @@ def main(cfg, run_number, scratch, do_merging_if_necessary):
         'TimeShift',
         'I3MCTree_preMuonProp',
         'I3MCTree',
+        'I3MCWeightDict',
+        'CorsikaWeightMap',
         'MMCTrackList',
         'I3EventHeader',
         'I3SuperDST',

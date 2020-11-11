@@ -11,9 +11,9 @@ from I3Tray import I3Tray, I3Units
 from icecube import icetray, dataclasses
 
 from utils import create_random_services, get_run_folder
-from resources import geometry
-from resources.neutrino_factory import NeutrinoFactory
 from resources.oversampling import DAQFrameMultiplier
+from resources.biased_muongun import MuonGeometryFilter
+from resources.biased_muongun import MuonLossProfileFilter
 
 
 class DummyMCTreeRenaming(icetray.I3ConditionalModule):
@@ -59,15 +59,15 @@ def main(cfg, run_number, scratch):
 
     click.echo('Run: {}'.format(run_number))
     click.echo('Outfile: {}'.format(outfile))
-    click.echo('Azimuth: [{},{}]'.format(*cfg['azimuth_range']))
-    click.echo('Zenith: [{},{}]'.format(*cfg['zenith_range']))
-    click.echo('Energy: [{},{}]'.format(*cfg['primary_energy_range']))
-    click.echo('Vertex x: [{},{}]'.format(*cfg['x_range']))
-    click.echo('Vertex y: [{},{}]'.format(*cfg['y_range']))
-    click.echo('Vertex z: [{},{}]'.format(*cfg['z_range']))
-    click.echo('Shift vertex dist.: {}'.format(cfg['shift_vertex_distance']))
-    click.echo('Max vertex dist.: {}'.format(cfg['max_vertex_distance']))
-    click.echo('Max track dist.: {}'.format(cfg['max_track_distance']))
+    for setting_key in (
+            'GenerateCosmicRayMuonsSettings',
+            'MuonGeometryFilterSettings',
+            'MuonLossProfileFilterSettings',
+            ):
+        if cfg[setting_key]:
+            click.echo('{}:'.format(setting_key))
+            for setting, value in cfg[setting_key].items():
+                click.echo('\t{}: {}'.format(setting, value))
 
     # crate random services
     if 'random_service_use_gslrng' not in cfg:
@@ -83,12 +83,16 @@ def main(cfg, run_number, scratch):
     # Build IceTray
     # --------------------------------------
     tray = I3Tray()
+
+    # add random generator to tray context
+    tray.context['I3RandomService'] = random_services[0]
+
     tray.AddModule('I3InfiniteSource', 'source',
                    # Prefix=gcdfile,
                    Stream=icetray.I3Frame.DAQ)
 
-    if 'sample_uniformly_on_sphere' not in cfg:
-        cfg['sample_uniformly_on_sphere'] = False
+    if 'oversampling_factor' not in cfg:
+        cfg['oversampling_factor'] = None
     if 'oversample_after_proposal' in cfg and \
             cfg['oversample_after_proposal']:
         oversampling_factor_injection = None
@@ -96,31 +100,24 @@ def main(cfg, run_number, scratch):
     else:
         oversampling_factor_injection = cfg['oversampling_factor']
         oversampling_factor_photon = None
-    tray.AddModule(
-        NeutrinoFactory, 'make_neutrinos',
-        azimuth_range=cfg['azimuth_range'],
-        zenith_range=cfg['zenith_range'],
-        sample_uniformly_on_sphere=cfg[
-            'sample_uniformly_on_sphere'],
-        primary_energy_range=cfg['primary_energy_range'],
-        fractional_energy_in_hadrons_range=cfg[
-            'fractional_energy_in_hadrons_range'],
-        time_range=cfg['time_range'],
-        x_range=cfg['x_range'],
-        y_range=cfg['y_range'],
-        z_range=cfg['z_range'],
-        shift_vertex_distance=cfg['shift_vertex_distance'],
-        max_vertex_distance=cfg['max_vertex_distance'],
-        max_track_distance=cfg['max_track_distance'],
-        convex_hull_distance_function=cfg[
-            'convex_hull_distance_function'],
-        flavors=cfg['flavors'],
-        interaction_types=cfg['interaction_types'],
+
+    tray.AddSegment(
+        segments.GenerateCosmicRayMuons,
+        'GenerateCosmicRayMuons',
         num_events=cfg['n_events_per_run'],
-        oversampling_factor=oversampling_factor_injection,
-        random_service=random_services[0],
-        constant_vars=cfg['constant_vars'],
-        )
+        **cfg['GenerateCosmicRayMuonsSettings']
+    )
+
+    # add filter to bias simulation based on track geometry
+    tray.AddModule(
+        MuonGeometryFilter,
+        'MuonGeometryFilter',
+        **cfg['MuonGeometryFilterSettings']
+    )
+
+    tray.AddModule(DAQFrameMultiplier, 'PreDAQFrameMultiplier',
+                   oversampling_factor=oversampling_factor_injection,
+                   mctree_keys=['I3MCTree_preMuonProp'])
 
     # propagate muons if config exists in config
     # Note: Snowstorm may perform muon propagation internally
@@ -134,10 +131,18 @@ def main(cfg, run_number, scratch):
         # are letting this be done by snowstorm propagation
         # We need to add a key named 'I3MCTree', since snowstorm expects this
         # It will propagate the particles for us.
-        tray.AddModule(DummyMCTreeRenaming, 'DummyMCTreeRenaming')
+        tray.AddModule('DummyMCTreeRenaming', 'DummyMCTreeRenaming')
 
-    tray.AddModule(DAQFrameMultiplier, 'DAQFrameMultiplier',
-                   oversampling_factor=oversampling_factor_photon)
+    # add filter to bias simulation based on muon loss profile
+    tray.AddModule(
+        MuonLossProfileFilter,
+        'MuonLossProfileFilter',
+        **cfg['MuonLossProfileFilterSettings']
+    )
+
+    tray.AddModule(DAQFrameMultiplier, 'PostDAQFrameMultiplier',
+                   oversampling_factor=oversampling_factor_photon,
+                   mctree_keys=['I3MCTree'])
 
     # --------------------------------------
     # Distance Splits
