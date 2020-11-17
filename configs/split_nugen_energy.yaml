@@ -4,13 +4,13 @@
 # Deep-Homogenous Ice, no tilt
 # DOMs on perfect hex grid
 
-chain_name: split_nugen_energy
+chain_name: nugen_snowstorm
 seed: 1337
 
 # Number of the dataset
 dataset_number: 44320
 # Events generated for each file
-n_events_per_run: 100
+n_events_per_run: 100000
 # Number of total runs/file
 n_runs: 1000
 
@@ -24,9 +24,9 @@ gcd_2012: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_AVG
 gcd_pass2: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_AVG_55697-57531_PASS2_SPE_withScaledNoise.i3.gz
 
 # used icemodel
-icemodel: deep-homogenous
+# icemodel: deep-homogenous
 # For default location: leave empty
-icemodel_location: /data/user/mhuennefeld/IceModels
+# icemodel_location: /data/user/mhuennefeld/IceModels
 # Whether I3MCPE list should be stored
 clsim_keep_mcpe: False
 
@@ -34,13 +34,13 @@ clsim_keep_mcpe: False
 # Neutrino flavor to simulate
 # if neutrino_flavor is set, neutrino_types does
 # not have any effect and I3NuGInjector is used.
-neutrino_flavor: NuMu
+# neutrino_flavor: NuMu
 
 # Detector Simulation
 # keep MCPEs in frame
 det_keep_mc_hits: True
 # keep I3MCPulseSeriesMap in frame.
-det_keep_mc_pulses: False
+det_keep_mc_pulses: True
 # Keep everything upto run X
 det_pass2_keep_all_upto: -1
 # keep MCTree with all in-ice propagated secondaries. These take a lot of space compared un propagated tree.

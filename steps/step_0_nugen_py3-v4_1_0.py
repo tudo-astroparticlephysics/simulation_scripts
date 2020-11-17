@@ -1,5 +1,8 @@
 #!/bin/sh /cvmfs/icecube.opensciencegrid.org/py3-v4.1.0/icetray-start
-#METAPROJECT combo/V01-00-00
+#METAPROJECT /mnt/lfs7/user/mhuennefeld/software/icecube/py3-v4.1.0/combo_V01-00-00/build
+
+#--METAPROJECT /mnt/lfs7/user/mhuennefeld/software/icecube/py3-v4.1.0/combo_V01-00-00-RC0/build
+#--METAPROJECT combo/V01-00-00
 import click
 import yaml
 
@@ -41,14 +44,14 @@ def main(cfg, run_number, scratch):
     click.echo('ZenithMax: {}'.format(cfg['zenith_max']))
     click.echo('AzimuthMin: {}'.format(cfg['azimuth_min']))
     click.echo('AzimuthMax: {}'.format(cfg['azimuth_max']))
-    if cfg['neutrino_flavor'] is None:
-        click.echo('NeutrinoTypes: {}'.format(cfg['neutrino_types']))
-        click.echo('PrimaryTypeRatio: {}'.format(cfg['primary_type_ratio']))
-    else:
-        click.echo('NeutrinoFlavor: {}'.format(cfg['neutrino_flavor']))
-    click.echo('CrossSections: {}'.format(cfg['cross_sections']))
-    if not cfg['cross_sections_path'] is None:
-        click.echo('CrossSectionsPath: {}'.format(cfg['cross_sections_path']))
+#     if cfg['neutrino_flavor'] is None:
+#         click.echo('NeutrinoTypes: {}'.format(cfg['neutrino_types']))
+#         click.echo('PrimaryTypeRatio: {}'.format(cfg['primary_type_ratio']))
+#     else:
+#         click.echo('NeutrinoFlavor: {}'.format(cfg['neutrino_flavor']))
+#     click.echo('CrossSections: {}'.format(cfg['cross_sections']))
+#     if not cfg['cross_sections_path'] is None:
+#         click.echo('CrossSectionsPath: {}'.format(cfg['cross_sections_path']))
 
     tray = I3Tray()
 
