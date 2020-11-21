@@ -14,6 +14,7 @@ from utils import create_random_services, get_run_folder
 from resources.oversampling import DAQFrameMultiplier
 from resources.biased_muongun import MuonGeometryFilter
 from resources.biased_muongun import MuonLossProfileFilter
+from resources.biased_muongun import bias_muongun_events
 
 
 class DummyMCTreeRenaming(icetray.I3ConditionalModule):
@@ -139,6 +140,11 @@ def main(cfg, run_number, scratch):
         'MuonLossProfileFilter',
         **cfg['MuonLossProfileFilterSettings']
     )
+
+    # add MuonGun bias module:
+    # Events can be biased while keeping ability to properly weight events.
+    # This is not the case for the filter modules above.
+    bias_muongun_events(tray, cfg)
 
     tray.AddModule(DAQFrameMultiplier, 'PostDAQFrameMultiplier',
                    oversampling_factor=oversampling_factor_photon,
