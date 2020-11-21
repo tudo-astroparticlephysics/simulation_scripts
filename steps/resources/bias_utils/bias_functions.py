@@ -87,17 +87,24 @@ class BDTBiasFunction(DummyBiasFunction):
     """BDT bias function class
     """
 
-    def __init__(self, settings):
+    def __init__(self, model_path, probability_bound=1e-5, score_index=1):
         """Summary
 
         Parameters
         ----------
-        settings : dict
-            The settings for this class.
+        model_path : str
+            The file path to the BDT model.
+        probability_bound : float, optional
+            The lower bound on the keep probability. The output of the
+            BDT will be clipped to a minimal value as specified here.
+        score_index : int, optional
+            The index of score values to use from model.predict_proba().
         """
 
         # create and load model
-        self._model_path = settings['model_path']
+        self._model_path = model_path
+        self._score_index = score_index
+        self._probability_bound = probability_bound
         self._model_wrapper = XGBoostModelWrapper()
         self._model_wrapper.load_model(self._model_path)
         self.model = self._model_wrapper.model
@@ -132,7 +139,7 @@ class BDTBiasFunction(DummyBiasFunction):
         input_data = np.expand_dims(np.asarray(input_data), axis=0)
 
         # apply BDT
-        score = self.model.predict_proba(input_data)[:, 1]
+        score = self.model.predict_proba(input_data)[:, self._score_index]
 
         assert len(score) == 1, score
         score = score[0]
@@ -143,5 +150,8 @@ class BDTBiasFunction(DummyBiasFunction):
         # and if there is no over-training and so on..
         # For now, we will ignore thise and use the score directly
         keep_probability = score
+
+        # make sure the probability is greater zero
+        keep_probability = max(keep_probability, self._probability_bound)
 
         return keep_probability

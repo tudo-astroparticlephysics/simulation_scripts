@@ -49,7 +49,7 @@ def bias_muongun_events(tray, cfg, name='BiasedMuonWeighter'):
         bias_function_name = bias_cfg.pop('bias_function')
         bias_function_settings = bias_cfg.pop('bias_function_settings')
         bias_function = getattr(bias_functions, bias_function_name)(
-            bias_function_settings)
+            **bias_function_settings)
 
         tray.AddModule(
             BiasedMuonWeighter, name,
