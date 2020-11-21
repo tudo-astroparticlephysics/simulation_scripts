@@ -89,7 +89,7 @@ def main(cfg, run_number, scratch):
     tray.context['I3RandomService'] = random_services[0]
 
     tray.AddModule('I3InfiniteSource', 'source',
-                   # Prefix=gcdfile,
+                   Prefix=cfg['gcd'],
                    Stream=icetray.I3Frame.DAQ)
 
     if 'oversampling_factor' not in cfg:
