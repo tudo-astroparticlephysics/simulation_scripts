@@ -45,21 +45,27 @@ def write_onejob_file(config,
 
     # CUDA and other requirements
     requirement_line = 'requirements ='
-    if 'only_sl6' in resources_cfg and resources_cfg['only_sl6']:
-        requirement_line += ' (OpSysMajorVer =?= 6) &&'
-    if 'has_ssse3' in resources_cfg and resources_cfg['has_ssse3']:
-        requirement_line += ' (TARGET.has_ssse3) &&'
-    if 'has_avx2' in resources_cfg and resources_cfg['has_avx2']:
-        requirement_line += ' (TARGET.has_avx2) &&'
-    if ('cuda_compute_capability' in resources_cfg and
-            resources_cfg['gpus'] > 0):
-        if resources_cfg['cuda_compute_capability'] is not None:
-            requirement_line += ' (( CUDACapability == {:1.1f} )'.format(
-                            resources_cfg['cuda_compute_capability'][0])
-            for capability in resources_cfg['cuda_compute_capability'][1:]:
-                requirement_line += ' || ( CUDACapability == {:1.1f} )'.format(
-                    capability)
-            requirement_line += ')'
+
+    if ('requirements' in resources_cfg and
+            config['step'] in resources_cfg['requirements']):
+
+        req_config = resources_cfg['requirements'][config['step']]
+        if 'only_sl6' in req_config and req_config['only_sl6']:
+            requirement_line += ' (OpSysMajorVer =?= 6) &&'
+        if 'has_ssse3' in req_config and req_config['has_ssse3']:
+            requirement_line += ' (TARGET.has_ssse3) &&'
+        if 'has_avx2' in req_config and req_config['has_avx2']:
+            requirement_line += ' (TARGET.has_avx2) &&'
+        if ('cuda_compute_capability' in req_config and
+                req_config['gpus'] > 0):
+            if req_config['cuda_compute_capability'] is not None:
+                requirement_line += ' (( CUDACapability == {:1.1f} )'.format(
+                                req_config['cuda_compute_capability'][0])
+                for capability in req_config['cuda_compute_capability'][1:]:
+                    requirement_line += (
+                        ' || ( CUDACapability == {:1.1f} )'.format(capability)
+                    )
+                requirement_line += ')'
 
     if requirement_line != 'requirements =':
         if requirement_line[-3:] == ' &&':
