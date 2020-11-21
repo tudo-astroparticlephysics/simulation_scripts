@@ -42,6 +42,30 @@ def write_onejob_file(config,
         if config['step'] in resources_cfg['cpus'].keys():
             lines.append('request_cpus = {}'.format(
                 resources_cfg['cpus'][config['step']]))
+
+    # CUDA and other requirements
+    requirement_line = 'requirements ='
+    if 'only_sl6' in resources_cfg and resources_cfg['only_sl6']:
+        requirement_line += ' (OpSysMajorVer =?= 6) &&'
+    if 'has_ssse3' in resources_cfg and resources_cfg['has_ssse3']:
+        requirement_line += ' (TARGET.has_ssse3) &&'
+    if 'has_avx2' in resources_cfg and resources_cfg['has_avx2']:
+        requirement_line += ' (TARGET.has_avx2) &&'
+    if ('cuda_compute_capability' in resources_cfg and
+            resources_cfg['gpus'] > 0):
+        if resources_cfg['cuda_compute_capability'] is not None:
+            requirement_line += ' (( CUDACapability == {:1.1f} )'.format(
+                            resources_cfg['cuda_compute_capability'][0])
+            for capability in resources_cfg['cuda_compute_capability'][1:]:
+                requirement_line += ' || ( CUDACapability == {:1.1f} )'.format(
+                    capability)
+            requirement_line += ')'
+
+    if requirement_line != 'requirements =':
+        if requirement_line[-3:] == ' &&':
+            requirement_line = requirement_line[:-3]
+        lines.append(requirement_line)
+
     lines.append('queue')
     onejob_file = os.path.join(scratch_folder, 'OneJob.submit')
     with open(onejob_file, 'w') as open_file:
