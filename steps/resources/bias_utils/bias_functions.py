@@ -65,18 +65,48 @@ class DummyBiasFunction:
             )
 
         df['inner_outer_energy_ratio'] = (
-            (df['layer_energy_00'] + df['layer_energy_01']) /
-            (df['layer_energy_02'] + df['layer_energy_03'] + eps)
+            (df['BiasedMuonWeighter_layer_energy_00'] +
+             df['BiasedMuonWeighter_layer_energy_01']) /
+            (df['BiasedMuonWeighter_layer_energy_02'] + eps)
         )
 
+        df['inner_charge'] = (
+            df['BiasedMuonWeighter_layer_charge_00'] +
+            df['BiasedMuonWeighter_layer_charge_01']
+        )
+
+        df['outer_charge'] = (
+            df['BiasedMuonWeighter_layer_charge_02'] +
+            df['BiasedMuonWeighter_layer_charge_03']
+        )
+
+        df['total_charge'] = df['inner_charge'] + df['outer_charge']
+
         df['inner_outer_charge_ratio'] = (
-            (df['layer_charge_00'] + df['layer_charge_01']) /
-            (df['layer_charge_02'] + df['layer_charge_03'] + eps)
+            df['inner_charge'] / (df['outer_charge'] + eps)
+        )
+
+        df['outer_charge_fraction'] = (
+            df['outer_charge'] / (df['total_charge'] + eps)
+        )
+
+        df['inner_length'] = (
+            df['BiasedMuonWeighter_track_length_00'] +
+            df['BiasedMuonWeighter_track_length_01']
+        )
+
+        df['total_length'] = (
+            df['inner_length'] + df['BiasedMuonWeighter_track_length_02']
         )
 
         df['inner_outer_length_ratio'] = (
-            (df['track_length_00'] + df['track_length_01']) /
-            (df['track_length_02'] + df['track_length_03'] + eps)
+            (df['inner_length']) /
+            (df['BiasedMuonWeighter_track_length_02'] + eps)
+        )
+
+        df['outer_length_fraction'] = (
+            df['BiasedMuonWeighter_track_length_02'] /
+            (df['total_length'] + eps)
         )
 
         return df
