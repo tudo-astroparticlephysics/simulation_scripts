@@ -126,6 +126,7 @@ def main(cfg, run_number, scratch):
         'BeaconLaunches',
         'CorsikaInteractionHeight',
         'CorsikaWeightMap',
+        'BiasedMuonWeighter',
         'EventProperties',
         'GenerationSpec',
         'I3LinearizedMCTree',
