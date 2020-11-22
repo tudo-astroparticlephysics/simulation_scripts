@@ -54,6 +54,7 @@ def bias_corridor_muons(tray, cfg, name='BiasedMuonCorridorWeighter'):
         tray.AddModule(
             BiasedMuonCorridorWeighter, name,
             output_key=output_key,
+            mc_tree_name=mc_tree_name,
             **bias_cfg
         )
 
