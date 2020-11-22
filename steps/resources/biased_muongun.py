@@ -46,6 +46,11 @@ def bias_corridor_muons(tray, cfg, name='BiasedMuonCorridorWeighter'):
         else:
             output_key = name
 
+        if 'mc_tree_name' in bias_cfg:
+            mc_tree_name = bias_cfg.pop('mc_tree_name')
+        else:
+            mc_tree_name = 'I3MCTree_preMuonProp'
+
         tray.AddModule(
             BiasedMuonCorridorWeighter, name,
             output_key=output_key,
