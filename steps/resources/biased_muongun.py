@@ -81,7 +81,7 @@ def bias_muongun_events(tray, cfg, name='BiasedMuonWeighter'):
     """
     if 'ApplyBiasedMuonGun' in cfg and cfg['ApplyBiasedMuonGun']:
 
-        from egenerator.addons.muon_bias import BiasedMuonWeighter
+        from egenerator.addons.muon_bias.weighter import BiasedMuonWeighter
         from .bias_utils import bias_functions
 
         bias_cfg = deepcopy(cfg['BiasedMuonGunConfig'])
