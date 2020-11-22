@@ -63,6 +63,9 @@ def main(cfg, run_number, scratch):
         additional_keep_keys = cfg['additional_keep_keys'] + muongun_keys
     else:
         additional_keep_keys = muongun_keys
+    additional_keep_keys += [
+        'BiasedMuonWeighter', 'BiasedMuonCorridorWeighter',
+    ]
 
     tray = I3Tray()
     """The main L1 script"""
@@ -141,8 +144,6 @@ def main(cfg, run_number, scratch):
         'BeaconLaunches',
         'CorsikaInteractionHeight',
         'CorsikaWeightMap',
-        'BiasedMuonWeighter',
-        'BiasedMuonCorridorWeighter',
         'EventProperties',
         'GenerationSpec',
         'I3LinearizedMCTree',
