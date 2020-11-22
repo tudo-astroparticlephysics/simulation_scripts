@@ -8,6 +8,49 @@ from ic3_labels.labels.utils import detector
 from ic3_labels.labels.utils import muon as mu_utils
 
 
+def bias_corridor_muons(tray, cfg, name='BiasedMuonCorridorWeighter'):
+    """Bias Corridor MuonGun Events.
+
+    Config setup:
+
+        ApplyBiasedMuonCorridorWeighter: True
+        BiasedMuonCorridorWeighterConfig: {
+            sigmoid_scaling: , [optional]
+            sigmoid_offset: , [optional]
+            lower_probability_bound: , [optional]
+            save_debug_info: , [optional]
+            bad_doms_key: , [optional]
+            track_step_size: , [optional]
+            keep_all_events: , [optional]
+        }
+
+    Parameters
+    ----------
+    tray : I3Tray
+        The I3Tray to which the modules should be added.
+    cfg : dict
+        A dictionary with all configuration settings.
+    name : str, optional
+        Name of the tray segment.
+    """
+    if ('ApplyBiasedMuonCorridorWeighter' in cfg and
+            cfg['ApplyBiasedMuonCorridorWeighter']):
+
+        from egenerator.addons.muon_bias import BiasedMuonCorridorWeighter
+        bias_cfg = deepcopy(cfg['BiasedMuonCorridorWeighterConfig'])
+
+        if 'output_key' in bias_cfg:
+            output_key = bias_cfg.pop('output_key')
+        else:
+            output_key = name
+
+        tray.AddModule(
+            BiasedMuonCorridorWeighter, name,
+            output_key=output_key,
+            **bias_cfg
+        )
+
+
 def bias_muongun_events(tray, cfg, name='BiasedMuonWeighter'):
     """Bias MuonGun Events.
 
