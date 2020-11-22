@@ -36,7 +36,9 @@ def bias_corridor_muons(tray, cfg, name='BiasedMuonCorridorWeighter'):
     if ('ApplyBiasedMuonCorridorWeighter' in cfg and
             cfg['ApplyBiasedMuonCorridorWeighter']):
 
-        from egenerator.addons.muon_bias import BiasedMuonCorridorWeighter
+        from egenerator.addons.muon_bias.corridor_weighter import (
+            BiasedMuonCorridorWeighter
+        )
         bias_cfg = deepcopy(cfg['BiasedMuonCorridorWeighterConfig'])
 
         if 'output_key' in bias_cfg:
