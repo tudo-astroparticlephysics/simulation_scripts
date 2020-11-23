@@ -16,6 +16,7 @@ from resources.biased_muongun import MuonGeometryFilter
 from resources.biased_muongun import MuonLossProfileFilter
 from resources.biased_muongun import bias_muongun_events
 from resources.biased_muongun import bias_corridor_muons
+from resources.biased_muongun import bias_mesc_hotspot_muons
 
 
 class DummyMCTreeRenaming(icetray.I3ConditionalModule):
@@ -120,6 +121,7 @@ def main(cfg, run_number, scratch):
     # add corridor MuonGun bias module:
     # Events can be biased while keeping ability to properly weight events.
     # This is not the case for the filter module above.
+    bias_mesc_hotspot_muons(tray, cfg)
     bias_corridor_muons(tray, cfg)
 
     tray.AddModule(DAQFrameMultiplier, 'PreDAQFrameMultiplier',

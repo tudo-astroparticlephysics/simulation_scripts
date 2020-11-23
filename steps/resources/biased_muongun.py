@@ -8,6 +8,55 @@ from ic3_labels.labels.utils import detector
 from ic3_labels.labels.utils import muon as mu_utils
 
 
+def bias_mesc_hotspot_muons(tray, cfg, name='BiasedMESCHotspotWeighter'):
+    """Bias Corridor MuonGun Events.
+
+    Config setup:
+
+        ApplyBiasedMESCHotspotWeighter: True
+        BiasedMESCHotspotWeighterConfig: {
+            hotspots: , [optional]
+            sigmoid_scaling: , [optional]
+            sigmoid_offset: , [optional]
+            lower_probability_bound: , [optional]
+            keep_all_events: , [optional]
+        }
+
+    Parameters
+    ----------
+    tray : I3Tray
+        The I3Tray to which the modules should be added.
+    cfg : dict
+        A dictionary with all configuration settings.
+    name : str, optional
+        Name of the tray segment.
+    """
+    if ('ApplyBiasedMESCHotspotWeighter' in cfg and
+            cfg['ApplyBiasedMESCHotspotWeighter']):
+
+        from egenerator.addons.muon_bias.mesc_hotspot import (
+            BiasedMESCHotspotWeighter
+        )
+        bias_cfg = deepcopy(cfg['BiasedMESCHotspotWeighterConfig'])
+
+        if 'output_key' in bias_cfg:
+            output_key = bias_cfg.pop('output_key')
+        else:
+            output_key = name
+
+        if 'mc_tree_name' in bias_cfg:
+            mc_tree_name = bias_cfg.pop('mc_tree_name')
+        else:
+            mc_tree_name = 'I3MCTree_preMuonProp'
+
+        tray.AddModule(
+            BiasedMESCHotspotWeighter, name,
+            output_key=output_key,
+            mc_tree_name=mc_tree_name,
+            **bias_cfg
+        )
+
+
 def bias_corridor_muons(tray, cfg, name='BiasedMuonCorridorWeighter'):
     """Bias Corridor MuonGun Events.
 
@@ -18,7 +67,6 @@ def bias_corridor_muons(tray, cfg, name='BiasedMuonCorridorWeighter'):
             sigmoid_scaling: , [optional]
             sigmoid_offset: , [optional]
             lower_probability_bound: , [optional]
-            save_debug_info: , [optional]
             bad_doms_key: , [optional]
             track_step_size: , [optional]
             keep_all_events: , [optional]
