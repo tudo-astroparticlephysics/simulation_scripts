@@ -5,6 +5,7 @@
 #--METAPROJECT combo/V01-00-00
 import click
 import yaml
+import time
 
 import numpy as np
 
@@ -16,6 +17,8 @@ from icecube import sim_services, MuonGun
 
 from utils import create_random_services, get_run_folder
 from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
+
+from resources.nugen_select_split_module import NuGenSelectSplitModule
 
 
 @click.command()
@@ -54,8 +57,10 @@ def main(cfg, run_number, scratch):
 #         click.echo('CrossSectionsPath: {}'.format(cfg['cross_sections_path']))
 
     tray = I3Tray()
+    
+    start_time = time.time()
 
-    random_services, _ = create_random_services(
+    random_services, int_run_number = create_random_services(
         dataset_number=cfg['dataset_number'],
         run_number=cfg['run_number'],
         seed=cfg['seed'],
@@ -98,6 +103,17 @@ def main(cfg, run_number, scratch):
         # We need to add a key named 'I3MCTree', since snowstorm expects this
         # It will propagate the particles for us.
         tray.AddModule('Rename', keys=['I3MCTree_preMuonProp', 'I3MCTree'])
+        
+    # Selection and split module   
+    if cfg['select_split_module']:
+        tray.AddModule(
+            NuGenSelectSplitModule, 
+            'NuGenSelectAndSplitMuonTrack',
+            percentage_energy_loss=cfg['percentage_energy_loss'], 
+            NewPsi=cfg['new_psi'], 
+            MinDist=cfg['min_dist'],
+            RandomSeed=int_run_number,
+            beta=cfg['beta'])
 
     if cfg['distance_splits'] is not None:
         import dom_distance_cut as dom_cut
@@ -135,6 +151,10 @@ def main(cfg, run_number, scratch):
     click.echo('Scratch: {}'.format(scratch))
     tray.AddModule("TrashCan", "the can")
     tray.Execute()
+    
+    end_time = time.time()
+    print('needs {}s for {} events'.format(np.round(end_time - start_time, 1), cfg['n_events_per_run']))
+    
     tray.Finish()
 
 
