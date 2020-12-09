@@ -35,7 +35,7 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
         self.AddParameter('beta', 
                         'int to scale sampling angle',
                           1)
-        self.AddParameter('check_selection'
+        self.AddParameter('check_selection',
                          'bool to write down all events and only check selection',
                          False)
 
