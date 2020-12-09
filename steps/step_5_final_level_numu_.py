@@ -59,7 +59,7 @@ def main(cfg, run_number, scratch):
                    FilenameList=[cfg['gcd_pass2'], infile])
 
     # Default options
-    default_options = {
+    options = {
         'photonicsdir': '/cvmfs/icecube.opensciencegrid.org/data/photon-tables/SPICEMie/',
         'photonicsdriverdir': '/cvmfs/icecube.opensciencegrid.org/data/photon-tables/SPICEMie/driverfiles',
         'photonicsdriverfile': 'mu_photorec.list',
@@ -73,7 +73,8 @@ def main(cfg, run_number, scratch):
         'do_postL5': False,
         'is_MC': True,
     }
-    options = default_options.update(cfg['DiffuseNuMuFinalLevelSettings'])
+    if 'DiffuseNuMuFinalLevelSettings' in cfg:
+        options.update(cfg['DiffuseNuMuFinalLevelSettings'])
 
     # L3 processing
     tray.AddSegment(MuonL3,
