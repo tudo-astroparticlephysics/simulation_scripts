@@ -92,6 +92,7 @@ nugen_snowstorm:
     2: step_2_snowstorm_detector_simulation
     3: step_3_pass2_L1_py3_v4_1_0
     4: step_4_pass2_L2_py3_v4_1_0
+    5: step_5_final_level_numu
 
 muon_resimulation:
   default_config: configs/default_muon_resimulation.yaml
