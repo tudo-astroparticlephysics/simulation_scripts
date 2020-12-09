@@ -3,7 +3,7 @@ from I3Tray import *
 import numpy as np
 from scipy.spatial import ConvexHull
 
-from resources.nugen_muon_split_functions import build_tree_with_muon_split_nugen, selection_nugen
+from resources.nugen_muon_split_functions import insert_deflection_angle, selection
 
 class NuGenSelectSplitModule(icetray.I3ConditionalModule):
 
@@ -35,6 +35,9 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
         self.AddParameter('beta', 
                         'int to scale sampling angle',
                           1)
+        self.AddParameter('check_selection'
+                         'bool to write down all events and only check selection',
+                         False)
 
     def Configure(self):
         """Set 
@@ -44,7 +47,8 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
         self._new_psi = self.GetParameter('NewPsi')
         # self._random_seed = self.GetParameter('RandomSeed')
         self._random_service = np.random.RandomState(self.GetParameter('RandomSeed'))
-        self._beta = self.GetParamter('beta')
+        self._beta = self.GetParameter('beta')
+        self._check_selection = self.GetParameter('check_selection')
 
     def Geometry(self, frame):
         """Summary
@@ -85,11 +89,11 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
             The current Q-frame.
         """
         
-        if selection_nugen(self, frame) == False:
-            return False
+        # if selection_nugen(self, frame) == False:
+            # return False
         
-        if build_tree_with_muon_split_nugen(frame, self._new_psi, self._random_service, self._beta) == False:
-            return False
+        # if build_tree_with_muon_split_nugen(frame, self._new_psi, self._random_service, self._beta) == False:
+            # return False
 
         self.PushFrame(frame)
 
@@ -101,4 +105,19 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
         frame : I3Frame
             The current P-Frame.
         """
+        
+        if selection(self, frame, self._check_selection) == False:
+            return False
+        
+        insert_deflection_angle(frame, self._new_psi, self._random_service, self._beta)
+        
+        cut_millipede_out_of_detector(frame)
+        
+        
+        # if selection_nugen(self, frame) == False:
+            # return False
+        
+        # if build_tree_with_muon_split_nugen(frame, self._new_psi, self._random_service, self._beta) == False:
+            # return False
+        
         self.PushFrame(frame)

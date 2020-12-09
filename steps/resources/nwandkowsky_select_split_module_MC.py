@@ -3,7 +3,7 @@ from I3Tray import *
 import numpy as np
 from scipy.spatial import ConvexHull
 
-from resources.nwandkowsky_muon_split_functions import build_tree_with_muon_split, selection_MC
+from resources.nwandkowsky_muon_split_functions import build_tree_with_muon_split, selection_MC, cut_millipede_out_of_detector
 
 class SelectSplitModuleMC(icetray.I3ConditionalModule):
 
@@ -94,9 +94,10 @@ class SelectSplitModuleMC(icetray.I3ConditionalModule):
         """
         if selection_MC(self, frame) == False:
             return False
+                
+        if cut_millipede_out_of_detector(frame) == False:
+            return False
         
-        # build_tree_with_muon_split(frame, self._new_psi, self._random_service)
-        
-        # cut_millipede_out_of_detector()
+        build_tree_with_muon_split(frame, self._new_psi, self._random_service)
         
         self.PushFrame(frame)

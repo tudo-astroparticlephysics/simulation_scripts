@@ -72,7 +72,7 @@ def build_tree_with_muon_split(frame, new_psi, random_service):
             i3map = frame['I3MapSplit']
             # Save opening angle and new direction
             i3map['delta_psi_in_degree'] = new_psi
-            i3map['incoming_muon_energy'] = muon.energy
+            # i3map['incoming_muon_energy'] = muon.energy
             if d.type_string == 'NuclInt':    
                 i3map['max_E_loss_type'] = -2000001004
             elif d.type_string == 'Brems':
@@ -88,7 +88,7 @@ def build_tree_with_muon_split(frame, new_psi, random_service):
             i3map['post_length'] = (tree[max_index].pos - tree[-1].pos).magnitude
 
             # Insert pos key to frame
-            frame.Put('I3PosOfMaxEnergyLoss', dataclasses.I3Position(d.pos))
+            # frame.Put('I3PosOfMaxEnergyLoss', dataclasses.I3Position(d.pos))
 
         if found_max == True:
             # Set new direction
@@ -180,7 +180,7 @@ def get_max_energy_loss_id_interaction(tree, muon_id, percentage_energy_loss, mi
 
 
 def get_max_energy_loss(tree, muon_id):
-        '''Find maximum energy loss in the tree.
+    '''Find maximum energy loss in the tree.
 
     Paramters
     ---------
@@ -196,21 +196,35 @@ def get_max_energy_loss(tree, muon_id):
     '''
     # Get muon track               
     min_id = 1
-    try:
-        while tree[min_id+muon_id].minor_id < tree[muon_id].minor_id:
-            min_id += 1
-        if min_id == 1:
+#    try:
+    tree_len = len(tree)
+    # Check if muon is the last particle in tree
+    if muon_id+1 >= tree_len:
+        return [-1, 0, 0]
+    while tree[min_id+muon_id].minor_id < tree[muon_id].minor_id:
+        min_id += 1
+        if min_id+muon_id >= tree_len:
+            break
+            
+    if min_id == 1:
             # There is no muon track
-            return [0, 0, 0] 
-        muon_track = tree[muon_id+1:min_id+muon_id]   
-    except:
-        return [0, 0, 0]
+        print('There is no muon track')
+        return [-1, 0, 0] 
+    
+    muon_track = tree[muon_id+1:min_id+muon_id]   
+    
+#    except:
+        # return [-1, 0, 0]
+    
     distances = [distance_to_icecube_hull(d.pos) if d.length==0 else 0 for d in muon_track]               
                    
     energies = [d.energy if distances[l]<0 else 0 for d,l in zip(muon_track, range(len(distances)))]
     max_E_loss = max(energies)
     max_index_track = energies.index(max_E_loss)               
     max_index = max_index_track + muon_id + 1 # Necessary to get access via tree               
+    # If max_e_loss = 0 --> muon was not going through the detector
+    hull_distance_of_max_e_loss = distances[max_index_track]
+    return [max_index, max_E_loss, hull_distance_of_max_e_loss]
     
 '''    
     incoming_muon_energy = tree[muon_id].energy
@@ -235,7 +249,7 @@ def get_max_energy_loss(tree, muon_id):
     max_index = max_index_track + muon_id + 1 # Necessary to get access via tree
 '''    
     
-    '''Long loop instead of list comprehension
+'''Long loop instead of list comprehension
     # Create energy array with two energies for the first two particles (unkown and muon)
     energies = [0, 0]
     distances = [0, 0]
@@ -248,14 +262,7 @@ def get_max_energy_loss(tree, muon_id):
             energies.append(d.energy)
         else:
             energies.append(0)
-    '''
-    
-    
-       
-    # If max_e_loss = 0 --> muon was not going through the detector
-    hull_distance_of_max_e_loss = distances[max_index_track] 
-    return [max_index, max_E_loss, hull_distance_of_max_e_loss]
-
+'''
 
 
 
@@ -280,14 +287,21 @@ def selection(self, frame):
 
     # Get muon
     muon_id = 0
-    try:
-        while ((tree[muon_id].type_string != 'MuMinus') & (tree[muon_id].type_string != 'MuPlus')):
-            muon_id += 1
-            muon = tree[muon_id]
-    except:
+#    try:
+    tree_len = len(tree)
+    while ((tree[muon_id].type_string != 'MuMinus') & (tree[muon_id].type_string != 'MuPlus')):
+        muon_id += 1
+        # muon = tree[muon_id]
+        if muon_id >= tree_len:
+            return False
+    muon = tree[muon_id]
+        
+#    except:
         # Muon not in tree
         # selection = 1
-        return False
+    # if (muon.type_string != 'MuMinus') & (muon.type_string != 'MuPlus'):
+        # print('No muon found in tree (selection)-----ERROR')
+        # return False
         
       
     # Check if particle moves through detector
@@ -302,7 +316,7 @@ def selection(self, frame):
     
     # Check if muon is going through detector --> about 60% of the events are rejected
     if id_E_dist[1] == 0:
-        print('------you should never see this print!------')
+        # print('------you should never see this print!------')
         selection = 1
         # return False
     
@@ -321,7 +335,7 @@ def selection(self, frame):
         
     
     # Save data in tree 
-    frame.Put('I3PosOfMaxEnergyLoss', dataclasses.I3Position(d.pos))
+    frame.Put('I3PosOfMaxEnergyLoss', dataclasses.I3Position(tree[id_E_dist[0]].pos))
     frame.Put('I3MapSplit', dataclasses.I3MapStringDouble())
     frame['I3MapSplit']['muon_id'] = muon_id
     frame['I3MapSplit']['incoming_muon_energy'] = muon.energy
@@ -351,16 +365,23 @@ def selection_MC(self, frame):
 
     # Get muon
     muon_id = 0
-    try:
-        while ((tree[muon_id].type_string != 'MuMinus') & (tree[muon_id].type_string != 'MuPlus')):
-            muon_id += 1
-            muon = tree[muon_id]
-    except:
+    tree_len = len(tree)
+#     try:
+    while ((tree[muon_id].type_string != 'MuMinus') & (tree[muon_id].type_string != 'MuPlus')):
+        muon_id += 1
+        if muon_id >= tree_len:
+            return False
+    
+    
+    muon = tree[muon_id]
+#     except:
         # Muon not in tree
-        return False
+    # if (muon.type_string != 'MuMinus') & (muon.type_string != 'MuPlus'):
+        # print('No muon found in tree (selection)-----ERROR')
+        # return False
         
       
-    # Check if particle moves through detector
+    # Check if particle moves through detector, only checks the direction
     if particle_is_inside(muon, self._convex_hull) != True:
         return False
 
@@ -369,9 +390,9 @@ def selection_MC(self, frame):
 
     id_E_dist = get_max_energy_loss(tree, muon_id)
     
-    # Check if muon is going through detector --> about 60% of the events are rejected
+    # Check if muon is going through detector --> about 60% of the events are rejected, checks if particle looses energy in detector
     if id_E_dist[1] == 0:
-        print('------you should never see this print!------')
+        # print('------you should never see this print!------')
         return False
     
     # Check for minimum energy loss: 30% loss -> 3% left, 50% loss -> 1.3% left
@@ -385,7 +406,7 @@ def selection_MC(self, frame):
         return False
     
     # Save data in tree 
-    frame.Put('I3PosOfMaxEnergyLoss', dataclasses.I3Position(d.pos))
+    frame.Put('I3PosOfMaxEnergyLoss', dataclasses.I3Position(tree[id_E_dist[0]].pos))
     frame.Put('I3MapSplit', dataclasses.I3MapStringDouble())
     frame['I3MapSplit']['muon_id'] = muon_id
     frame['I3MapSplit']['incoming_muon_energy'] = muon.energy
@@ -398,6 +419,18 @@ def selection_MC(self, frame):
     return True
     
     
-def cut_millipede_out_of_detector():
+def cut_millipede_out_of_detector(frame):
     '''Add new key to frame with list of energy losses only inside the detector.
     '''
+    if 'SplineMPE_MillipedeHighEnergyMIE' not in frame.keys():
+        print('No millipede in frame')
+        return False
+    millipede = frame['SplineMPE_MillipedeHighEnergyMIE']
+    millipede_in_detector = [d for d in millipede if distance_to_icecube_hull(d.pos) < 0]
+    if len(millipede_in_detector) == 0:
+        p = dataclasses.I3Particle()
+        p.energy = 0
+        millipede_in_detector.append(p)
+    frame.Put('SplineMPE_MillipedeInsideDetector', dataclasses.I3VectorI3Particle(millipede_in_detector))
+
+
