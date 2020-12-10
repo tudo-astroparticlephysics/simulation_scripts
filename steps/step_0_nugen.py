@@ -114,7 +114,7 @@ def main(cfg, run_number, scratch):
         tray.AddModule(
             BaseSimulationBias,
             'BaseSimulationBias',
-            random_service=random_services[3],
+            random_service=random_services[2],
             **cfg['BaseSimulationBiasSettings']
         )
 
