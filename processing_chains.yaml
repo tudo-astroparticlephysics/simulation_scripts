@@ -66,6 +66,8 @@ nugen_2012_pass2_distance_split:
 nugen_snowstorm:
   default_config: configs/default_nugen_snowstorm.yaml
   job_template: job_templates/py3-v4.1.0.sh
+  job_templates:
+    5: job_templates/py3-v4.0.1.sh
   steps:
     0: step_0_nugen_py3_v4_1_0
     1: step_1_snowstorm_propagation
