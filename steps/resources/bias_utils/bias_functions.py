@@ -124,8 +124,42 @@ class UpgoingMuonStochasticity(BaseBiasFunction):
             mctree_name=self.mctree_name,
         )
 
+        if muon is None:
+
+            # if muon did not hit the convex hull, or if no muon exists,
+            # it will be None. In this case we set default values
+            found_muon = False
+            cos_zen = np.cos(primaries[0].dir.zenith)
+            track_length = 0.
+            max_rel_loss = 0.
+
+        else:
+            found_muon = True
+            cos_zen = np.cos(muon.dir.zenith)
+            track_length = mu_utils.get_muon_track_length_inside(
+                muon, detector.icecube_hull)
+
+            # get muon energy losses
+            losses = [
+                loss for loss in mc_tree.get_daughters(muon) if
+                not mu_utils.is_muon(loss)
+            ]
+
+            # compute relative energy losses
+            rel_losses = []
+            for loss in losses:
+
+                # get energy of muon prior to energy loss
+                distance = (muon.pos - loss.pos).magnitude
+                energy = mu_utils.get_muon_energy_at_distance(
+                    frame, muon, distance - 1)
+                rel_losses.append(loss.energy / energy)
+            if rel_losses:
+                max_rel_loss = np.max(rel_losses)
+            else:
+                max_rel_loss = 0.
+
         # bias based on zenith
-        cos_zen = np.cos(muon.dir.zenith)
         zenith_keep_prob = self.sigmoid(
             -cos_zen,
             s=self.cos_zenith_sigmoid_scale,
@@ -133,33 +167,11 @@ class UpgoingMuonStochasticity(BaseBiasFunction):
         )
 
         # bias based on in detector track length
-        track_length = mu_utils.get_muon_track_length_inside(
-            muon, detector.icecube_hull)
         track_length_prob = self.sigmoid(
             track_length,
             s=self.track_length_sigmoid_scale,
             b=self.track_length_sigmoid_bias,
         )
-
-        # get muon energy losses
-        losses = [
-            loss for loss in mc_tree.get_daughters(muon) if
-            not mu_utils.is_muon(loss)
-        ]
-
-        # compute relative energy losses
-        rel_losses = []
-        for loss in losses:
-
-            # get energy of muon prior to energy loss
-            distance = (muon.pos - loss.pos).magnitude
-            energy = mu_utils.get_muon_energy_at_distance(
-                frame, muon, distance - 1)
-            rel_losses.append(loss.energy / energy)
-        if rel_losses:
-            max_rel_loss = np.max(rel_losses)
-        else:
-            max_rel_loss = 0.
 
         # bias based on maximum relative energy loss
         max_rel_loss_prob = self.sigmoid(
@@ -169,6 +181,7 @@ class UpgoingMuonStochasticity(BaseBiasFunction):
         )
 
         bias_info = {
+            'found_muon': found_muon,
             'cos_zenith': cos_zen,
             'track_length_in_detector': track_length,
             'max_relative_energy_loss': max_rel_loss,
