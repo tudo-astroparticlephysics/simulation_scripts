@@ -153,6 +153,13 @@ class UpgoingMuonStochasticity(BaseBiasFunction):
                 distance = (muon.pos - loss.pos).magnitude
                 energy = mu_utils.get_muon_energy_at_distance(
                     frame, muon, distance - 1)
+
+                # If the loss is at the muon decay point, the returned energy
+                # might be NaN, assert this and set default value of 1 GeV
+                if not np.isfinite(energy):
+                    assert np.abs(distance - muon.length) < 1, (energy, muon)
+                    energy = 1
+
                 rel_losses.append(loss.energy / energy)
             if rel_losses:
                 max_rel_loss = np.max(rel_losses)
