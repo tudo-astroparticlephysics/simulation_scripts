@@ -52,7 +52,7 @@ class BaseSimulationBias(icetray.I3ConditionalModule):
             'lower_probability_bound',
             'A lower bound of this value is applied to the computed keep '
             'probability.',
-            1e-6)
+            1e-4)
         self.AddParameter(
             'keep_all_events',
             'If True, all events are kept and the bias results '

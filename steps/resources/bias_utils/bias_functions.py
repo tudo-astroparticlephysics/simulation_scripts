@@ -1,5 +1,7 @@
 import numpy as np
 
+from icecube.icetray.i3logging import log_error, log_warn
+
 from ic3_labels.labels.utils import detector
 from ic3_labels.labels.utils import muon as mu_utils
 
@@ -161,8 +163,16 @@ class UpgoingMuonStochasticity(BaseBiasFunction):
                     assert np.abs(distance - muon.length) < 1, (energy, muon)
                     energy = 1
 
+                rel_loss = loss.energy / energy
+                if rel_loss > 1. or rel_loss < 0.:
+                    msg = 'Found out of bounds rel_loss: {:3.3f}. '.format(
+                        rel_loss)
+                    msg += 'Clipping value to [0, 1]'
+                    log_warn(msg)
+                    rel_loss = np.clip(rel_loss, 0., 1.)
+
                 loss_energies.append(loss.energy)
-                rel_losses.append(loss.energy / energy)
+                rel_losses.append(rel_loss)
             if rel_losses:
                 max_rel_loss = rel_losses[np.argmax(loss_energies)]
             else:
