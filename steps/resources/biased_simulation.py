@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy as np
+import timeit
 
 from I3Tray import I3Tray
 from icecube import icetray, dataclasses
