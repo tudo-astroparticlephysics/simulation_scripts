@@ -53,13 +53,17 @@ def main(cfg, run_number, scratch):
 
     tray = I3Tray()
 
+    if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:
+        n_services = 3
+    else:
+        n_services = 2
     random_services, _ = create_random_services(
         dataset_number=cfg['dataset_number'],
         run_number=cfg['run_number'],
         seed=cfg['seed'],
-        n_services=2)
+        n_services=n_services)
 
-    random_service, random_service_prop = random_services
+    random_service, random_service_prop = random_services[:2]
     tray.context['I3RandomService'] = random_service
 
     tray.AddModule("I3InfiniteSource",
@@ -106,6 +110,7 @@ def main(cfg, run_number, scratch):
         tray.AddModule(
             BaseSimulationBias,
             'BaseSimulationBias',
+            random_service=random_services[3],
             **cfg['BaseSimulationBiasSettings']
         )
 
