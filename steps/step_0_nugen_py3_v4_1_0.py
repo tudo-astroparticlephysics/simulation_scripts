@@ -47,9 +47,10 @@ def main(cfg, run_number, scratch):
         click.echo('PrimaryTypeRatio: {}'.format(cfg['primary_type_ratio']))
     else:
         click.echo('NeutrinoFlavor: {}'.format(cfg['neutrino_flavor']))
-    click.echo('CrossSections: {}'.format(cfg['cross_sections']))
-    if not cfg['cross_sections_path'] is None:
-        click.echo('CrossSectionsPath: {}'.format(cfg['cross_sections_path']))
+    if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:
+        click.echo('Apply simulation bias: True')
+    else:
+        click.echo('Apply simulation bias: True')
 
     tray = I3Tray()
 
