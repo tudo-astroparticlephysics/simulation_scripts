@@ -114,7 +114,7 @@ class BaseSimulationBias(icetray.I3ConditionalModule):
         assert keep_prob > 0. and keep_prob <= 1., keep_prob
         keep_prob = np.clip(keep_prob, self.lower_probability_bound, 1.0)
 
-        passed = self.random_service.uniform() <= keep_prob
+        passed = self.random_service.uniform(0., 1.) <= keep_prob
 
         bias_weights = dataclasses.I3MapStringDouble({
             'keep_prob': keep_prob,
