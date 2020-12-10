@@ -78,7 +78,6 @@ class BaseSimulationBias(icetray.I3ConditionalModule):
     def Configure(self):
         """Configures MuonLossProfileFilter.
         """
-        self.mctree_name = self.GetParameter('mctree_name')
         self.bias_function = self.GetParameter('bias_function')
         self.bias_function_kwargs = self.GetParameter('bias_function_kwargs')
         self.lower_probability_bound = self.GetParameter(
