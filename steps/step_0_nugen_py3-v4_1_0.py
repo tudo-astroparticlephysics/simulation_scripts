@@ -12,6 +12,7 @@ from icecube import icetray, dataclasses
 from icecube import sim_services, MuonGun
 
 from utils import create_random_services, get_run_folder
+from resources.biased_simulation import BaseSimulationBias
 from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
 
 
@@ -95,6 +96,14 @@ def main(cfg, run_number, scratch):
         # We need to add a key named 'I3MCTree', since snowstorm expects this
         # It will propagate the particles for us.
         tray.AddModule('Rename', keys=['I3MCTree_preMuonProp', 'I3MCTree'])
+
+    # Bias simulation if desired
+    if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:
+        tray.AddModule(
+            BaseSimulationBias,
+            'BaseSimulationBias',
+            **cfg['BaseSimulationBiasSettings']
+        )
 
     if cfg['distance_splits'] is not None:
         import dom_distance_cut as dom_cut

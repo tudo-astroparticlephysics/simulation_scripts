@@ -12,6 +12,7 @@ from icecube import icetray, dataclasses
 from icecube import sim_services, MuonGun
 
 from utils import create_random_services, get_run_folder
+from resources.biased_simulation import BaseSimulationBias
 from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
 
 
@@ -99,6 +100,14 @@ def main(cfg, run_number, scratch):
         "PropagateMuons",
         RandomService=random_service_prop,
         **cfg['muon_propagation_config'])
+
+    # Bias simulation if desired
+    if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:
+        tray.AddModule(
+            BaseSimulationBias,
+            'BaseSimulationBias',
+            **cfg['BaseSimulationBiasSettings']
+        )
 
     if cfg['distance_splits'] is not None:
         import dom_distance_cut as dom_cut

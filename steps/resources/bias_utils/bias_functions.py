@@ -1,15 +1,15 @@
 import numpy as np
 
+from ic3_labels.labels.utils import detector
+from ic3_labels.labels.utils import muon as mu_utils
 
-from .bdt.bdt_wrapper import XGBoostModelWrapper
 
+class BaseBiasFunction:
 
-class DummyBiasFunction:
-
-    """Dummy bias function class
+    """Base bias function class
     """
 
-    def __init__(self, settings):
+    def __init__(self, **settings):
         """Summary
 
         Parameters
@@ -26,109 +26,72 @@ class DummyBiasFunction:
         ----------
         bias_data : dict
             Dictionary of bias input data.
+            Contents may include:
+            {
+                'frame': the current I3Frame,
+            }
 
         Returns
         -------
         float
             Keep probability: probability with which this event should be kept.
+        dict
+            A dictionary with additional bias information.
         """
-        return 1.
+        return 1., {}
 
-    def add_additional_features(self, df):
-        """Add additional features to the bias data dictionary.
+    def sigmoid(self, x, s=1., b=0.):
+        """Compute Sigmoid Function
 
         Parameters
         ----------
-        df : dict
-            The bias data dictionary.
+        x : array_like
+            The input data.
+        s : float, optional
+            The scale parameter of the sigmoid.
+        b : float, optional
+            The offset parameter of the sigmoid.
 
         Returns
         -------
-        dict
-            The updated bias data dictionary
+        array_like
+            Sigmoid results
         """
-        eps = 1e-8
-        energy_key = 'layer_energy_{:02d}'
-        charge_key = 'layer_charge_{:02d}'
-        for i in range(4):
-            df['entry_x_{:02d}'.format(i)] = df['entry_x'][i]
-            df['entry_y_{:02d}'.format(i)] = df['entry_y'][i]
-            df['entry_z_{:02d}'.format(i)] = df['entry_z'][i]
-            df['exit_z_{:02d}'.format(i)] = df['exit_z'][i]
-            df['track_length_{:02d}'.format(i)] = df['track_lengths'][i]
-            df['layer_energy_{:02d}'.format(i)] = df['layer_energies'][i]
-            df['layer_charge_{:02d}'.format(i)] = float(np.sum(
-                df['layer_dom_charges'][i]))
-
-            df['charge_energy_ratio_{:02d}'.format(i)] = (
-                df[charge_key.format(i)] / (df[energy_key.format(i)] + eps)
-            )
-
-        df['inner_outer_energy_ratio'] = (
-            (df['layer_energy_00'] + df['layer_energy_01']) /
-            (df['layer_energy_02'] + eps)
-        )
-
-        df['inner_charge'] = df['layer_charge_00'] + df['layer_charge_01']
-        df['outer_charge'] = df['layer_charge_02'] + df['layer_charge_03']
-        df['total_charge'] = df['inner_charge'] + df['outer_charge']
-
-        df['inner_outer_charge_ratio'] = (
-            df['inner_charge'] / (df['outer_charge'] + eps)
-        )
-
-        df['outer_charge_fraction'] = (
-            df['outer_charge'] / (df['total_charge'] + eps)
-        )
-
-        df['inner_length'] = df['track_length_00'] + df['track_length_01']
-        df['total_length'] = df['inner_length'] + df['track_length_02']
-
-        df['inner_outer_length_ratio'] = (
-            (df['inner_length']) /
-            (df['track_length_02'] + eps)
-        )
-
-        df['outer_length_fraction'] = (
-            df['track_length_02'] /
-            (df['total_length'] + eps)
-        )
-
-        return df
+        xt = (x - b) / s
+        return 1./(1 + np.exp(-xt))
 
 
-class BDTBiasFunction(DummyBiasFunction):
+class UpgoingMuonStochasticity(BaseBiasFunction):
 
-    """BDT bias function class
+    """Biases simulation towards upgoing muons with large relative
+    energy losses.
     """
 
-    def __init__(self, model_path, probability_bound=1e-5, score_index=1):
+    def __init__(
+            self,
+            cos_zenith_sigmoid_scale=0.03,
+            cos_zenith_sigmoid_bias=-0.2,
+            track_length_sigmoid_scale=15,
+            track_length_sigmoid_bias=120,
+            muon_loss_sigmoid_scale=.03,
+            muon_loss_sigmoid_bias=0.25,
+            mctree_name='I3MCTree',
+            ):
         """Summary
 
         Parameters
         ----------
-        model_path : str
-            The file path to the BDT model.
-        probability_bound : float, optional
-            The lower bound on the keep probability. The output of the
-            BDT will be clipped to a minimal value as specified here.
-        score_index : int, optional
-            The index of score values to use from model.predict_proba().
+        mctree_name : str, optional
+            The name of the I3MCTree. The I3MCTree may be before CLSIM, but
+            PROPOSAL needs to have run.
         """
-
-        # create and load model
-        self._model_path = model_path
-        self._score_index = score_index
-        self._probability_bound = probability_bound
-        self._model_wrapper = XGBoostModelWrapper()
-        self._model_wrapper.load_model(self._model_path)
-        self.model = self._model_wrapper.model
-        self.n_features = len(self._model_wrapper.column_description)
-        self.features = []
-        for keys, cols in self._model_wrapper.column_description:
-            assert len(keys) == 1, ('Expected only one key:', keys)
-            assert len(cols) == 1, ('Expected only one column:', cols)
-            self.features.append(cols[0])
+        self.mctree_name = mctree_name
+        self.cos_zenith_sigmoid_scale = cos_zenith_sigmoid_scale
+        self.cos_zenith_sigmoid_bias = cos_zenith_sigmoid_bias
+        self.track_length_sigmoid_scale = track_length_sigmoid_scale
+        self.track_length_sigmoid_bias = track_length_sigmoid_bias
+        self.muon_loss_sigmoid_scale = muon_loss_sigmoid_scale
+        self.muon_loss_sigmoid_bias = muon_loss_sigmoid_bias
 
     def __call__(self, bias_data):
         """Apply Bias Function
@@ -137,6 +100,10 @@ class BDTBiasFunction(DummyBiasFunction):
         ----------
         bias_data : dict
             Dictionary of bias input data.
+            Contents may include:
+            {
+                'frame': the current I3Frame,
+            }
 
         Returns
         -------
@@ -144,29 +111,68 @@ class BDTBiasFunction(DummyBiasFunction):
             Keep probability: probability with which this event should be kept.
         """
 
-        # add additional features
-        bias_data = self.add_additional_features(bias_data)
+        frame = bias_data['frame']
 
-        # collect features for BDT input data
-        input_data = []
-        for feature in self.features:
-            input_data.append(bias_data[feature])
-        input_data = np.expand_dims(np.asarray(input_data), axis=0)
+        # get primary
+        mc_tree = frame[self.mctree_name]
+        primaries = mc_tree.get_primaries()
+        assert len(primaries) == 1, 'Expected only 1 Primary!'
 
-        # apply BDT
-        score = self.model.predict_proba(input_data)[:, self._score_index]
+        # get muon
+        muon = mu_utils.get_muon(
+            frame, primaries[0], detector.icecube_hull,
+            mctree_name=self.mctree_name,
+        )
 
-        assert len(score) == 1, score
-        score = score[0]
+        # bias based on zenith
+        cos_zen = np.cos(muon.dir.zenith)
+        zenith_keep_prob = self.sigmoid(
+            -cos_zen,
+            s=self.cos_zenith_sigmoid_scale,
+            b=self.cos_zenith_sigmoid_bias,
+        )
 
-        # The score is not the same as a probability!
-        # This would only be the case if the training data distribution
-        # and distribution of data it is applied on is exactly the same
-        # and if there is no over-training and so on..
-        # For now, we will ignore thise and use the score directly
-        keep_probability = score
+        # bias based on in detector track length
+        track_length = mu_utils.get_muon_track_length_inside(
+            muon, detector.icecube_hull)
+        track_length_prob = self.sigmoid(
+            track_length,
+            s=self.track_length_sigmoid_scale,
+            b=self.track_length_sigmoid_bias,
+        )
 
-        # make sure the probability is greater zero
-        keep_probability = max(keep_probability, self._probability_bound)
+        # get muon energy losses
+        losses = [
+            loss for loss in mc_tree.get_daughters(muon) if
+            not mu_utils.is_muon(loss)
+        ]
 
-        return keep_probability
+        # compute relative energy losses
+        rel_losses = []
+        for loss in losses:
+
+            # get energy of muon prior to energy loss
+            distance = (muon.pos - loss.pos).magnitude
+            energy = mu_utils.get_muon_energy_at_distance(
+                frame, muon, distance - 1)
+            rel_losses.append(loss.energy / energy)
+        if rel_losses:
+            max_rel_loss = np.max(rel_losses)
+        else:
+            max_rel_loss = 0.
+
+        # bias based on maximum relative energy loss
+        max_rel_loss_prob = self.sigmoid(
+            max_rel_loss,
+            s=self.muon_loss_sigmoid_scale,
+            b=self.muon_loss_sigmoid_bias,
+        )
+
+        bias_info = {
+            'cos_zenith': cos_zen,
+            'track_length_in_detector': track_length,
+            'max_relative_energy_loss': max_rel_loss,
+        }
+
+        keep_prob = zenith_keep_prob * track_length_prob * max_rel_loss_prob
+        return keep_prob, bias_info
