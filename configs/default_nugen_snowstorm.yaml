@@ -74,6 +74,8 @@ zenith_max: 180.
 azimuth_min: 0.
 # End azimuth
 azimuth_max: 360.
+# Leave this empty if using 'NuTypes' and 'PrimaryTypeRatio'
+neutrino_flavor: 'NuMu'
 
 additional_GenerateNeutrinos_settings:
     SimMode: Full
@@ -93,7 +95,7 @@ additional_GenerateNeutrinos_settings:
     NuTypes: ["NuMu","NuMuBar"]
     # Ratio of neutrino_types
     # (only used if neutrino_flavor is unset)
-    PrimaryTypeRatio: [1,1]
+    PrimaryTypeRatio: [1, 1]
     # Whether or not to use differential cross sections
     UseDifferentialXsection: True
     # cross sections to use [csms]

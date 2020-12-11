@@ -1,7 +1,11 @@
-#!/bin/sh /cvmfs/icecube.opensciencegrid.org/py2-v2/icetray-start
-#METAPROJECT simulation/V05-01-02
+#!/bin/sh /cvmfs/icecube.opensciencegrid.org/py3-v4.1.0/icetray-start
+#METAPROJECT /mnt/lfs7/user/mhuennefeld/software/icecube/py3-v4.1.0/combo_V01-00-00/build
+
+#--METAPROJECT /mnt/lfs7/user/mhuennefeld/software/icecube/py3-v4.1.0/combo_V01-00-00-RC0/build
+#--METAPROJECT combo/V01-00-00
 import click
 import yaml
+import time
 
 import numpy as np
 
@@ -14,6 +18,8 @@ from icecube import sim_services, MuonGun
 from utils import create_random_services, get_run_folder
 from resources.biased_simulation import BaseSimulationBias
 from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
+
+from resources.nugen_select_split_module import NuGenSelectSplitModule
 
 
 @click.command()
@@ -47,15 +53,14 @@ def main(cfg, run_number, scratch):
         click.echo('PrimaryTypeRatio: {}'.format(cfg['primary_type_ratio']))
     else:
         click.echo('NeutrinoFlavor: {}'.format(cfg['neutrino_flavor']))
-    click.echo('CrossSections: {}'.format(cfg['cross_sections']))
-    if not cfg['cross_sections_path'] is None:
-        click.echo('CrossSectionsPath: {}'.format(cfg['cross_sections_path']))
     if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:
         click.echo('Apply simulation bias: True')
     else:
         click.echo('Apply simulation bias: True')
 
     tray = I3Tray()
+    
+    start_time = time.time()
 
     if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:
         n_services = 3
@@ -65,7 +70,9 @@ def main(cfg, run_number, scratch):
         dataset_number=cfg['dataset_number'],
         run_number=cfg['run_number'],
         seed=cfg['seed'],
-        n_services=n_services)
+        n_services=n_services,
+        use_gslrng=cfg['random_service_use_gslrng'],
+    )
 
     random_service, random_service_prop = random_services[:2]
     tray.context['I3RandomService'] = random_service
@@ -77,37 +84,43 @@ def main(cfg, run_number, scratch):
 
     tray.AddSegment(
         segments.GenerateNeutrinos, "GenerateNeutrinos",
+        RunID=run_number,
         RandomService=random_service,
         NumEvents=cfg['n_events_per_run'],
-        SimMode=cfg['simulation_mode'],
-        VTXGenMode=cfg['vertex_generation_mode'],
-        InjectionMode=cfg['injection_mode'],
-        CylinderParams=cfg['cylinder_params'],
-        AutoExtendMuonVolume=cfg['auto_extend_muon_volume'],
-        Flavor=cfg['neutrino_flavor'],
-        # NuTypes = cfg['neutrino_types'], # Only in newer simprod versions
-        # PrimaryTypeRatio = cfg['primary_type_ratio'], # Only in newer simprod versions
-        GammaIndex=cfg['gamma'],
-
         FromEnergy=cfg['e_min']*icetray.I3Units.GeV,
         ToEnergy=cfg['e_max']*icetray.I3Units.GeV,
-
         ZenithRange=[cfg['zenith_min'] * icetray.I3Units.deg,
                      cfg['zenith_max'] * icetray.I3Units.deg],
         AzimuthRange=[cfg['azimuth_min'] * icetray.I3Units.deg,
                       cfg['azimuth_max'] * icetray.I3Units.deg],
+        **cfg['additional_GenerateNeutrinos_settings']
+    )
 
-        # UseDifferentialXsection = cfg['use_diff_cross_section'], # Only in newer simprod versions
-        CrossSections=cfg['cross_sections'],
-        CrossSectionsPath=cfg['cross_sections_path'],
-        # ZenithSamplingMode = cfg['zenith_sampling_mode'], # Only in newer simprod versions
-        )
-
-    tray.AddSegment(
-        segments.PropagateMuons,
-        "PropagateMuons",
-        RandomService=random_service_prop,
-        **cfg['muon_propagation_config'])
+    # propagate muons if config exists in config
+    # Note: Snowstorm may perform muon propagation internally
+    if 'muon_propagation_config' in cfg:
+        tray.AddSegment(segments.PropagateMuons,
+                        'propagate_muons',
+                        RandomService=random_service_prop,
+                        **cfg['muon_propagation_config'])
+    else:
+        # In this case we are not propagating the I3MCTree yet, but
+        # are letting this be done by snowstorm propagation
+        # We need to add a key named 'I3MCTree', since snowstorm expects this
+        # It will propagate the particles for us.
+        tray.AddModule('Rename', keys=['I3MCTree_preMuonProp', 'I3MCTree'])
+        
+    # Selection and split module   
+    if cfg['select_split_module']:
+        tray.AddModule(
+            NuGenSelectSplitModule, 
+            'NuGenSelectAndSplitMuonTrack',
+            percentage_energy_loss=cfg['percentage_energy_loss'], 
+            NewPsi=cfg['new_psi'], 
+            MinDist=cfg['min_dist'],
+            RandomSeed=int_run_number,
+            beta=cfg['beta']
+            perform_cut=cfg['perform_cut'])
 
     # Bias simulation if desired
     if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:
@@ -154,6 +167,10 @@ def main(cfg, run_number, scratch):
     click.echo('Scratch: {}'.format(scratch))
     tray.AddModule("TrashCan", "the can")
     tray.Execute()
+    
+    end_time = time.time()
+    print('needs {}s for {} events'.format(np.round(end_time - start_time, 1), cfg['n_events_per_run']))
+    
     tray.Finish()
 
 
