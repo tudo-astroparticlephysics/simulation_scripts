@@ -3,7 +3,7 @@ from I3Tray import *
 import numpy as np
 from scipy.spatial import ConvexHull
 
-from resources.nugen_muon_split_functions import insert_deflection_angle, selection
+from resources.nugen_muon_split_functions import insert_deflection_angle, selection, cut_millipede_out_of_detector
 
 class NuGenSelectSplitModule(icetray.I3ConditionalModule):
 
@@ -35,7 +35,7 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
         self.AddParameter('beta', 
                         'int to scale sampling angle',
                           1)
-        self.AddParameter('check_selection',
+        self.AddParameter('perform_cut',
                          'bool to write down all events and only check selection',
                          False)
 
@@ -48,7 +48,7 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
         # self._random_seed = self.GetParameter('RandomSeed')
         self._random_service = np.random.RandomState(self.GetParameter('RandomSeed'))
         self._beta = self.GetParameter('beta')
-        self._check_selection = self.GetParameter('check_selection')
+        self._perform_cut = self.GetParameter('perform_cut')
 
     def Geometry(self, frame):
         """Summary
@@ -106,7 +106,7 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
             The current P-Frame.
         """
         
-        if selection(self, frame, self._check_selection) == False:
+        if selection(self, frame, self._perform_cut) == False:
             return False
         
         insert_deflection_angle(frame, self._new_psi, self._random_service, self._beta)

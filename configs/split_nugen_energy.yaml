@@ -10,7 +10,7 @@ seed: 1337
 # Number of the dataset
 dataset_number: 44324
 # Events generated for each file
-n_events_per_run: 1000000
+n_events_per_run: 1000
 # Number of total runs/file
 n_runs: 10000
 
@@ -51,3 +51,4 @@ new_psi: 5 # if new_psi != 0: use brems and nuclint distributions for sampling
 percentage_energy_loss: 0.4
 min_dist: -100 
 beta: 1
+perform_cut: False

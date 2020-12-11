@@ -12,7 +12,7 @@ from scipy.spatial import ConvexHull
 
 
 ########### NEW FUNCTIONS ###############################################
-def selection(self, frame, check_selection=False):
+def selection(self, frame, perform_cut=False):
     '''Get primary muon and check:
         1. track hits detector
         2. maximum energy loss is higher than choosen E_loss
@@ -25,105 +25,143 @@ def selection(self, frame, check_selection=False):
     # while tree[muon_index].type_string not in ('MuMinus', 'MuPlus'):
         # muon_id += 1
         
-    # Check selection
-    selection = 0
+    # Check selection, 1 = True
+    selection = 1
+    res = {
+        'muon_minor_id': -1,
+        'incoming_muon_energy': -1,
+        'muon_energy_at_entry': -1,
+        'max_p_minor_id': -1,
+        'max_E_loss': -1,
+        'hull_dist': -1,
+        'E_before_max_loss': -1,
+        'energy_before_max_loss': -1,
+        'max_p_type': -1,
+        'pre_length': -1,
+        'post_length': -1,
+    }
         
     muon = get_muon_of_inice_neutrino(frame)
     if muon == None:
-        print('None muon')
-        selection = 1
-        if check_selection==False:
-            return False
+        selection = 0
+    else:
+        # Check if particle moves through detector
+        if particle_is_inside(muon, self._convex_hull) != True:
+            selection = 0
+        else:
+            # Check maximum energy loss
+            res_ = get_max_energy_loss(frame, muon, self._convex_hull)
+            res.update(res_)
+            entry, time, energy = mu_utils.get_muon_entry_info(frame, muon, self._convex_hull)
+            res['muon_minor_id'] = muon.minor_id
+            res['incoming_muon_energy'] = muon.energy
+            res['muon_energy_at_entry'] = energy
+            print('E at entry: ', res['muon_energy_at_entry'])
+            if res['max_E_loss'] < res['muon_energy_at_entry'] * self._percentage_energy_loss:
+                selection = 0
+            elif res['hull_dist'] > self._min_dist:
+                selection = 0
+                
+    res['selection'] = selection
+    print(res)
     
-    # Check if particle moves through detector
-    if particle_is_inside(muon, self._convex_hull) != True:
-        selection = 1
-        if check_selection==False:
-            return False
+    frame.Put('I3MapSplit', dataclasses.I3MapStringDouble(res))
     
-    # Check maximum energy loss
-    res = get_max_energy_loss(frame['I3MCTree'], muon, self._percentage_energy_loss, self._min_dist, self._convex_hull)
-    if res == None:
-        selection = 1
-        if check_selection==False:
-            return False
-    
-    frame.Put('I3MapSplit', dataclasses.I3MapStringDouble())
-    frame['I3MapSplit']['muon_minor_id'] = muon.minor_id
-    frame['I3MapSplit']['incoming_muon_energy'] = muon.energy
-    frame['I3MapSplit']['max_p_minor_id'] = res[0]
-    frame['I3MapSplit']['max_E_loss'] = res[1]
-    frame['I3MapSplit']['hull_dist'] = res[2]
-    frame['I3MapSplit']['E_before_max_loss'] = res[3]
-    frame['I3MapSplit']['energy_before_max_loss'] = res[7]
-    frame['I3MapSplit']['max_p_type'] = res[4]
-    frame['I3MapSplit']['pre_length'] = res[5]
-    frame['I3MapSplit']['post_length'] = res[6]
-    frame['I3MapSplit']['selection'] = selection
+    if perform_cut:
+        return selection==1
+
     return True
     
     
     
     
 
-def get_max_energy_loss(tree, muon, min_energy_loss, min_distance, convex_hull):
+def get_max_energy_loss(frame, muon, convex_hull):
     '''
         Return
         ------
         list of issues of maximum energy loss: minor_id, energy_loss, distance to hull
         and energy before maximum loss
     '''
-    
+    tree = frame['I3MCTree']
     muon_daughters = tree.get_daughters(muon)
-    energy_losses_inside = [p.energy if (p.type_string not in ('MuMinus','MuPlus')) & (distance_to_icecube_hull(p.pos)<min_distance) else 0 for p in muon_daughters]
-    max_E_loss = np.max(energy_losses_inside)
-    if max_E_loss < muon.energy * min_energy_loss:
-        return None
-    
-    max_index = energy_losses_inside.index(max_E_loss)
-    max_p = muon_daughters[max_index]
-    
-    # Get muon energy
-    energy_before_max_loss = mu_utils.get_muon_energy_at_distance(frame, muon, (max_p.pos - muon.pos).magnitude - 1)
-    
-    if muon_daughters[max_index - 1].minor_id == max_p.minor_id-1:
-        E_before_max_loss = muon_daughters[max_index-1].energy   
-    elif muon_daughters[max_index - 2].minor_id == max_p.minor_id-1:
-        E_before_max_loss = muon_daughters[max_index-2].energy
-    elif muon_daughters[max_index - 3].minor_id == max_p.minor_id-1:
-        E_before_max_loss = muon_daughters[max_index-3].energy
-    else:        
-        print('error in Energy before max loss')
-        print(max_p.minor_id)
-        print(muon_daughters[max_index - 1].minor_id)
-        print(muon_daughters[max_index - 2].minor_id)
-        print(muon_daughters[max_index - 3].minor_id)
-        print(tree)
-        E_before_max_loss = -1
+    energy_losses_inside = [p.energy if (p.type_string not in ('MuMinus','MuPlus')) & (distance_to_icecube_hull(p.pos)<0) else 0 for p in muon_daughters]
+    max_E_loss = float(np.max(energy_losses_inside))
+    # if max_E_loss < muon.energy * min_energy_loss:
+        # return None
         
+    max_p_minor_id = -1
+    hull_dist = -1
+    E_before_max_loss = -1
+    energy_before_max_loss = -1
+    max_p_type = -1
+    pre_length = -1
+    post_length = -1 
     
-    entry = get_muon_initial_point_inside(muon, convex_hull)
-    exit = get_muon_exit_point(muon, convex_hull)
-    if (entry == None) | (exit == None):
-        pre_length = 0
-        post_length = 0
-    else:
-        pre_length =  (entry - max_p.pos).magnitude
-        post_length = (max_p.pos - exit).magnitude
+    # Check if max_E_loss == 0 (max_E_loss is not in detector)
+    if max_E_loss != 0:
+        # Check min dist of max p
+        max_index = energy_losses_inside.index(max_E_loss)
+        max_p = muon_daughters[max_index]
+        max_p_minor_id = max_p.minor_id
+        hull_dist = distance_to_icecube_hull(max_p.pos)
+        max_p_type = max_p.pdg_encoding
+        # Get muon energy
+        energy_before_max_loss = mu_utils.get_muon_energy_at_distance(frame, muon, (max_p.pos - muon.pos).magnitude - 1)
+
+        if muon_daughters[max_index - 1].minor_id == max_p.minor_id-1:
+            E_before_max_loss = muon_daughters[max_index-1].energy   
+        elif muon_daughters[max_index - 2].minor_id == max_p.minor_id-1:
+            E_before_max_loss = muon_daughters[max_index-2].energy
+        elif muon_daughters[max_index - 3].minor_id == max_p.minor_id-1:
+            E_before_max_loss = muon_daughters[max_index-3].energy
+        else:        
+            print('error in Energy before max loss')
+            print(max_p.minor_id)
+            print(muon_daughters[max_index - 1].minor_id)
+            print(muon_daughters[max_index - 2].minor_id)
+            print(muon_daughters[max_index - 3].minor_id)
+            print(tree)
+            
+        # if distance_to_icecube_hull(max_p.pos) < min_dist:
+    
+        entry = mu_utils.get_muon_initial_point_inside(muon, convex_hull)
+        exit = mu_utils.get_muon_exit_point(muon, convex_hull)
+        if (entry == None) | (exit == None):
+            pre_length = 0
+            post_length = 0
+        else:
+            pre_length =  (entry - max_p.pos).magnitude
+            post_length = (max_p.pos - exit).magnitude
          
                    
-    return [max_p.minor_id, max_E_loss, distance_to_icecube_hull(max_p.pos), E_before_max_loss, max_p.pdg_encoding, pre_length, post_length, energy_before_max_loss]
+    return {
+        'max_p_minor_id': max_p_minor_id,
+        'max_E_loss': max_E_loss,
+        'hull_dist': hull_dist,
+        'E_before_max_loss': E_before_max_loss,
+        'energy_before_max_loss': energy_before_max_loss,
+        'max_p_type': max_p_type,
+        'pre_length': pre_length,
+        'post_length': post_length,
+    }
+
 
 
 
 def insert_deflection_angle(frame, new_psi, random_service, beta=1):
+
+    max_p_minor_id = frame['I3MapSplit']['max_p_minor_id']
+    if max_p_minor_id == -1:
+        print('max_p_minor_id = -1')
+        return True
+
     
     tree = frame['I3MCTree']
     
     frame.Put('OldTree', dataclasses.I3MCTree(tree))
 
     # muon_minor_id = frame['I3MapSplit']['muon_minor_id']
-    max_p_minor_id = frame['I3MapSplit']['max_p_minor_id']
     
     found_max = False
     brems_nuclint = False

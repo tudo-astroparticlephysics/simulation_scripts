@@ -113,7 +113,8 @@ def main(cfg, run_number, scratch):
             NewPsi=cfg['new_psi'], 
             MinDist=cfg['min_dist'],
             RandomSeed=int_run_number,
-            beta=cfg['beta'])
+            beta=cfg['beta']
+            perform_cut=cfg['perform_cut'])
 
     if cfg['distance_splits'] is not None:
         import dom_distance_cut as dom_cut
