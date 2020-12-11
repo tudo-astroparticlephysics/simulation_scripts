@@ -16,7 +16,7 @@ KEEP_CRASHED_FILES={keep_crashed_files}
 echo 'Starting job on Host: '$HOSTNAME
 echo 'Loading py3-v4.0.1'
 eval `/cvmfs/icecube.opensciencegrid.org/py3-v4.0.1/setup.sh`
-export PYTHONUSERBASE=/cvmfs/icecube.opensciencegrid.org/users/eganster/combo.releases.V01-00-02.py3-v4.0.1.RHEL_7_x86_64/lib
+export PYTHONUSERBASE=/data/user/mhuennefeld/DNN_reco/virtualenvs/tensorflow_v1.14.0_cpu_py3-v4.0.1__diffuse_numu
 echo 'Using PYTHONUSERBASE: '${PYTHONUSERBASE}
 
 export PATH=$PYTHONUSERBASE/bin:$PATH
