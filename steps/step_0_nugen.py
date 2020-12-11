@@ -12,6 +12,7 @@ from icecube import icetray, dataclasses
 from icecube import sim_services, MuonGun
 
 from utils import create_random_services, get_run_folder
+from resources.biased_simulation import BaseSimulationBias
 from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
 
 
@@ -49,16 +50,24 @@ def main(cfg, run_number, scratch):
     click.echo('CrossSections: {}'.format(cfg['cross_sections']))
     if not cfg['cross_sections_path'] is None:
         click.echo('CrossSectionsPath: {}'.format(cfg['cross_sections_path']))
+    if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:
+        click.echo('Apply simulation bias: True')
+    else:
+        click.echo('Apply simulation bias: True')
 
     tray = I3Tray()
 
+    if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:
+        n_services = 3
+    else:
+        n_services = 2
     random_services, _ = create_random_services(
         dataset_number=cfg['dataset_number'],
         run_number=cfg['run_number'],
         seed=cfg['seed'],
-        n_services=2)
+        n_services=n_services)
 
-    random_service, random_service_prop = random_services
+    random_service, random_service_prop = random_services[:2]
     tray.context['I3RandomService'] = random_service
 
     tray.AddModule("I3InfiniteSource",
@@ -99,6 +108,15 @@ def main(cfg, run_number, scratch):
         "PropagateMuons",
         RandomService=random_service_prop,
         **cfg['muon_propagation_config'])
+
+    # Bias simulation if desired
+    if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:
+        tray.AddModule(
+            BaseSimulationBias,
+            'BaseSimulationBias',
+            random_service=random_services[2],
+            **cfg['BaseSimulationBiasSettings']
+        )
 
     if cfg['distance_splits'] is not None:
         import dom_distance_cut as dom_cut
