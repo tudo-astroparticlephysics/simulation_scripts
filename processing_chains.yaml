@@ -1,13 +1,3 @@
-split_nugen_energy:
-    default_config: configs/default_split_nugen_energy.yaml
-    job_template: job_templates/py3-v4.1.0.sh
-    steps:
-      0: step_0_split_nugen_energy
-      1: step_1_snowstorm_propagation
-      2: step_2_snowstorm_detector_simulation
-      3: step_3_pass2_L1_py3_v4_1_0
-      4: step_4_pass2_L2_py3_v4_1_0
-
 split_muongun_floodlight:
   default_config: configs/default_split_muongun_floodlight.yaml
   job_template: job_templates/py3-v4.1.0.sh 
@@ -90,6 +80,19 @@ nugen_snowstorm:
     5: job_templates/py3-v4.0.1__diffuse_numu.sh
   steps:
     0: step_0_nugen_py3-v4_1_0
+    1: step_1_snowstorm_propagation
+    2: step_2_snowstorm_detector_simulation
+    3: step_3_pass2_L1_py3_v4_1_0
+    4: step_4_pass2_L2_py3_v4_1_0
+    5: step_5_final_level_numu
+    
+nugen_snowstorm_split:
+  default_config: configs/default_nugen_snowstorm.yaml
+  job_template: job_templates/py3-v4.1.0.sh
+  job_templates:
+    5: job_templates/py3-v4.0.1__diffuse_numu.sh
+  steps:
+    0: step_0_nugen_split_py3_v4_1_0
     1: step_1_snowstorm_propagation
     2: step_2_snowstorm_detector_simulation
     3: step_3_pass2_L1_py3_v4_1_0

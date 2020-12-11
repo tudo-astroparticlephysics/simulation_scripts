@@ -66,7 +66,7 @@ def main(cfg, run_number, scratch):
         n_services = 3
     else:
         n_services = 2
-    random_services, _ = create_random_services(
+    random_services, int_run_number = create_random_services(
         dataset_number=cfg['dataset_number'],
         run_number=cfg['run_number'],
         seed=cfg['seed'],
@@ -111,16 +111,12 @@ def main(cfg, run_number, scratch):
         tray.AddModule('Rename', keys=['I3MCTree_preMuonProp', 'I3MCTree'])
         
     # Selection and split module   
-    if cfg['select_split_module']:
+    if 'NuGenSelectSplitModule' in cfg:
         tray.AddModule(
             NuGenSelectSplitModule, 
             'NuGenSelectAndSplitMuonTrack',
-            percentage_energy_loss=cfg['percentage_energy_loss'], 
-            NewPsi=cfg['new_psi'], 
-            MinDist=cfg['min_dist'],
             RandomSeed=int_run_number,
-            beta=cfg['beta']
-            perform_cut=cfg['perform_cut'])
+            **cfg['NuGenSelectSplitModule'])
 
     # Bias simulation if desired
     if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:

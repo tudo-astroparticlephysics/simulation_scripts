@@ -43,6 +43,7 @@ def selection(self, frame, perform_cut=False):
         
     muon = get_muon_of_inice_neutrino(frame)
     if muon == None:
+        print('muon none')
         selection = 0
     else:
         # Check if particle moves through detector
@@ -56,14 +57,12 @@ def selection(self, frame, perform_cut=False):
             res['muon_minor_id'] = muon.minor_id
             res['incoming_muon_energy'] = muon.energy
             res['muon_energy_at_entry'] = energy
-            print('E at entry: ', res['muon_energy_at_entry'])
             if res['max_E_loss'] < res['muon_energy_at_entry'] * self._percentage_energy_loss:
                 selection = 0
             elif res['hull_dist'] > self._min_dist:
                 selection = 0
                 
     res['selection'] = selection
-    print(res)
     
     frame.Put('I3MapSplit', dataclasses.I3MapStringDouble(res))
     
@@ -184,7 +183,7 @@ def insert_deflection_angle(frame, new_psi, random_service, beta=1):
             # Break energy losses which are not NuclInt or Brems, ~2%
             # if d_type in ('Brems', 'NuclInt'):            
                 # brems_nuclint = True
-            if new_psi != 0: 
+            if new_psi: 
                 # Incoming muon energy
                 E = frame['I3MapSplit']['E_before_max_loss']
                 # Muon energy afert maximum energy loss
@@ -198,7 +197,10 @@ def insert_deflection_angle(frame, new_psi, random_service, beta=1):
                     brems_nuclint = True
                     new_psi = get_new_psi_brems(E, E_, random_service) * beta
                 else:
+                    assert 'new_psi = 0'
                     new_psi = 0
+            else:
+                new_psi = 0
                 
             new_zenith_azimuth = get_delta_psi_vector(d.dir.zenith, d.dir.azimuth, random_service=random_service, delta_psi=new_psi, is_degree=True)
 

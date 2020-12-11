@@ -21,14 +21,15 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
         """
         icetray.I3ConditionalModule.__init__(self, context)
         # self.AddOutBox('OutBox') ?? whats this ??
-        self.AddParameter('MinDist', 
+        self.AddParameter('min_dist', 
                         'minimum distance of highest energy loss in detector',
                         -100)
         self.AddParameter('percentage_energy_loss',
                         'percentage energy loss',
-                        0.3)
-        self.AddParameter('NewPsi', 
-                        'angle in degree to set new direction after split')
+                        0.4)
+        self.AddParameter('new_psi', 
+                        'bool, sample new deflection angles',
+                         False)
         self.AddParameter('RandomSeed',
                         'int for random service',
                         42)
@@ -42,10 +43,9 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
     def Configure(self):
         """Set 
         """
-        self._min_dist = self.GetParameter('MinDist')
+        self._min_dist = self.GetParameter('min_dist')
         self._percentage_energy_loss = self.GetParameter('percentage_energy_loss')
-        self._new_psi = self.GetParameter('NewPsi')
-        # self._random_seed = self.GetParameter('RandomSeed')
+        self._new_psi = self.GetParameter('new_psi')
         self._random_service = np.random.RandomState(self.GetParameter('RandomSeed'))
         self._beta = self.GetParameter('beta')
         self._perform_cut = self.GetParameter('perform_cut')
@@ -88,13 +88,12 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
         frame : I3Frame
             The current Q-frame.
         """
-        
-        # if selection_nugen(self, frame) == False:
-            # return False
-        
-        # if build_tree_with_muon_split_nugen(frame, self._new_psi, self._random_service, self._beta) == False:
-            # return False
 
+        # if selection(self, frame, self._perform_cut) == False:
+            # return False
+        
+        # insert_deflection_angle(frame, self._new_psi, self._random_service, self._beta)
+        
         self.PushFrame(frame)
 
     def Physics(self, frame):
@@ -113,11 +112,5 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
         
         cut_millipede_out_of_detector(frame)
         
-        
-        # if selection_nugen(self, frame) == False:
-            # return False
-        
-        # if build_tree_with_muon_split_nugen(frame, self._new_psi, self._random_service, self._beta) == False:
-            # return False
-        
+
         self.PushFrame(frame)
