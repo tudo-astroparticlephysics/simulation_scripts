@@ -1,6 +1,5 @@
 #!/bin/sh /cvmfs/icecube.opensciencegrid.org/py3-v4.0.1/icetray-start
 #METAPROJECT /cvmfs/icecube.opensciencegrid.org/users/eganster/combo.releases.V01-00-02.py3-v4.0.1.RHEL_7_x86_64
-#--METAPROJECT /mnt/lfs7/user/mhuennefeld/software/icecube/py3-v4.1.0/combo_V01-00-00/build
 import click
 import yaml
 
@@ -42,6 +41,8 @@ def main(cfg, run_number, scratch):
     infile = infile.replace(' ', '0')
     infile = infile.replace('Level0.{}'.format(cfg['previous_step']),
                             'Level0.{}'.format(cfg['previous_step'] % 10))
+    infile = infile.replace('Level0.{}'.format(cfg['previous_step'] % 10),
+                            'Level2')
     infile = infile.replace('2012_pass2', 'pass2')
 
     if scratch:
