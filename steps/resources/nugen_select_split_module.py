@@ -89,10 +89,11 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
             The current Q-frame.
         """
 
-        # if selection(self, frame, self._perform_cut) == False:
-            # return False
+        if selection(self, frame, self._perform_cut) == False:
+            return False
         
-        # insert_deflection_angle(frame, self._new_psi, self._random_service, self._beta)
+        if self._new_psi:
+            insert_deflection_angle(frame, self._random_service, self._beta)
         
         self.PushFrame(frame)
 
@@ -104,13 +105,9 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
         frame : I3Frame
             The current P-Frame.
         """
+
         
-        if selection(self, frame, self._perform_cut) == False:
-            return False
-        
-        insert_deflection_angle(frame, self._new_psi, self._random_service, self._beta)
-        
-        cut_millipede_out_of_detector(frame)
+        # cut_millipede_out_of_detector(frame)
         
 
         self.PushFrame(frame)

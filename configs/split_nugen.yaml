@@ -10,7 +10,7 @@ seed: 1337
 # Number of the dataset
 dataset_number: 44325
 # Events generated for each file
-n_events_per_run: 1000
+n_events_per_run: 10000
 # Number of total runs/file
 n_runs: 10000
 

@@ -18,14 +18,8 @@ def selection(self, frame, perform_cut=False):
         2. maximum energy loss is higher than choosen E_loss
         3. check if maximum loss is at least x meters inside the detector
     '''
-    
-    # Get muon
-    # tree = frame['I3MCTree']
-    # muon_index = 0
-    # while tree[muon_index].type_string not in ('MuMinus', 'MuPlus'):
-        # muon_id += 1
-        
-    # Check selection, 1 = True
+
+    # Check selection, 1: event passes cuts, 0: event is rejected 
     selection = 1
     res = {
         'muon_minor_id': -1,
@@ -39,13 +33,22 @@ def selection(self, frame, perform_cut=False):
         'max_p_type': -1,
         'pre_length': -1,
         'post_length': -1,
+        'old_zenith': -1,
+        'old_azimuth': -1,
+        'new_zenith': -1,
+        'new_azimuth': -1, 
+        'delta_psi_in_degree': -1, 
+        'time': -1,
     }
-        
+    
+    # Get muon        
     muon = get_muon_of_inice_neutrino(frame)
     if muon == None:
         print('muon none')
         selection = 0
     else:
+        res['muon_minor_id'] = muon.minor_id
+        res['incoming_muon_energy'] = muon.energy
         # Check if particle moves through detector
         if particle_is_inside(muon, self._convex_hull) != True:
             selection = 0
@@ -54,8 +57,6 @@ def selection(self, frame, perform_cut=False):
             res_ = get_max_energy_loss(frame, muon, self._convex_hull)
             res.update(res_)
             entry, time, energy = mu_utils.get_muon_entry_info(frame, muon, self._convex_hull)
-            res['muon_minor_id'] = muon.minor_id
-            res['incoming_muon_energy'] = muon.energy
             res['muon_energy_at_entry'] = energy
             if res['max_E_loss'] < res['muon_energy_at_entry'] * self._percentage_energy_loss:
                 selection = 0
@@ -85,7 +86,7 @@ def get_max_energy_loss(frame, muon, convex_hull):
     tree = frame['I3MCTree']
     muon_daughters = tree.get_daughters(muon)
     energy_losses_inside = [p.energy if (p.type_string not in ('MuMinus','MuPlus')) & (distance_to_icecube_hull(p.pos)<0) else 0 for p in muon_daughters]
-    max_E_loss = float(np.max(energy_losses_inside))
+    max_E_loss = np.max(energy_losses_inside)
     # if max_E_loss < muon.energy * min_energy_loss:
         # return None
         
@@ -96,6 +97,10 @@ def get_max_energy_loss(frame, muon, convex_hull):
     max_p_type = -1
     pre_length = -1
     post_length = -1 
+    max_p_pos = -1
+    max_p_time = -1
+    old_zenith = -1
+    old_azimuth = -1
     
     # Check if max_E_loss == 0 (max_E_loss is not in detector)
     if max_E_loss != 0:
@@ -105,6 +110,10 @@ def get_max_energy_loss(frame, muon, convex_hull):
         max_p_minor_id = max_p.minor_id
         hull_dist = distance_to_icecube_hull(max_p.pos)
         max_p_type = max_p.pdg_encoding
+        max_p_pos = max_p.pos
+        max_p_time = max_p.time
+        old_zenith = max_p.dir.zenith
+        old_azimuth = max_p.dir.azimuth
         # Get muon energy
         energy_before_max_loss = mu_utils.get_muon_energy_at_distance(frame, muon, (max_p.pos - muon.pos).magnitude - 1)
 
@@ -132,23 +141,30 @@ def get_max_energy_loss(frame, muon, convex_hull):
         else:
             pre_length =  (entry - max_p.pos).magnitude
             post_length = (max_p.pos - exit).magnitude
-         
+    
+    if max_p_pos == -1:
+        max_p_pos = dataclasses.I3Position(0,0,0)
+        
+    frame.Put('I3PosOfMaxEnergyLoss', dataclasses.I3Position(max_p_pos))
                    
     return {
         'max_p_minor_id': max_p_minor_id,
-        'max_E_loss': max_E_loss,
+        'max_E_loss': float(max_E_loss),
         'hull_dist': hull_dist,
         'E_before_max_loss': E_before_max_loss,
         'energy_before_max_loss': energy_before_max_loss,
         'max_p_type': max_p_type,
         'pre_length': pre_length,
         'post_length': post_length,
+        'time': max_p_time,
+        'old_zenith': old_zenith,
+        'old_azimuth': old_azimuth
     }
 
 
 
 
-def insert_deflection_angle(frame, new_psi, random_service, beta=1):
+def insert_deflection_angle(frame, random_service, beta=1):
 
     max_p_minor_id = frame['I3MapSplit']['max_p_minor_id']
     if max_p_minor_id == -1:
@@ -163,7 +179,7 @@ def insert_deflection_angle(frame, new_psi, random_service, beta=1):
     # muon_minor_id = frame['I3MapSplit']['muon_minor_id']
     
     found_max = False
-    brems_nuclint = False
+    # brems_nuclint = False
     
     
     # muon_daughters = tree.get_daughters(muon)
@@ -175,53 +191,41 @@ def insert_deflection_angle(frame, new_psi, random_service, beta=1):
         if d.minor_id == max_p_minor_id:
             found_max = True
             muon_split_helper = d
-               
-            # Get new zenith and azimuth value for splitted particles with given delta_angle
-            # random_service = np.random.RandomState(random_seed)
             
             d_type = d.type_string
             # Break energy losses which are not NuclInt or Brems, ~2%
             # if d_type in ('Brems', 'NuclInt'):            
                 # brems_nuclint = True
-            if new_psi: 
+            
                 # Incoming muon energy
-                E = frame['I3MapSplit']['E_before_max_loss']
+            E = frame['I3MapSplit']['E_before_max_loss']
                 # Muon energy afert maximum energy loss
                 # E_ = E - d.energy 
-                E_ = E - frame['I3MapSplit']['max_E_loss']
-                # Get angle in rad
-                if d_type == 'NuclInt':
-                    brems_nuclint = True
-                    new_psi = get_new_psi_nuclint(E, E_, random_service) * beta
-                elif d_type == 'Brems':
-                    brems_nuclint = True
-                    new_psi = get_new_psi_brems(E, E_, random_service) * beta
-                else:
-                    assert 'new_psi = 0'
-                    new_psi = 0
+            E_ = E - frame['I3MapSplit']['max_E_loss']
+            if d_type == 'NuclInt':
+                # brems_nuclint = True
+                new_psi_ = get_new_psi_nuclint(E, E_, random_service) * beta
+            elif d_type == 'Brems':
+                # brems_nuclint = True
+                new_psi_ = get_new_psi_brems(E, E_, random_service) * beta
             else:
-                new_psi = 0
-                
-            new_zenith_azimuth = get_delta_psi_vector(d.dir.zenith, d.dir.azimuth, random_service=random_service, delta_psi=new_psi, is_degree=True)
+                new_psi_ = 0
 
-            # Insert key to frame
-            frame['I3MapSplit']['delta_psi_in_degree'] = new_psi
+            frame['I3MapSplit']['delta_psi_in_degree'] = new_psi_
+            
+            # frame['I3MapSplit']['old_zenith'] = d.dir.zenith
+            # frame['I3MapSplit']['old_azimuth'] = d.dir.azimuth
+            # frame['I3MapSplit']['time'] = d.time
+            # frame.Put('I3PosOfMaxEnergyLoss', dataclasses.I3Position(d.pos))
+            
+            if new_psi_ == 0:
+                break
+            
+            
+            new_zenith_azimuth = get_delta_psi_vector(d.dir.zenith, d.dir.azimuth, random_service=random_service, delta_psi=new_psi_, is_degree=True)
             frame['I3MapSplit']['new_zenith'] = new_zenith_azimuth[0][0]
             frame['I3MapSplit']['new_azimuth'] = new_zenith_azimuth[1][0]
-            frame['I3MapSplit']['old_zenith'] = d.dir.zenith
-            frame['I3MapSplit']['old_azimuth'] = d.dir.azimuth
-            frame['I3MapSplit']['time'] = d.time
             
-            # wrong! get lenght of track via daughters! check ditstance in detector
-            # i3map['pre_length'] = (tree[0].pos - d.pos).magnitude
-            # i3map['post_length'] = (d.pos - tree[-1].pos).magnitude
-
-            # Insert pos key to frame
-            frame.Put('I3PosOfMaxEnergyLoss', dataclasses.I3Position(d.pos))
-            
-            if brems_nuclint == False:
-                break
-
         if found_max == True:
             
             ### FIX: CHANGE DIR ONLY OF MUON TRACK, NOT WHOLE TREE
@@ -248,7 +252,41 @@ def cut_millipede_out_of_detector(frame):
     frame.Put('SplineMPE_MillipedeInsideDetector', dataclasses.I3VectorI3Particle(millipede_in_detector))
 
 
-
+def get_new_psi_brems(E, E_, rnd_state, is_degree=True, theta_star=1):
+    epsilon = E - E_
+    mu = 0.1057 # muon mass
+    p = rnd_state.uniform(0, 1)
+    r_max = np.minimum(1, E_/epsilon) * E * theta_star / mu
+    a = p * r_max**2 / (1+r_max**2)
+    r = np.sqrt(a/(1-a))
+    theta_photon = mu / E * r
+    theta_mu = epsilon / E_ * theta_photon
+    
+    if is_degree:
+        return np.rad2deg(theta_mu)
+    else:
+        return theta_mu
+    
+def get_new_psi_nuclint(E, E_, rnd_state, is_degree=True):
+    M = 0.9383 # Proton mass in GeV
+    mu = 0.1057 # Muon mass in GeV
+    m_0 = np.sqrt(0.4)
+    p = rnd_state.uniform(0, 1)
+    # nu = epsilon
+    epsilon = E - E_
+    y = epsilon / E
+    t_max = 2 * M * epsilon
+    t_min = (mu * y)**2 / (1 - y)
+    t_1 = np.minimum(epsilon**2, m_0**2)
+    t_p = (t_max * t_1) / ((t_max + t_1) * ((t_max * (t_min + t_1))\
+                    / (t_min * (t_max + t_1)))**p - t_max)
+    sin2 = (t_p - t_min) / (4 * (E * E_ - mu**2) - 2 * t_min)
+    theta_mu = 2 * np.arcsin(np.sqrt(sin2))
+    
+    if is_degree:
+        return np.rad2deg(theta_mu)
+    else:
+        return theta_mu
 
 ##########################################################################
 
@@ -362,45 +400,6 @@ def build_tree_with_muon_split_nugen(frame, new_psi, random_service, beta=1):
 
             # Set new position
             tree[i].pos = muon_split_helper.pos + muon_split_helper.dir * (muon_split_helper.pos - d.pos).magnitude
-            
-            
-def get_new_psi_brems(E, E_, rnd_state, is_degree=True, theta_star=1):
-    epsilon = E - E_
-    mu = 0.1057 # muon mass
-    p = rnd_state.uniform(0, 1)
-    r_max = np.minimum(1, E_/epsilon) * E * theta_star / mu
-    a = p * r_max**2 / (1+r_max**2)
-    r = np.sqrt(a/(1-a))
-    theta_photon = mu / E * r
-    theta_mu = epsilon / E_ * theta_photon
-    
-    if is_degree:
-        # print(np.rad2deg(theta_mu))
-        return np.rad2deg(theta_mu)
-    else:
-        return theta_mu
-    
-def get_new_psi_nuclint(E, E_, rnd_state, is_degree=True):
-    M = 0.9383 # Proton mass in GeV
-    mu = 0.1057 # Muon mass in GeV
-    m_0 = np.sqrt(0.4)
-    p = rnd_state.uniform(0, 1)
-    # nu = epsilon
-    epsilon = E - E_
-    y = epsilon / E
-    t_max = 2 * M * epsilon
-    t_min = (mu * y)**2 / (1 - y)
-    t_1 = np.minimum(epsilon**2, m_0**2)
-    t_p = (t_max * t_1) / ((t_max + t_1) * ((t_max * (t_min + t_1))\
-                    / (t_min * (t_max + t_1)))**p - t_max)
-    sin2 = (t_p - t_min) / (4 * (E * E_ - mu**2) - 2 * t_min)
-    theta_mu = 2 * np.arcsin(np.sqrt(sin2))
-    
-    if is_degree:
-        # print(np.rad2deg(theta_mu))
-        return np.rad2deg(theta_mu)
-    else:
-        return theta_mu
             
             
 def get_max_energy_loss_id_nugen_old(tree, muon_id, energy_loss, min_dist):
