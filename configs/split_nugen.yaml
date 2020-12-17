@@ -8,14 +8,14 @@ chain_name: nugen_snowstorm_split
 seed: 1337
 
 # Number of the dataset
-dataset_number: 44325
+dataset_number: 50000
 # Events generated for each file
-n_events_per_run: 10000
+n_events_per_run: 100000
 # Number of total runs/file
 n_runs: 10000
 
-e_min: !!float 1e3 # 1e2 
-e_max: !!float 1e6 # 1e5
+e_min: !!float 1e2 # 1e2 
+e_max: !!float 1e4 # 1e5
 DOMOversizeFactor: 5
 
 # PATH to the GCD File
@@ -47,16 +47,28 @@ det_pass2_keep_all_upto: -1
 det_keep_propagated_mc_tree: True
 
 NuGenSelectSplitModule: {
-    new_psi: True,
+    new_psi: False,
     percentage_energy_loss: 0.4,
     min_dist: -100,
     beta: 1,
     perform_cut: False,
 }
 
-# select_split_module: True
-# new_psi: 5 # if new_psi != 0: use brems and nuclint distributions for sampling  
-# percentage_energy_loss: 0.4
-# min_dist: -100 
-# beta: 1
-# perform_cut: False
+
+# Keep keys
+additional_keep_keys: [
+    'I3MapSplit',
+    'I3PosOfMaxEnergyLoss',
+    'OldTree',
+    'OnlineL2_SplineMPE',
+    'OnlineL2_SplineMPEFitParams'
+]
+
+# Bias Simulation
+ApplyBaseSimulationBias: True
+BaseSimulationBiasSettings: {
+    'bias_function': 'UpgoingMuonStochasticity',
+    'lower_probability_bound': !!float 1e-4,
+    'keep_all_events': True,
+    'verbose': False,
+}
