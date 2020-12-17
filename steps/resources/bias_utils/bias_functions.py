@@ -2,6 +2,7 @@ import numpy as np
 
 from icecube.icetray.i3logging import log_error, log_warn
 
+from ic3_labels.labels.utils import geometry
 from ic3_labels.labels.utils import detector
 from ic3_labels.labels.utils import muon as mu_utils
 
@@ -144,7 +145,8 @@ class UpgoingMuonStochasticity(BaseBiasFunction):
             # get muon energy losses
             losses = [
                 loss for loss in mc_tree.get_daughters(muon) if
-                not mu_utils.is_muon(loss)
+                not mu_utils.is_muon(loss) and
+                geometry.is_in_detector_bounds(loss.pos, extend_boundary=60)
             ]
 
             # compute relative energy losses
@@ -155,7 +157,7 @@ class UpgoingMuonStochasticity(BaseBiasFunction):
                 # get energy of muon prior to energy loss
                 distance = (muon.pos - loss.pos).magnitude
                 energy = mu_utils.get_muon_energy_at_distance(
-                    frame, muon, distance - 1)
+                    frame, muon, np.clip(distance - 1, 0., float('inf')))
 
                 # If the loss is at the muon decay point, the returned energy
                 # might be NaN, assert this and set default value of 1 GeV
