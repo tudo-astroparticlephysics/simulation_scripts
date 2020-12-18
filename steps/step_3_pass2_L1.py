@@ -64,7 +64,7 @@ def main(cfg, run_number, scratch):
     additional_keep_keys += [
         'BiasedMuonWeighter', 'BiasedMuonCorridorWeighter',
         'BiasedMESCHotspotWeighter', 'BiasedSimulationWeight',
-        'PROPOSALStorm',
+        'PROPOSALStorm', 'PROPOSALStormUniformRanges',
     ]
 
     tray = I3Tray()

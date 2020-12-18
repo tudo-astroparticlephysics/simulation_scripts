@@ -65,7 +65,8 @@ class PROPOSALStormWriter(icetray.I3Module):
         super(PROPOSALStormWriter, self).__init__(ctx)
         self.AddParameter("PROPOSALStormObject", "PROPOSALStorm object.")
         self.AddParameter(
-            "OutputKey", "Output key for the meta data.", 'PROPOSALStorm')
+            "OutputKey", "Output key for the PROPOSAL-Storm data.",
+            'PROPOSALStorm')
 
     def Configure(self):
         self.proposal_storm = self.GetParameter("PROPOSALStormObject")
@@ -82,16 +83,18 @@ class PROPOSALStormWriter(icetray.I3Module):
             # create settings frame and push it
             settings_frame = icetray.I3Frame('m')
 
-            settings_data = {}
-
             # add meta data on ranges
+            settings_data = {}
             for key, value_range in self.proposal_storm.uniform_ranges.items():
                 settings_data[key+'RangeMin'] = value_range[0]
                 settings_data[key+'RangeMax'] = value_range[1]
 
-            settings_data.update(self.proposal_storm.sampled_settings)
+            # write to frame
+            settings_frame[self._output_key+'UniformRanges'] = (
+                dataclasses.I3MapStringDouble(settings_data)
+            )
             settings_frame[self._output_key] = dataclasses.I3MapStringDouble(
-                settings_data)
+                self.proposal_storm.sampled_settings)
 
             self.PushFrame(settings_frame)
 
