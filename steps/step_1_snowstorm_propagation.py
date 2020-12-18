@@ -481,6 +481,7 @@ def run_snowstorm_propagation(cfg, infile, outfile):
                  Streams=[icetray.I3Frame.TrayInfo,
                           icetray.I3Frame.Simulation,
                           icetray.I3Frame.Stream('M'),
+                          icetray.I3Frame.Stream('m'),
                           icetray.I3Frame.DAQ,
                           icetray.I3Frame.Physics])
 
@@ -527,6 +528,7 @@ def run_snowstorm_propagation(cfg, infile, outfile):
              Streams=[icetray.I3Frame.TrayInfo,
                       icetray.I3Frame.Simulation,
                       icetray.I3Frame.Stream('M'),
+                      icetray.I3Frame.Stream('m'),
                       icetray.I3Frame.DAQ,
                       icetray.I3Frame.Physics])
     tray.Execute()

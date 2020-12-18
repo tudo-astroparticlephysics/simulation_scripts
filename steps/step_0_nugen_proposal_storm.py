@@ -152,6 +152,7 @@ def main(cfg, run_number, scratch):
                            Streams=[icetray.I3Frame.DAQ,
                                     icetray.I3Frame.Physics,
                                     icetray.I3Frame.Stream('S'),
+                                    icetray.I3Frame.Stream('m'),
                                     icetray.I3Frame.Stream('M')],
                            If=stream_i)
     else:
@@ -161,6 +162,7 @@ def main(cfg, run_number, scratch):
                        Streams=[icetray.I3Frame.DAQ,
                                 icetray.I3Frame.Physics,
                                 icetray.I3Frame.Stream('S'),
+                                icetray.I3Frame.Stream('m'),
                                 icetray.I3Frame.Stream('M')])
     click.echo('Scratch: {}'.format(scratch))
     tray.AddModule("TrashCan", "the can")
