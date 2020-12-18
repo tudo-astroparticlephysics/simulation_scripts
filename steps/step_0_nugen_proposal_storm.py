@@ -76,7 +76,8 @@ def main(cfg, run_number, scratch):
 
     # Add PROPOSAL Storm to generate a PROPOSAL config as a temporary file
     temp_dir = tempfile.TemporaryDirectory()
-    temp_proposal_file = os.path.join(temp_dir, 'temp_proposal_config.json')
+    temp_proposal_file = os.path.join(
+        temp_dir.name, 'temp_proposal_config.json')
     tray.AddModule(
         PROPOSALStorm, 'PROPOSALStorm',
         ConfigFilePath=temp_proposal_file,
@@ -163,7 +164,7 @@ def main(cfg, run_number, scratch):
     tray.Finish()
 
     # clean up
-    temp_dir.close()
+    temp_dir.cleanup()
 
 
 if __name__ == '__main__':
