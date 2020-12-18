@@ -34,18 +34,18 @@ class PROPOSALStorm(icetray.I3Module):
 
         self._frame_has_been_pushed = False
 
+        # sample setting values
+        self.sampled_settings = self.sample_settings()
+
+        # write config file with these settings
+        write_config(self.config_file_path, self.sampled_settings)
+
     def Process(self):
 
         # get next frame
         frame = self.PopFrame()
 
         if not self._frame_has_been_pushed:
-
-            # sample setting values
-            sampled_settings = self.sample_settings()
-
-            # write config file with these settings
-            write_config(self.config_file_path, sampled_settings)
 
             # create settings frame and push it
             settings_frame = icetray.I3Frame('m')
@@ -57,7 +57,7 @@ class PROPOSALStorm(icetray.I3Module):
                 settings_data[key+'RangeMin'] = value_range[0]
                 settings_data[key+'RangeMax'] = value_range[1]
 
-            settings_data.update(sampled_settings)
+            settings_data.update(self.sampled_settings)
             settings_frame[self._output_key] = dataclasses.I3MapStringDouble(
                 settings_data)
 
