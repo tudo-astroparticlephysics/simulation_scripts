@@ -1,5 +1,6 @@
 #!/bin/sh /cvmfs/icecube.opensciencegrid.org/py3-v4.1.0/icetray-start
 #METAPROJECT combo/V01-00-00
+import os
 import click
 import yaml
 
@@ -74,7 +75,8 @@ def main(cfg, run_number, scratch):
                    Stream=icetray.I3Frame.DAQ)
 
     # Add PROPOSAL Storm to generate a PROPOSAL config as a temporary file
-    temp_proposal_file = tempfile.TemporaryFile()
+    temp_dir = tempfile.TemporaryDirectory()
+    temp_proposal_file = os.path.join(temp_dir, 'temp_proposal_config.json')
     tray.AddModule(
         PROPOSALStorm, 'PROPOSALStorm',
         ConfigFilePath=temp_proposal_file,
@@ -161,7 +163,7 @@ def main(cfg, run_number, scratch):
     tray.Finish()
 
     # clean up
-    temp_proposal_file.close()
+    temp_dir.close()
 
 
 if __name__ == '__main__':
