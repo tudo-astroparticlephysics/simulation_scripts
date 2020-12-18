@@ -1,3 +1,4 @@
+import os
 from icecube import icetray, dataclasses
 
 from .config import write_config
@@ -8,6 +9,8 @@ class PROPOSALStorm:
     def __init__(
             self, config_file_path, random_service,
             uniform_ranges={}, discrete_options={},
+            default_config=os.path.expandvars(
+                "$I3_BUILD/PROPOSAL/resources/config_icesim.json")
             ):
         """Set up PROPOSAL Storm
 
@@ -26,11 +29,15 @@ class PROPOSALStorm:
             the provided options. Format:
                 {'name': [option1, option2]}
             [Note: this option is not yet supported!]
+        default_config : str, optional
+            The path to the default PROPOSAL config which will be used as the
+            baseline.
         """
         self.config_file_path = config_file_path
         self._rnd = random_service
         self.uniform_ranges = uniform_ranges
         self.discrete_options = discrete_options
+        self.default_config = default_config
 
         if self.discrete_options != {}:
             raise NotImplementedError('Discrete options not yet supported!')
@@ -39,7 +46,11 @@ class PROPOSALStorm:
         self.sampled_settings = self.sample_settings()
 
         # write config file with these settings
-        write_config(self.config_file_path, self.sampled_settings)
+        write_config(
+            file_path=self.config_file_path,
+            setting_updates=self.sampled_settings,
+            default_config=self.default_config,
+        )
 
     def sample_settings(self):
         """Sample PROPOSAL Settings
