@@ -3,42 +3,74 @@ from icecube import icetray, dataclasses
 from .config import write_config
 
 
-class PROPOSALStorm(icetray.I3Module):
-    """
-    Add a "m" frame for the PROPOSAL settings.
-    """
-    def __init__(self, ctx):
-        super(PROPOSALStorm, self).__init__(ctx)
-        self.AddParameter("ConfigFilePath", "Path to output config file.")
-        self.AddParameter("RandomService", "RandomService to use.")
-        self.AddParameter(
-            "UniformRanges",
-            "Dictionary of settings which will be sampled uniformly "
-            "in the given range. Format: {'name': [min, max]}", {})
-        self.AddParameter(
-            "DiscreteOptions",
-            "Dictionary of settings which will be sampled uniformly "
-            "from the given options. Format: {'name': [option1, option2]}", {})
-        self.AddParameter(
-            "OutputKey", "Output key of the meta data.", 'PROPOSALStorm')
+class PROPOSALStorm:
 
-    def Configure(self):
-        self.config_file_path = self.GetParameter("ConfigFilePath")
-        self._rnd = self.GetParameter("RandomService")
-        self._ranges_dict = self.GetParameter("UniformRanges")
-        self._options_dict = self.GetParameter("DiscreteOptions")
-        self._output_key = self.GetParameter("OutputKey")
+    def __init__(
+            self, config_file_path, random_service,
+            uniform_ranges={}, discrete_options={},
+            ):
+        """Set up PROPOSAL Storm
 
-        if self._options_dict != {}:
+        Parameters
+        ----------
+        config_file_path : str
+            Path to which the config file will be written to.
+        random_service : obj
+            A random number service.
+        uniform_ranges : dict, optional
+            A dictionary of settings which will be sampled uniformly in the
+            provided range. Format:
+                {'name': [min, manx]}
+        discrete_options : dict, optional
+            A dictionary of settings which will be sampled uniformly from
+            the provided options. Format:
+                {'name': [option1, option2]}
+            [Note: this option is not yet supported!]
+        """
+        self.config_file_path = config_file_path
+        self._rnd = random_service
+        self.uniform_ranges = uniform_ranges
+        self.discrete_options = discrete_options
+
+        if self.discrete_options != {}:
             raise NotImplementedError('Discrete options not yet supported!')
-
-        self._frame_has_been_pushed = False
 
         # sample setting values
         self.sampled_settings = self.sample_settings()
 
         # write config file with these settings
         write_config(self.config_file_path, self.sampled_settings)
+
+    def sample_settings(self):
+        """Sample PROPOSAL Settings
+        """
+        settings_dict = {}
+
+        # Uniform ranges
+        for key, value_range in self.uniform_ranges.items():
+            settings_dict[key] = float(self._rnd.uniform(*value_range))
+
+        # Uniform options
+        for key, options in self.discrete_options.items():
+            raise NotImplementedError('Discrete options not yet supported!')
+
+        return settings_dict
+
+
+class PROPOSALStormWriter(icetray.I3Module):
+    """
+    Add a "m" frame for the PROPOSAL settings.
+    """
+    def __init__(self, ctx):
+        super(PROPOSALStormWriter, self).__init__(ctx)
+        self.AddParameter("PROPOSALStormObject", "PROPOSALStorm object.")
+        self.AddParameter(
+            "OutputKey", "Output key for the meta data.", 'PROPOSALStorm')
+
+    def Configure(self):
+        self.proposal_storm = self.GetParameter("PROPOSALStormObject")
+        self._output_key = self.GetParameter("OutputKey")
+        self._frame_has_been_pushed = False
 
     def Process(self):
 
@@ -53,11 +85,11 @@ class PROPOSALStorm(icetray.I3Module):
             settings_data = {}
 
             # add meta data on ranges
-            for key, value_range in self._ranges_dict.items():
+            for key, value_range in self.proposal_storm.uniform_ranges.items():
                 settings_data[key+'RangeMin'] = value_range[0]
                 settings_data[key+'RangeMax'] = value_range[1]
 
-            settings_data.update(self.sampled_settings)
+            settings_data.update(self.proposal_storm.sampled_settings)
             settings_frame[self._output_key] = dataclasses.I3MapStringDouble(
                 settings_data)
 
@@ -66,18 +98,3 @@ class PROPOSALStorm(icetray.I3Module):
             self._frame_has_been_pushed = True
 
         self.PushFrame(frame)
-
-    def sample_settings(self):
-        """Sample PROPOSAL Settings
-        """
-        settings_dict = {}
-
-        # Uniform ranges
-        for key, value_range in self._ranges_dict.items():
-            settings_dict[key] = float(self._rnd.uniform(*value_range))
-
-        # Uniform options
-        for key, options in self._options_dict.items():
-            raise NotImplementedError('Discrete options not yet supported!')
-
-        return settings_dict

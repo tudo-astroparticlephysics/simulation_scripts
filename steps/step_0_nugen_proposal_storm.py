@@ -16,6 +16,7 @@ from icecube import sim_services, MuonGun
 from utils import create_random_services, get_run_folder
 from resources.biased_simulation import BaseSimulationBias
 from resources.proposal_storm.proposal_storm import PROPOSALStorm
+from resources.proposal_storm.proposal_storm import PROPOSALStormWriter
 from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
 
 
@@ -78,11 +79,14 @@ def main(cfg, run_number, scratch):
     temp_dir = tempfile.TemporaryDirectory()
     temp_proposal_file = os.path.join(
         temp_dir.name, 'temp_proposal_config.json')
-    tray.AddModule(
-        PROPOSALStorm, 'PROPOSALStorm',
-        ConfigFilePath=temp_proposal_file,
-        RandomService=rnd_storm,
+    proposal_storm = PROPOSALStorm(
+        random_service=rnd_storm,
+        config_file_path=temp_proposal_file,
         **cfg['PROPOSALStormConfig']
+    )
+    tray.AddModule(
+        PROPOSALStormWriter, 'PROPOSALStormWriter',
+        PROPOSALStormObject=proposal_storm,
     )
 
     tray.AddSegment(
