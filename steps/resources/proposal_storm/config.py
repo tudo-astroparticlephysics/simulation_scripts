@@ -23,14 +23,15 @@ CONFIG_TEMPLATE_STRING = """{
                 {
                         "do_interpolation" : true,
                         "path_to_tables" : [
-                                "$I3_BUILD/PROPOSAL/resources/tables"
+                                # "$I3_BUILD/PROPOSAL/resources/tables"
                         ],
                         "path_to_tables_readonly" : [
-                                "$I3_TESTDATA/PROPOSAL/resources/tables",
-                                "$I3_BUILD/PROPOSAL/resources/tables"
+                                # "$I3_TESTDATA/PROPOSAL/resources/tables",
+                                # "$I3_BUILD/PROPOSAL/resources/tables"
                         ],
                         "do_binary_tables" : false,
-                        "just_use_readonly_path" : true
+                        # "just_use_readonly_path" : true
+                        "just_use_readonly_path" : false
                 },
 
                 "exact_time" : true,
