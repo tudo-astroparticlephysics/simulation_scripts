@@ -2,6 +2,8 @@
 #METAPROJECT /cvmfs/icecube.opensciencegrid.org/users/eganster/combo.releases.V01-00-02.py3-v4.0.1.RHEL_7_x86_64
 import click
 import yaml
+import time 
+import numpy as np 
 
 from I3Tray import I3Tray
 from icecube import icetray, dataclasses, dataio
@@ -55,6 +57,9 @@ def main(cfg, run_number, scratch):
     print('Outfile != $FINAL_OUT clean up for crashed scripts not possible!')
 
     tray = I3Tray()
+    
+    start_time = time.time()
+    
     """The main L1 script"""
     tray.AddModule('I3Reader',
                    'i3 reader',
@@ -144,6 +149,8 @@ def main(cfg, run_number, scratch):
     tray.Finish()
     del tray
 
+    end_time = time.time()
+    print('That took {} seconds'.format(np.round(end_time - start_time, 1)))
 
 if __name__ == '__main__':
     main()

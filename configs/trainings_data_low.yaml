@@ -8,9 +8,9 @@ chain_name: nugen_snowstorm_split
 seed: 1337
 
 # Number of the dataset
-dataset_number: 50002
+dataset_number: 60030
 # Events generated for each file
-n_events_per_run: 10000
+n_events_per_run: 1000000
 # Number of total runs/file
 n_runs: 10000
 
@@ -24,12 +24,12 @@ resources:
     1: 1
   # Indication of needed memory for each step if nothing is set 1GB is assumed as default
   memory:
-    0: 5gb  
+    0: 2gb  
     1: 3gb
-    2: 5gb
+    2: 2gb
     3: 3gb
     4: 3gb
-    5: 3gb
+    5: 5gb
   walltime:
   cpus:
 
@@ -62,10 +62,10 @@ det_pass2_keep_all_upto: -1
 det_keep_propagated_mc_tree: True
 
 NuGenSelectSplitModule: {
-    new_psi: True,
+    new_psi: False,
     percentage_energy_loss: 0.4,
     min_dist: -100,
-    beta: 1000,
+    beta: 1,
     perform_cut: False,
 }
 
@@ -84,6 +84,6 @@ ApplyBaseSimulationBias: True
 BaseSimulationBiasSettings: {
     'bias_function': 'UpgoingMuonStochasticity',
     'lower_probability_bound': !!float 1e-4,
-    'keep_all_events': True,
+    'keep_all_events': False,
     'verbose': False,
 }

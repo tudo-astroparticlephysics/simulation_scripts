@@ -18,6 +18,7 @@ from icecube.phys_services.which_split import which_split
 import os
 import sys
 import time
+import numpy as np
 
 import subprocess
 from math import log10, cos, radians
@@ -73,6 +74,9 @@ def main(cfg, run_number, scratch):
     ]
 
     tray = I3Tray()
+    
+    start_time = time.time()
+    
     """The main L1 script"""
     tray.AddModule('I3Reader',
                    'i3 reader',
@@ -325,7 +329,9 @@ def main(cfg, run_number, scratch):
     tray.AddModule("TrashCan", "the can")
     tray.Execute()
     tray.Finish()
-
+    
+    end_time = time.time()
+    print('That took {} seconds'.format(np.round(end_time - start_time, 1)))
 
 if __name__ == '__main__':
     main()

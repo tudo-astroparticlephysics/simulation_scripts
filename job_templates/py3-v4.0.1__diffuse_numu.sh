@@ -27,6 +27,9 @@ export CUDA_HOME=/usr/local/cuda-10.0;
 export PATH=$PATH:$CUDA_HOME/bin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_HOME/lib64
 
+# language
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
 
 echo $FINAL_OUT
 if [ -z ${PBS_JOBID} ] && [ -z ${_CONDOR_SCRATCH_DIR} ]

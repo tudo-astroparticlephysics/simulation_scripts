@@ -39,6 +39,9 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
         self.AddParameter('perform_cut',
                          'bool to write down all events and only check selection',
                          False)
+        self.AddParameter('selection',
+                          'bool to check selection',
+                          True)
 
     def Configure(self):
         """Set 
@@ -49,6 +52,7 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
         self._random_service = np.random.RandomState(self.GetParameter('RandomSeed'))
         self._beta = self.GetParameter('beta')
         self._perform_cut = self.GetParameter('perform_cut')
+        self._selection = self.GetParameter('selection')
 
     def Geometry(self, frame):
         """Summary
@@ -88,9 +92,10 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
         frame : I3Frame
             The current Q-frame.
         """
-
-        if selection(self, frame, self._perform_cut) == False:
-            return False
+        
+        if self._selection:
+            if selection(self, frame, self._perform_cut) == False:
+                return False
         
         if self._new_psi:
             insert_deflection_angle(frame, self._random_service, self._beta)

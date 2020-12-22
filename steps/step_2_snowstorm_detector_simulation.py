@@ -7,6 +7,8 @@ import os
 
 import click
 import yaml
+import time
+import numpy as np
 
 from icecube.simprod import segments
 from I3Tray import I3Tray
@@ -49,6 +51,8 @@ def main(cfg, run_number, scratch):
     print('Outfile != $FINAL_OUT clean up for crashed scripts not possible!')
 
     tray = I3Tray()
+    
+    start_time = time.time()
 
     tray.context['I3FileStager'] = dataio.get_stagers()
 
@@ -148,6 +152,8 @@ def main(cfg, run_number, scratch):
     tray.Execute()
     tray.Finish()
 
+    end_time = time.time()
+    print('That took {} seconds'.format(np.round(end_time - start_time, 1)))
 
 if __name__ == '__main__':
     main()

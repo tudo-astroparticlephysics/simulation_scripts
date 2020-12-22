@@ -28,7 +28,6 @@ def selection(self, frame, perform_cut=False):
         'max_p_minor_id': -1,
         'max_E_loss': -1,
         'hull_dist': -1,
-        'E_before_max_loss': -1,
         'energy_before_max_loss': -1,
         'max_p_type': -1,
         'pre_length': -1,
@@ -44,7 +43,6 @@ def selection(self, frame, perform_cut=False):
     # Get muon        
     muon = get_muon_of_inice_neutrino(frame)
     if muon == None:
-        print('muon none')
         selection = 0
     else:
         res['muon_minor_id'] = muon.minor_id
@@ -67,6 +65,10 @@ def selection(self, frame, perform_cut=False):
     
     frame.Put('I3MapSplit', dataclasses.I3MapStringDouble(res))
     
+    if res['max_p_minor_id'] == -1:
+        max_p_pos = dataclasses.I3Position(-1,-1,-1)
+        frame.Put('I3PosOfMaxEnergyLoss', dataclasses.I3Position(max_p_pos))
+    
     if perform_cut:
         return selection==1
 
@@ -85,14 +87,11 @@ def get_max_energy_loss(frame, muon, convex_hull):
     '''
     tree = frame['I3MCTree']
     muon_daughters = tree.get_daughters(muon)
-    energy_losses_inside = [p.energy if (p.type_string not in ('MuMinus','MuPlus')) & (distance_to_icecube_hull(p.pos)<0) else 0 for p in muon_daughters]
+    energy_losses_inside = [p.energy if (p.type_string in ['Brems','NuclInt', 'PairProd', 'DeltaE']) & (distance_to_icecube_hull(p.pos)<0) else 0 for p in muon_daughters]
     max_E_loss = np.max(energy_losses_inside)
-    # if max_E_loss < muon.energy * min_energy_loss:
-        # return None
         
     max_p_minor_id = -1
     hull_dist = -1
-    E_before_max_loss = -1
     energy_before_max_loss = -1
     max_p_type = -1
     pre_length = -1
@@ -116,22 +115,6 @@ def get_max_energy_loss(frame, muon, convex_hull):
         old_azimuth = max_p.dir.azimuth
         # Get muon energy
         energy_before_max_loss = mu_utils.get_muon_energy_at_distance(frame, muon, (max_p.pos - muon.pos).magnitude - 1)
-
-        if muon_daughters[max_index - 1].minor_id == max_p.minor_id-1:
-            E_before_max_loss = muon_daughters[max_index-1].energy   
-        elif muon_daughters[max_index - 2].minor_id == max_p.minor_id-1:
-            E_before_max_loss = muon_daughters[max_index-2].energy
-        elif muon_daughters[max_index - 3].minor_id == max_p.minor_id-1:
-            E_before_max_loss = muon_daughters[max_index-3].energy
-        else:        
-            print('error in Energy before max loss')
-            print(max_p.minor_id)
-            print(muon_daughters[max_index - 1].minor_id)
-            print(muon_daughters[max_index - 2].minor_id)
-            print(muon_daughters[max_index - 3].minor_id)
-            print(tree)
-            
-        # if distance_to_icecube_hull(max_p.pos) < min_dist:
     
         entry = mu_utils.get_muon_initial_point_inside(muon, convex_hull)
         exit = mu_utils.get_muon_exit_point(muon, convex_hull)
@@ -142,16 +125,13 @@ def get_max_energy_loss(frame, muon, convex_hull):
             pre_length =  (entry - max_p.pos).magnitude
             post_length = (max_p.pos - exit).magnitude
     
-    if max_p_pos == -1:
-        max_p_pos = dataclasses.I3Position(0,0,0)
-        
-    frame.Put('I3PosOfMaxEnergyLoss', dataclasses.I3Position(max_p_pos))
+    if max_p_pos != -1:
+        frame.Put('I3PosOfMaxEnergyLoss', dataclasses.I3Position(max_p_pos))
                    
     return {
         'max_p_minor_id': max_p_minor_id,
         'max_E_loss': float(max_E_loss),
         'hull_dist': hull_dist,
-        'E_before_max_loss': E_before_max_loss,
         'energy_before_max_loss': energy_before_max_loss,
         'max_p_type': max_p_type,
         'pre_length': pre_length,
@@ -166,69 +146,81 @@ def get_max_energy_loss(frame, muon, convex_hull):
 
 def insert_deflection_angle(frame, random_service, beta=1):
 
+    tree = frame['I3MCTree']
+    frame.Put('OldTree', dataclasses.I3MCTree(tree))
+    
     max_p_minor_id = frame['I3MapSplit']['max_p_minor_id']
     if max_p_minor_id == -1:
-        print('max_p_minor_id = -1')
         return True
-
-    
-    tree = frame['I3MCTree']
-    
-    frame.Put('OldTree', dataclasses.I3MCTree(tree))
-
-    # muon_minor_id = frame['I3MapSplit']['muon_minor_id']
     
     found_max = False
-    # brems_nuclint = False
-    
-    
-    # muon_daughters = tree.get_daughters(muon)
-    
-    
+   
+    muon = get_muon_of_inice_neutrino(frame)
+    assert muon != None, 'muon = None'
+        
+    muon_daughters = tree.get_daughters(muon)
+     
     # Problem: change all angles of tree, not only muon track angles
     for i in range(len(tree)):
         d = tree[i]
+        
+        if d not in muon_daughters:
+            continue
+        
         if d.minor_id == max_p_minor_id:
+            
+            # Check tree order
+            assert d.minor_id > tree[i-1].minor_id, d.minor_id
+                
+            
             found_max = True
             muon_split_helper = d
             
-            d_type = d.type_string
-            # Break energy losses which are not NuclInt or Brems, ~2%
-            # if d_type in ('Brems', 'NuclInt'):            
-                # brems_nuclint = True
+            d_type = frame['I3MapSplit']['max_p_type']
             
-                # Incoming muon energy
-            E = frame['I3MapSplit']['E_before_max_loss']
-                # Muon energy afert maximum energy loss
-                # E_ = E - d.energy 
+            # Incoming muon energy
+            E = frame['I3MapSplit']['energy_before_max_loss']
+            # Muon energy afert maximum energy loss
             E_ = E - frame['I3MapSplit']['max_E_loss']
-            if d_type == 'NuclInt':
-                # brems_nuclint = True
-                new_psi_ = get_new_psi_nuclint(E, E_, random_service) * beta
-            elif d_type == 'Brems':
-                # brems_nuclint = True
-                new_psi_ = get_new_psi_brems(E, E_, random_service) * beta
+            if int(d_type) == -2000001004: # NuclInt
+                new_psi = get_new_psi_nuclint(E, E_, random_service) * beta
+            elif int(d_type) == -2000001001: # Brems
+                new_psi = get_new_psi_brems(E, E_, random_service) * beta
+            elif int(d_type) == -2000001003: # PairProd
+                new_psi = get_new_psi_pairprod(E, E_, random_service) * beta
+            elif int(d_type) == -2000001002: # DeltaE
+                new_psi = 0
             else:
-                new_psi_ = 0
+                # Wrong interaction type
+                print('maximum loss: ', frame['I3MapSplit']['max_E_loss']) 
+                print('id: ', d.minor_id)
+                print('type: ', d_type)
+                print(tree)
+                assert False, tree
+                
+            # Error in sampling of new_psi
+            assert new_psi >= 0, new_psi
 
-            frame['I3MapSplit']['delta_psi_in_degree'] = new_psi_
+            if new_psi > 45:
+                # Result of high beta
+                new_psi = random_service.uniform(10, 45)
+                
+            frame['I3MapSplit']['delta_psi_in_degree'] = new_psi
             
-            # frame['I3MapSplit']['old_zenith'] = d.dir.zenith
-            # frame['I3MapSplit']['old_azimuth'] = d.dir.azimuth
-            # frame['I3MapSplit']['time'] = d.time
-            # frame.Put('I3PosOfMaxEnergyLoss', dataclasses.I3Position(d.pos))
+            if new_psi == 0:
+                # in case of DeltaE because until now there is on parametrization
+                break  
             
-            if new_psi_ == 0:
-                break
-            
-            
-            new_zenith_azimuth = get_delta_psi_vector(d.dir.zenith, d.dir.azimuth, random_service=random_service, delta_psi=new_psi_, is_degree=True)
+            new_zenith_azimuth = get_delta_psi_vector(d.dir.zenith, d.dir.azimuth, random_service=random_service, delta_psi=new_psi, is_degree=True)
             frame['I3MapSplit']['new_zenith'] = new_zenith_azimuth[0][0]
             frame['I3MapSplit']['new_azimuth'] = new_zenith_azimuth[1][0]
             
         if found_max == True:
             
-            ### FIX: CHANGE DIR ONLY OF MUON TRACK, NOT WHOLE TREE
+            # CHANGE DIR ONLY OF MUON TRACK, NOT WHOLE TREE
+            if tree[i].type_string not in ['MuMinus', 'MuPlus', 'Brems', 'NuclInt', 'DeltaE', 'PairProd']:
+                # Case of stopping muon
+                continue
             
             # Set new direction
             tree[i].dir = dataclasses.I3Direction(new_zenith_azimuth[0][0], new_zenith_azimuth[1][0])
@@ -283,6 +275,24 @@ def get_new_psi_nuclint(E, E_, rnd_state, is_degree=True):
     sin2 = (t_p - t_min) / (4 * (E * E_ - mu**2) - 2 * t_min)
     theta_mu = 2 * np.arcsin(np.sqrt(sin2))
     
+    if is_degree:
+        return np.rad2deg(theta_mu)
+    else:
+        return theta_mu
+    
+def get_new_psi_pairprod(E, E_, rnd_state, is_degree=True):
+    n = -1
+    a = 8.9e-4
+    b = 1.5e-5
+    c = 0.032
+    d = 1
+    e = 0.1
+    m = 105.7 / 1e3 # in GeV
+    m_e =   0.5110 / 1e3 # in GeV
+    nu = (E - E_) / (E - m)
+    minimum = np.min([a * nu**(1/4) * (1 + b*E) + c * nu / (nu + d), e])
+    rms_theta = (2.3 + np.log(E)) * (1- nu)**n / E * (nu - 2 * m_e/E)**2 / nu**2 * minimum
+    theta_mu = abs(rnd_state.normal(0, rms_theta/np.sqrt(2), 1)[0]) 
     if is_degree:
         return np.rad2deg(theta_mu)
     else:
