@@ -129,6 +129,12 @@ def main(cfg, run_number, scratch):
                     ],
                     )
 
+    if not cfg['det_keep_mc_pulses']:
+        tray.Add("Delete", Keys=['I3MCPulseSeriesMapPrimaryIDMap'])
+
+    if not cfg['det_keep_mc_hits']:
+        tray.Add("Delete", Keys=['I3MCPESeriesMapParticleIDMap'])
+
     if cfg['det_remove_keys_from_m_frame']:
         tray.Add("Delete", Keys=cfg['det_remove_keys_from_m_frame'])
 
