@@ -123,7 +123,7 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
             # push frame on to subsequent modules
             self.PushFrame()
 
-    def _powerlaw_sampler(e_min, e_max, gamma, num=1):
+    def _powerlaw_sampler(e_min, e_max, gamma):
         """Sample from Powerlaw Distribution
 
         Sample `num` events from a power law with index gamma between x
@@ -151,10 +151,10 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
 
         Returns
         -------
-        np.ndarray
-            The random numbers sampled from a powerlaw.
+        float
+            The sampled energy from the specified powerlaw distribution.
         """
-        u = self.random_service.uniform(size=int(num))
+        u = self.random_service.uniform(0., 1.)
 
         if gamma == 1:
             return np.exp(u * np.log(xhigh / xlow)) * xlow
@@ -217,7 +217,7 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
         muon.location_type = dataclasses.I3Particle.LocationType.InIce
 
         # sample type: MuPlus or MuMinus
-        u = self.random_service.uniform(size=1)
+        u = self.random_service.uniform(0., 1.)
         if u > 0.5:
             pdg_encoding = 13
         else:
