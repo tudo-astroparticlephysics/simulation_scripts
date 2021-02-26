@@ -123,7 +123,7 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
             # push frame on to subsequent modules
             self.PushFrame()
 
-    def _powerlaw_sampler(e_min, e_max, gamma):
+    def _powerlaw_sampler(self, e_min, e_max, gamma):
         """Sample from Powerlaw Distribution
 
         Sample `num` events from a power law with index gamma between x
