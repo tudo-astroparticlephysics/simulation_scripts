@@ -110,21 +110,54 @@ def main(cfg, run_number, scratch):
         **cfg['veto_muon_injection_config']
     )
 
-    # propagate muons if config exists in config
-    # Note: Snowstorm may perform muon propagation internally
-    if 'muon_propagation_config' in cfg:
-        tray.AddModule(
-            'Rename', keys=[import_cfg['mctree_name'], 'I3MCTree_preMuonProp'])
-        tray.AddSegment(segments.PropagateMuons,
-                        'propagate_muons',
-                        RandomService=random_services[1],
-                        **cfg['muon_propagation_config'])
-    else:
-        # In this case we are not propagating the I3MCTree yet, but
-        # are letting this be done by snowstorm propagation
-        # We need to add a key named 'I3MCTree', since snowstorm expects this
-        # It will propagate the particles for us.
-        tray.AddModule('Rename', keys=['I3MCTree_preMuonProp', 'I3MCTree'])
+    # rename I3MCTrees so that we can run PROPOSAL
+    def rename_keys(frame, rename_dict):
+        for key, new_name in rename_dict.items():
+            frame[new_name] = frame[key]
+            del frame[key]
+
+    t_name = import_cfg['mctree_name']
+    rename_dict = {
+        t_name: '_' + t_name,
+        t_name + '_preMuonProp': '_' + t_name + '_preMuonProp',
+        t_name + '_preMuonProp_RNGState': (
+            '_' + t_name + '_preMuonProp_RNGState',
+        ),
+        t_name + '_veto_muon': 'I3MCTree_preMuonProp',
+    }
+    tray.AddModule(rename_keys, 'TempRename', rename_dict=rename_dict)
+
+    # propagate injected muon
+    tray.AddSegment(segments.PropagateMuons,
+                    'propagate_muons',
+                    RandomService=random_services[1],
+                    **cfg['muon_propagation_config'])
+
+    # now revert renaming
+    rename_dict = {
+        'I3MCTree': t_name + '_veto_muon',
+        'I3MCTree_preMuonProp': t_name + '_preMuonProp_veto_muon',
+        '_' + t_name: t_name,
+        '_' + t_name + '_preMuonProp': t_name + '_preMuonProp',
+        '_' + t_name + '_preMuonProp_RNGState': (
+            t_name + '_preMuonProp_RNGState',
+        ),
+    }
+    tray.AddModule(rename_keys, 'UndoRenaming', rename_dict=rename_dict)
+
+    # create combined I3MCTree for CLSIM
+    def combine_mctrees(frame, tree1, tree2):
+        tree1 = dataclasses.I3MCTree(frame[tree1])
+        tree2 = dataclasses.I3MCTree(frame[tree2])
+        for primary in tree2.primaries:
+            tree1.add_primary(primary)
+            tree1.append_children(primary, tree2.children(primary))
+        frame['CombinedMuonVetoI3MCTree'] = tree1
+    tray.AddModule(
+        combine_mctrees, 'combine_mctrees',
+        tree1=t_name,
+        tree2=t_name + '_veto_muon',
+    )
 
     # Bias simulation if desired
     if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:

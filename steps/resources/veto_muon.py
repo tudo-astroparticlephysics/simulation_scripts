@@ -102,8 +102,7 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
             inj_dir = dataclasses.I3Direction(primary.dir)
 
             # inject new muon
-            mc_tree, injection_info = self._inject_muon(
-                mc_tree=mc_tree,
+            mc_tree, injection_info = self._create_mc_tree(
                 inj_pos=inj_pos,
                 inj_time=inj_time,
                 inj_dir=inj_dir,
@@ -113,8 +112,7 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
             frame_copy = icetray.I3Frame(frame)
 
             # replace I3MCTree
-            del frame_copy[self.mctree_name]
-            frame_copy[self.mctree_name] = mc_tree
+            frame_copy[self.mctree_name + '_veto_muon'] = mc_tree
 
             # add info to frame
             injection_info['injection_counter'] = float(i)
@@ -183,13 +181,11 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
                 self.sampling_method))
         return energy
 
-    def _inject_muon(self, mc_tree, inj_pos, inj_time, inj_dir):
+    def _create_mc_tree(self, inj_pos, inj_time, inj_dir):
         """Inject accompanying muon in provided I3MCTree
 
         Parameters
         ----------
-        mc_tree : I3MCTree
-            The I3MCTree into which the muon will be injected.
         inj_pos : I3Position
             The position at which to inject the muon.
         inj_time : double
@@ -204,6 +200,7 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
         I3MapStringDouble
             Information on the injected muon.
         """
+        mc_tree = dataclasses.I3MCTree()
         muon_primary = dataclasses.I3Particle()
         muon_primary.shape = dataclasses.I3Particle.ParticleShape.Primary
         muon_primary.dir = dataclasses.I3Direction(inj_dir)
