@@ -181,25 +181,34 @@ class UpgoingMuonStochasticity(BaseBiasFunction):
                 max_rel_loss = 0.
 
         # bias based on zenith
-        zenith_keep_prob = self.sigmoid(
-            -cos_zen,
-            s=self.cos_zenith_sigmoid_scale,
-            b=self.cos_zenith_sigmoid_bias,
-        )
+        if self.cos_zenith_sigmoid_scale is None:
+            zenith_keep_prob = 1.0
+        else:
+            zenith_keep_prob = self.sigmoid(
+                -cos_zen,
+                s=self.cos_zenith_sigmoid_scale,
+                b=self.cos_zenith_sigmoid_bias,
+            )
 
         # bias based on in detector track length
-        track_length_prob = self.sigmoid(
-            track_length,
-            s=self.track_length_sigmoid_scale,
-            b=self.track_length_sigmoid_bias,
-        )
+        if self.track_length_sigmoid_scale is None:
+            track_length_prob = 1.0
+        else:
+            track_length_prob = self.sigmoid(
+                track_length,
+                s=self.track_length_sigmoid_scale,
+                b=self.track_length_sigmoid_bias,
+            )
 
         # bias based on maximum relative energy loss
-        max_rel_loss_prob = self.sigmoid(
-            max_rel_loss,
-            s=self.muon_loss_sigmoid_scale,
-            b=self.muon_loss_sigmoid_bias,
-        )
+        if self.muon_loss_sigmoid_scale is None:
+            max_rel_loss_prob = 1.
+        else:
+            max_rel_loss_prob = self.sigmoid(
+                max_rel_loss,
+                s=self.muon_loss_sigmoid_scale,
+                b=self.muon_loss_sigmoid_bias,
+            )
 
         bias_info = {
             'found_muon': found_muon,

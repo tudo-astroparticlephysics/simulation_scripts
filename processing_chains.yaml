@@ -76,6 +76,19 @@ nugen_snowstorm:
     4: step_4_pass2_L2_py3_v4_1_0
     5: step_5_final_level_numu
 
+nugen_snowstorm_proposalstorm:
+  default_config: configs/default_nugen_snowstorm.yaml
+  job_template: job_templates/py3-v4.1.0.sh
+  job_templates:
+    5: job_templates/py3-v4.0.1__diffuse_numu.sh
+  steps:
+    0: step_0_nugen_proposal_storm
+    1: step_1_snowstorm_propagation
+    2: step_2_snowstorm_detector_simulation
+    3: step_3_pass2_L1_py3_v4_1_0
+    4: step_4_pass2_L2_py3_v4_1_0
+    5: step_5_final_level_numu
+
 muon_resimulation:
   default_config: configs/default_muon_resimulation.yaml
   job_template: job_templates/nugen_general_template.sh
