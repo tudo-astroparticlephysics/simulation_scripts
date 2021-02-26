@@ -110,41 +110,46 @@ def main(cfg, run_number, scratch):
         **cfg['veto_muon_injection_config']
     )
 
-    # rename I3MCTrees so that we can run PROPOSAL
-    def rename_keys(frame, rename_dict):
-        for key, new_name in rename_dict.items():
-            if key in frame:
-                frame[new_name] = frame[key]
-                del frame[key]
+    # # rename I3MCTrees so that we can run PROPOSAL
+    # def rename_keys(frame, rename_dict):
+    #     for key, new_name in rename_dict.items():
+    #         if key in frame:
+    #             frame[new_name] = frame[key]
+    #             del frame[key]
+    #         print('key', key)
 
-    t_name = import_cfg['mctree_name']
-    rename_dict = {
-        t_name: '_' + t_name,
-        t_name + '_preMuonProp': '_' + t_name + '_preMuonProp',
-        t_name + '_preMuonProp_RNGState': (
-            '_' + t_name + '_preMuonProp_RNGState',
-        ),
-        t_name + '_veto_muon': 'I3MCTree_preMuonProp',
-    }
-    tray.AddModule(rename_keys, 'TempRename', rename_dict=rename_dict)
+    # t_name = import_cfg['mctree_name']
+    # rename_dict = {
+    #     t_name: '_' + t_name,
+    #     t_name + '_preMuonProp': '_' + t_name + '_preMuonProp',
+    #     t_name + '_preMuonProp_RNGState': (
+    #         '_' + t_name + '_preMuonProp_RNGState',
+    #     ),
+    #     t_name + '_veto_muon': 'I3MCTree_preMuonProp',
+    # }
+    # tray.AddModule(rename_keys, 'TempRename', rename_dict=rename_dict)
 
     # propagate injected muon
+    cfg['muon_propagation_config'].update({
+        'InputMCTreeName': t_name + 'VetoMuon_preMuonProp',
+        'OutputMCTreeName': t_name + 'VetoMuon',
+    })
     tray.AddSegment(segments.PropagateMuons,
                     'propagate_muons',
                     RandomService=random_services[1],
                     **cfg['muon_propagation_config'])
 
-    # now revert renaming
-    rename_dict = {
-        'I3MCTree': t_name + '_veto_muon',
-        'I3MCTree_preMuonProp': t_name + '_preMuonProp_veto_muon',
-        '_' + t_name: t_name,
-        '_' + t_name + '_preMuonProp': t_name + '_preMuonProp',
-        '_' + t_name + '_preMuonProp_RNGState': (
-            t_name + '_preMuonProp_RNGState',
-        ),
-    }
-    tray.AddModule(rename_keys, 'UndoRenaming', rename_dict=rename_dict)
+    # # now revert renaming
+    # rename_dict = {
+    #     'I3MCTree': t_name + '_veto_muon',
+    #     'I3MCTree_preMuonProp': t_name + '_preMuonProp_veto_muon',
+    #     '_' + t_name: t_name,
+    #     '_' + t_name + '_preMuonProp': t_name + '_preMuonProp',
+    #     '_' + t_name + '_preMuonProp_RNGState': (
+    #         t_name + '_preMuonProp_RNGState',
+    #     ),
+    # }
+    # tray.AddModule(rename_keys, 'UndoRenaming', rename_dict=rename_dict)
 
     # create combined I3MCTree for CLSIM
     def combine_mctrees(frame, tree1, tree2):
@@ -157,7 +162,7 @@ def main(cfg, run_number, scratch):
     tray.AddModule(
         combine_mctrees, 'combine_mctrees',
         tree1=t_name,
-        tree2=t_name + '_veto_muon',
+        tree2=t_name + 'VetoMuon',
     )
 
     # Bias simulation if desired

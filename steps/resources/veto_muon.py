@@ -112,7 +112,7 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
             frame_copy = icetray.I3Frame(frame)
 
             # replace I3MCTree
-            frame_copy[self.mctree_name + '_veto_muon'] = mc_tree
+            frame_copy[self.mctree_name + 'VetoMuon_preMuonProp'] = mc_tree
 
             # add info to frame
             injection_info['injection_counter'] = float(i)
