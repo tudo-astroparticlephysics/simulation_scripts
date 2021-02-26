@@ -272,3 +272,4 @@ class CombineMCTrees(icetray.I3ConditionalModule):
             tree1.add_primary(primary)
             tree1.append_children(primary, tree2.children(primary))
         frame[self.output_key] = tree1
+        self.PushFrame(frame)
