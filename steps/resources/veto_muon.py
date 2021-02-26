@@ -126,8 +126,8 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
     def _powerlaw_sampler(self, e_min, e_max, gamma):
         """Sample from Powerlaw Distribution
 
-        Sample `num` events from a power law with index gamma between x
-        low and xhigh by using the analytic inversion method.
+        Sample `num` events from a power law with index gamma between e_min
+        and e_max by using the analytic inversion method.
         The power law pdf is given by
         .. math::
            \mathrm{pdf}(\gamma) = x^{-\gamma} / \mathrm{norm}
@@ -157,10 +157,10 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
         u = self.random_service.uniform(0., 1.)
 
         if gamma == 1:
-            return np.exp(u * np.log(xhigh / xlow)) * xlow
+            return np.exp(u * np.log(e_max / e_min)) * e_min
         else:
-            radicant = (u * (xhigh**(1. - gamma) - xlow**(1. - gamma))
-                        + xlow**(1. - gamma))
+            radicant = (u * (e_max**(1. - gamma) - e_min**(1. - gamma))
+                        + e_min**(1. - gamma))
             return radicant**(1. / (1. - gamma))
 
     def _sample_energy(self):
