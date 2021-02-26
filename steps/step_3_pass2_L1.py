@@ -11,7 +11,9 @@ from icecube import phys_services
 from icecube.filterscripts import filter_globals
 from icecube.filterscripts.all_filters import OnlineFilter
 from icecube.phys_services.which_split import which_split
-import os, sys, time
+import os
+import sys
+import time
 
 import subprocess
 from math import log10, cos, radians
@@ -50,7 +52,7 @@ def main(cfg, run_number, scratch):
     else:
         outfile = cfg['outfile_pattern'].format(**cfg)
     outfile = outfile.replace('Level0.{}'.format(cfg['step']),
-                            'Level0.{}'.format(cfg['step'] % 10))
+                              'Level0.{}'.format(cfg['step'] % 10))
     outfile = outfile.replace(' ', '0')
     outfile = outfile.replace('2012_pass2', 'pass2')
     print('Outfile != $FINAL_OUT clean up for crashed scripts not possible!')
@@ -65,6 +67,7 @@ def main(cfg, run_number, scratch):
         'BiasedMuonWeighter', 'BiasedMuonCorridorWeighter',
         'BiasedMESCHotspotWeighter', 'BiasedSimulationWeight',
         'PROPOSALStorm', 'PROPOSALStormUniformRanges',
+        'MCVetoMuonInjectionInfo',
     ]
 
     tray = I3Tray()

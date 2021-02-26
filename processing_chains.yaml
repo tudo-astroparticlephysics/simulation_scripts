@@ -181,6 +181,19 @@ neutrino_injection_ppc:
     13: step_3_pass2_get_pulses_no_merging_py3_v4_1_0
     23: step_3_pass2_get_mc_pulses_py3_v4_1_0
 
+atmospheric_neutrinos:
+  default_config: configs/default_cascade_snowstorm.yaml
+  job_template: job_templates/py3-v4.1.0.sh
+  job_templates:
+    5: job_templates/py3-v4.0.1__diffuse_numu.sh
+  steps:
+    0: step_0_inject_veto_muons
+    1: step_1_snowstorm_propagation
+    2: step_2_snowstorm_detector_simulation
+    3: step_3_pass2_L1_py3_v4_1_0
+    4: step_4_pass2_L2_py3_v4_1_0
+    5: step_5_final_level_numu
+
 event_import_snowstorm:
   default_config: configs/default_cascade_snowstorm.yaml
   job_template: job_templates/py3-v4.1.0.sh
