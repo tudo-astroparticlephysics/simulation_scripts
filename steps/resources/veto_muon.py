@@ -88,7 +88,7 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
                 # particle did not hit convex hull, use closest approach
                 closest_position = I3Calculator.closest_approach_position(
                     primary, dataclasses.I3Position(0., 0., 0.))
-                distance = get_distance_along_track_to_point(
+                distance = mu_utils.get_distance_along_track_to_point(
                     primary.pos, primary.dir, closest_position)
             else:
                 distance = min(intersection_ts)
