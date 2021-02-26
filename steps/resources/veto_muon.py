@@ -237,3 +237,38 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
         })
 
         return mc_tree, injection_info
+
+
+class CombineMCTrees(icetray.I3ConditionalModule):
+
+    def __init__(self, context):
+        """Class to combine two I3MCTrees
+
+        Parameters
+        ----------
+        context : TYPE
+            Description
+        """
+        icetray.I3ConditionalModule.__init__(self, context)
+        self.AddOutBox('OutBox')
+        self.AddParameter('tree1', 'The name of the first I3MCTree.')
+        self.AddParameter('tree2', 'The name of the first I3MCTree.')
+        self.AddParameter(
+            'output_key', 'Key to which the combined I3MCTree is written to.')
+
+    def Configure(self):
+        """Configures MuonLossProfileFilter.
+        """
+        self.tree1 = self.GetParameter('tree1')
+        self.tree2 = self.GetParameter('tree2')
+        self.output_key = self.GetParameter('output_key')
+
+    def DAQ(self, frame):
+        """Inject accompanying muons
+        """
+        tree1 = dataclasses.I3MCTree(frame[self.tree1])
+        tree2 = dataclasses.I3MCTree(frame[self.tree2])
+        for primary in tree2.primaries:
+            tree1.add_primary(primary)
+            tree1.append_children(primary, tree2.children(primary))
+        frame[self.output_key] = tree1

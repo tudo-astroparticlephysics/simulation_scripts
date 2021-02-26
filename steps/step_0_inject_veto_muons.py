@@ -15,7 +15,7 @@ from utils import create_random_services, get_run_folder
 from resources import geometry
 from resources.import_events import ImportEvents
 from resources.biased_simulation import BaseSimulationBias
-from resources.veto_muon import InjectSingleVetoMuon
+from resources.veto_muon import InjectSingleVetoMuon, CombineMCTrees
 
 
 @click.command()
@@ -160,17 +160,11 @@ def main(cfg, run_number, scratch):
     # tray.AddModule(rename_keys, 'UndoRenaming', rename_dict=rename_dict)
 
     # create combined I3MCTree for CLSIM
-    def combine_mctrees(frame, tree1, tree2):
-        tree1 = dataclasses.I3MCTree(frame[tree1])
-        tree2 = dataclasses.I3MCTree(frame[tree2])
-        for primary in tree2.primaries:
-            tree1.add_primary(primary)
-            tree1.append_children(primary, tree2.children(primary))
-        frame['CombinedMuonVetoI3MCTree'] = tree1
-    tray.Add(
-        combine_mctrees, 'combine_mctrees',
+    tray.AddModule(
+        CombineMCTrees, 'CombineMCTrees',
         tree1=t_name,
         tree2=t_name + 'VetoMuon',
+        output_key='CombinedMuonVetoI3MCTree',
     )
 
     # Bias simulation if desired
