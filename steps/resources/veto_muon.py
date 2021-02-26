@@ -217,7 +217,11 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
         muon.location_type = dataclasses.I3Particle.LocationType.InIce
 
         # sample type: MuPlus or MuMinus
-        pdg_encoding = self.random_service.choice([13, -13])
+        u = self.random_service.uniform(size=1)
+        if u > 0.5:
+            pdg_encoding = 13
+        else:
+            pdg_encoding = -13
         muon.pdg_encoding = pdg_encoding
 
         # sample energy
