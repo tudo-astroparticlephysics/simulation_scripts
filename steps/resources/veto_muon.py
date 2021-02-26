@@ -3,9 +3,11 @@ import numpy as np
 
 from I3Tray import I3Tray
 from icecube import icetray, dataclasses
+from icecube.phys_services import I3Calculator
 
 from ic3_labels.labels.utils import muon as mu_utils
 from ic3_labels.labels.utils import detector
+from ic3_labels.labels.utils import geometry
 
 
 class InjectSingleVetoMuon(icetray.I3ConditionalModule):
@@ -80,15 +82,23 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
             primary = mc_tree.get_primaries()[0]
 
             # compute entry point
-            entry, time, nu_energy = mu_utils.get_muon_entry_info(
-                frame, primary, convex_hull=detector.icecube_hull)
+            intersection_ts = mu_utils.get_muon_convex_hull_intersections(
+                primary, convex_hull=detector.icecube_hull)
+            if len(intersection_ts) == 0:
+                # particle did not hit convex hull, use closest approach
+                closest_position = I3Calculator.closest_approach_position(
+                                                particle, position)
+                distance = get_distance_along_track_to_point(
+                    primary.pos, primary.dir, closest_position)
+            else:
+                distance = min(intersection_ts)
 
             # in order to not land exactly on the conved hull and potentially
             # cause issues for label generation, we will walk back a little further
             # for primary and muon injection
-            dt = time - 10 - primary.time
-            inj_pos = primary.pos + dt * primary.dir
-            inj_time = time - 10
+            distance -= 1
+            inj_pos = primary.pos + distance * primary.dir
+            inj_time = primary.time + distance / dataclasses.I3Constants.c
             inj_dir = dataclasses.I3Direction(primary.dir)
 
             # inject new muon
