@@ -41,7 +41,7 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
             1)
         self.AddParameter(
             'sampling_settings',
-            'Settings specifying how the muon energy is sampled.'
+            'Settings specifying how the muon energy is sampled.',
             {'method': 'power_law', 'range': [10, 1e7], 'gamma': 2})
         self.AddParameter(
             'random_service',
