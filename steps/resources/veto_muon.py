@@ -163,9 +163,9 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
         """
         if self.sampling_method == 'power_law':
             energy = self._powerlaw_sampler(
-                e_min=self.sampling_settings['min_muon_energy'],
-                e_max=self.sampling_settings['max_muon_energy'],
-                gamma=self.sampling_settings['gamma_index'],
+                e_min=self.sampling_settings['range'][0],
+                e_max=self.sampling_settings['range'][1],
+                gamma=self.sampling_settings['gamma'],
             )
 
         else:

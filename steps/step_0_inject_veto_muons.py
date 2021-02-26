@@ -38,14 +38,25 @@ def main(cfg, run_number, scratch):
     # ------------------------------
     import_cfg = cfg['event_import_settings']
     glob_files = import_cfg['input_file_glob_list']
+
+    import_cfg['folder_num_pre_offset'] = cfg['run_number']//1000
+    import_cfg['folder_num'] = (
+        import_cfg['folder_offset'] + cfg['run_number']//1000
+    )
+    import_cfg['folder_pattern'] = import_cfg['folder_pattern'].format(
+        **import_cfg)
+    import_cfg['run_folder'] = import_cfg['folder_pattern'].format(
+        **import_cfg)
+
     if isinstance(glob_files, str):
         # single string provided
-        files = glob.glob(glob_files.format(run_number=run_number))
+        files = glob.glob(glob_files.format(**import_cfg))
     else:
         # list of file globs provided
         files = []
         for file_pattern in glob_files:
-            files.extend(glob.glob(file_pattern.format(run_number=run_number)))
+            files.extend(glob.glob(file_pattern.format(**import_cfg)))
+
     # sort files
     files = sorted(files)
     # ------------------------------
@@ -87,6 +98,9 @@ def main(cfg, run_number, scratch):
     )
 
     # inject coincident muon from some direction as neutrino
+    if 'mctree_name' not in cfg['veto_muon_injection_config']:
+        cfg['veto_muon_injection_config'] = import_cfg['mctree_name']
+
     tray.AddModule(
         InjectSingleVetoMuon, 'InjectSingleVetoMuon',
         random_service=random_services[0],
@@ -96,6 +110,8 @@ def main(cfg, run_number, scratch):
     # propagate muons if config exists in config
     # Note: Snowstorm may perform muon propagation internally
     if 'muon_propagation_config' in cfg:
+        tray.AddModule(
+            'Rename', keys=[import_cfg['mctree_name'], 'I3MCTree_preMuonProp'])
         tray.AddSegment(segments.PropagateMuons,
                         'propagate_muons',
                         RandomService=random_services[1],
