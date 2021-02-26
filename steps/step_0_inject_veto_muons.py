@@ -110,6 +110,8 @@ def main(cfg, run_number, scratch):
         **cfg['veto_muon_injection_config']
     )
 
+    t_name = import_cfg['mctree_name']
+
     # # rename I3MCTrees so that we can run PROPOSAL
     # def rename_keys(frame, rename_dict):
     #     for key, new_name in rename_dict.items():
@@ -118,7 +120,6 @@ def main(cfg, run_number, scratch):
     #             del frame[key]
     #         print('key', key)
 
-    # t_name = import_cfg['mctree_name']
     # rename_dict = {
     #     t_name: '_' + t_name,
     #     t_name + '_preMuonProp': '_' + t_name + '_preMuonProp',
