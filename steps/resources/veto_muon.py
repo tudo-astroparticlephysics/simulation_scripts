@@ -118,10 +118,10 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
 
             # add info to frame
             injection_info['injection_counter'] = float(i)
-            frame[self.output_key] = injection_info
+            frame_copy[self.output_key] = injection_info
 
             # push frame on to subsequent modules
-            self.PushFrame()
+            self.PushFrame(frame_copy)
 
     def _powerlaw_sampler(self, e_min, e_max, gamma):
         """Sample from Powerlaw Distribution
