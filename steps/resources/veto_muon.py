@@ -264,12 +264,10 @@ class CombineMCTrees(icetray.I3ConditionalModule):
         self.output_key = self.GetParameter('output_key')
 
     def DAQ(self, frame):
-        """Inject accompanying muons
+        """Merge trees
         """
         tree1 = dataclasses.I3MCTree(frame[self.tree1])
         tree2 = dataclasses.I3MCTree(frame[self.tree2])
-        for primary in tree2.primaries:
-            tree1.add_primary(primary)
-            tree1.append_children(primary, tree2.children(primary))
+        tree1.merge(tree2)
         frame[self.output_key] = tree1
         self.PushFrame(frame)
