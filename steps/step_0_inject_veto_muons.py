@@ -130,6 +130,9 @@ def main(cfg, run_number, scratch):
     # }
     # tray.AddModule(rename_keys, 'TempRename', rename_dict=rename_dict)
 
+    # temporarily save MMCTrackList
+    tray.AddModule('Rename', keys=['MMCTrackList', '_MMCTrackList'])
+
     # propagate injected muon
     cfg['muon_propagation_config'].update({
         'InputMCTreeName': t_name + 'VetoMuon_preMuonProp',
@@ -139,6 +142,11 @@ def main(cfg, run_number, scratch):
                     'propagate_muons',
                     RandomService=random_services[1],
                     **cfg['muon_propagation_config'])
+    tray.AddModule('Rename', keys=['MMCTrackList', '_MMCTrackList'])
+
+    # undo renaming
+    tray.AddModule('Rename', keys=['MMCTrackList', 'MMCTrackListVetoMuon'])
+    tray.AddModule('Rename', keys=['_MMCTrackList', 'MMCTrackList'])
 
     # # now revert renaming
     # rename_dict = {
@@ -160,7 +168,7 @@ def main(cfg, run_number, scratch):
             tree1.add_primary(primary)
             tree1.append_children(primary, tree2.children(primary))
         frame['CombinedMuonVetoI3MCTree'] = tree1
-    tray.AddModule(
+    tray.Add(
         combine_mctrees, 'combine_mctrees',
         tree1=t_name,
         tree2=t_name + 'VetoMuon',
