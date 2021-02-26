@@ -57,7 +57,7 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
     def Configure(self):
         """Configures MuonLossProfileFilter.
         """
-        self.mctree_name = self.GetParameter('n_frames_per_neutrino')
+        self.mctree_name = self.GetParameter('mctree_name')
         self.n_frames_per_neutrino = self.GetParameter('n_frames_per_neutrino')
         self.sampling_settings = self.GetParameter('sampling_settings')
         self.random_service = self.GetParameter('random_service')
