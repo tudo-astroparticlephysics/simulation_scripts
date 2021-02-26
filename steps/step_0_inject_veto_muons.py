@@ -40,6 +40,7 @@ def main(cfg, run_number, scratch):
     glob_files = import_cfg['input_file_glob_list']
 
     import_cfg['run_number'] = cfg['run_number']
+    import_cfg['dataset_number'] = cfg['dataset_number']
     import_cfg['folder_num_pre_offset'] = cfg['run_number']//1000
     import_cfg['folder_num'] = (
         import_cfg['folder_offset'] + cfg['run_number']//1000
