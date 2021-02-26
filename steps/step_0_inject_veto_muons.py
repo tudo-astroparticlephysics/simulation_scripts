@@ -100,7 +100,9 @@ def main(cfg, run_number, scratch):
 
     # inject coincident muon from some direction as neutrino
     if 'mctree_name' not in cfg['veto_muon_injection_config']:
-        cfg['veto_muon_injection_config'] = import_cfg['mctree_name']
+        cfg['veto_muon_injection_config']['mctree_name'] = (
+            import_cfg['mctree_name']
+        )
 
     tray.AddModule(
         InjectSingleVetoMuon, 'InjectSingleVetoMuon',
