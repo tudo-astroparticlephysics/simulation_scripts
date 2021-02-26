@@ -67,7 +67,10 @@ def main(cfg, run_number, scratch):
         'BiasedMuonWeighter', 'BiasedMuonCorridorWeighter',
         'BiasedMESCHotspotWeighter', 'BiasedSimulationWeight',
         'PROPOSALStorm', 'PROPOSALStormUniformRanges',
-        'MCVetoMuonInjectionInfo',
+        'MCVetoMuonInjectionInfo', 'MMCTrackListVetoMuon',
+        'CombinedMuonVetoI3MCTree', 'I3MCTreeVetoMuon',
+        'I3MCTreeVetoMuon_preMuonProp',
+        'I3MCTreeVetoMuon_preMuonProp_RNGState',
     ]
 
     tray = I3Tray()
