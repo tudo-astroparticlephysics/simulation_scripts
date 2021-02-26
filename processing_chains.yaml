@@ -182,7 +182,7 @@ neutrino_injection_ppc:
     23: step_3_pass2_get_mc_pulses_py3_v4_1_0
 
 atmospheric_neutrinos:
-  default_config: configs/default_cascade_snowstorm.yaml
+  default_config: configs/default_nugen_snowstorm.yaml
   job_template: job_templates/py3-v4.1.0.sh
   job_templates:
     5: job_templates/py3-v4.0.1__diffuse_numu.sh
