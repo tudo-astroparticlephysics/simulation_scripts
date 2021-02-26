@@ -113,8 +113,9 @@ def main(cfg, run_number, scratch):
     # rename I3MCTrees so that we can run PROPOSAL
     def rename_keys(frame, rename_dict):
         for key, new_name in rename_dict.items():
-            frame[new_name] = frame[key]
-            del frame[key]
+            if key in frame:
+                frame[new_name] = frame[key]
+                del frame[key]
 
     t_name = import_cfg['mctree_name']
     rename_dict = {
