@@ -142,7 +142,6 @@ def main(cfg, run_number, scratch):
                     'propagate_muons',
                     RandomService=random_services[1],
                     **cfg['muon_propagation_config'])
-    tray.AddModule('Rename', keys=['MMCTrackList', '_MMCTrackList'])
 
     # undo renaming
     tray.AddModule('Rename', keys=['MMCTrackList', 'MMCTrackListVetoMuon'])
