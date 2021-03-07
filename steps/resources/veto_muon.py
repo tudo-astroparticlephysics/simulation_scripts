@@ -145,6 +145,10 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
 
             # add info to frame
             injection_info['injection_counter'] = float(i)
+            if self.uncorrelated_muon_settings is not None:
+                injection_info['is_corelated'] = False
+            else:
+                injection_info['is_corelated'] = True
             frame_copy[self.output_key] = injection_info
 
             # push frame on to subsequent modules
