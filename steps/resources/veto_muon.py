@@ -101,9 +101,9 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
                     *self.uncorrelated_muon_settings['anchor_z_range'])
                 dt = self.random_service.uniform(
                     *self.uncorrelated_muon_settings['delta_time_range'])
-                azimuth = self.random_service.uniform(*np.rad2deg(
+                azimuth = self.random_service.uniform(*np.deg2rad(
                     self.uncorrelated_muon_settings['azimuth_range']))
-                zenith = self.random_service.uniform(*np.rad2deg(
+                zenith = self.random_service.uniform(*np.deg2rad(
                     self.uncorrelated_muon_settings['zenith_range']))
 
                 primary.pos = dataclasses.I3Position(x, y, z)
