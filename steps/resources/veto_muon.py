@@ -49,7 +49,7 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
             'uncorrelated_muon_settings',
             'If provided, the injected muon will be an uncorrelated coincident'
             ' muon sampled via the provided settings. The provided keys must '
-            'include: anchor_(x/y/z)_range, delta_time_range, '
+            'include: anchor_(x/y/z)_range, time_range, '
             'azimuth_range [deg], zenith_range [deg]',
             None)
         self.AddParameter(
@@ -99,8 +99,8 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
                     *self.uncorrelated_muon_settings['anchor_y_range'])
                 z = self.random_service.uniform(
                     *self.uncorrelated_muon_settings['anchor_z_range'])
-                dt = self.random_service.uniform(
-                    *self.uncorrelated_muon_settings['delta_time_range'])
+                t = self.random_service.uniform(
+                    *self.uncorrelated_muon_settings['time_range'])
                 azimuth = self.random_service.uniform(*np.deg2rad(
                     self.uncorrelated_muon_settings['azimuth_range']))
                 zenith = self.random_service.uniform(*np.deg2rad(
@@ -108,7 +108,7 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
 
                 primary.pos = dataclasses.I3Position(x, y, z)
                 primary.dir = dataclasses.I3Direction(zenith, azimuth)
-                primary.time = primary.time + dt
+                primary.time = t
 
             # compute entry point
             intersection_ts = mu_utils.get_muon_convex_hull_intersections(
@@ -122,9 +122,9 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
             else:
                 distance = min(intersection_ts)
 
-            # in order to not land exactly on the conved hull and potentially
-            # cause issues for label generation, we will walk back a little further
-            # for primary and muon injection
+            # in order to not land exactly on the convex hull and potentially
+            # cause issues for label generation, we will walk back a little
+            # further for primary and muon injection
             distance -= 1
             inj_pos = primary.pos + distance * primary.dir
             inj_time = primary.time + distance / dataclasses.I3Constants.c
