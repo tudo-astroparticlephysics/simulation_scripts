@@ -46,6 +46,13 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
             'Settings specifying how the muon energy is sampled.',
             {'method': 'power_law', 'range': [10, 1e7], 'gamma': 2})
         self.AddParameter(
+            'uncorrelated_muon_settings',
+            'If provided, the injected muon will be an uncorrelated coincident'
+            ' muon sampled via the provided settings. The provided keys must '
+            'include: anchor_(x/y/z)_range, delta_time_range, '
+            'azimuth_range [deg], zenith_range [deg]',
+            None)
+        self.AddParameter(
             'random_service',
             'The random service or seed to use. If this is an '
             'integer, a numpy random state will be created with '
@@ -62,6 +69,8 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
         self.mctree_name = self.GetParameter('mctree_name')
         self.n_frames_per_neutrino = self.GetParameter('n_frames_per_neutrino')
         self.sampling_settings = self.GetParameter('sampling_settings')
+        self.uncorrelated_muon_settings = self.GetParameter(
+            'uncorrelated_muon_settings')
         self.random_service = self.GetParameter('random_service')
         self.sampling_method = self.sampling_settings['method']
         self.output_key = self.GetParameter('output_key')
@@ -80,6 +89,26 @@ class InjectSingleVetoMuon(icetray.I3ConditionalModule):
 
             # primary particle
             primary = mc_tree.get_primaries()[0]
+
+            # inject uncorrelated muon with arbitrary anchor point
+            if self.uncorrelated_muon_settings is not None:
+                primary = dataclasses.I3Particle(primary)
+                x = self.random_service.uniform(
+                    *self.uncorrelated_muon_settings['anchor_x_range'])
+                y = self.random_service.uniform(
+                    *self.uncorrelated_muon_settings['anchor_y_range'])
+                z = self.random_service.uniform(
+                    *self.uncorrelated_muon_settings['anchor_z_range'])
+                dt = self.random_service.uniform(
+                    *self.uncorrelated_muon_settings['delta_time_range'])
+                azimuth = self.random_service.uniform(*np.rad2deg(
+                    self.uncorrelated_muon_settings['azimuth_range']))
+                zenith = self.random_service.uniform(*np.rad2deg(
+                    self.uncorrelated_muon_settings['zenith_range']))
+
+                primary.pos = dataclasses.I3Position(x, y, z)
+                primary.dir = dataclasses.I3Direction(zenith, azimuth)
+                primary.time = primary.time + dt
 
             # compute entry point
             intersection_ts = mu_utils.get_muon_convex_hull_intersections(
