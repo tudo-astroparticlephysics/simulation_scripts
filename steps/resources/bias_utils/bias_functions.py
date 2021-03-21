@@ -219,3 +219,70 @@ class UpgoingMuonStochasticity(BaseBiasFunction):
 
         keep_prob = zenith_keep_prob * track_length_prob * max_rel_loss_prob
         return keep_prob, bias_info
+
+
+class DowngoingFirstPrimary(BaseBiasFunction):
+
+    """Biases simulation towards downgoing events
+
+    This will be based on the first primary in the provide I3MCTree.
+    """
+
+    def __init__(
+            self,
+            cos_zenith_sigmoid_scale=0.03,
+            cos_zenith_sigmoid_bias=0.,
+            mctree_name='I3MCTree',
+            ):
+        """Summary
+
+        Parameters
+        ----------
+        mctree_name : str, optional
+            The name of the I3MCTree. The I3MCTree may be before CLSIM, but
+            PROPOSAL needs to have run.
+        """
+        self.mctree_name = mctree_name
+        self.cos_zenith_sigmoid_scale = cos_zenith_sigmoid_scale
+        self.cos_zenith_sigmoid_bias = cos_zenith_sigmoid_bias
+
+    def __call__(self, bias_data):
+        """Apply Bias Function
+
+        Parameters
+        ----------
+        bias_data : dict
+            Dictionary of bias input data.
+            Contents may include:
+            {
+                'frame': the current I3Frame,
+            }
+
+        Returns
+        -------
+        float
+            Keep probability: probability with which this event should be kept.
+        """
+
+        frame = bias_data['frame']
+
+        # get primary
+        mc_tree = frame[self.mctree_name]
+        primaries = mc_tree.get_primaries()
+        cos_zen = np.cos(primaries[0].dir.zenith)
+
+        # bias based on zenith
+        if self.cos_zenith_sigmoid_scale is None:
+            zenith_keep_prob = 1.0
+        else:
+            zenith_keep_prob = self.sigmoid(
+                cos_zen,
+                s=self.cos_zenith_sigmoid_scale,
+                b=self.cos_zenith_sigmoid_bias,
+            )
+
+        bias_info = {
+            'cos_zenith': cos_zen,
+        }
+
+        return zenith_keep_prob, bias_info
