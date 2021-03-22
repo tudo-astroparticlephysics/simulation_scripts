@@ -71,6 +71,11 @@ def main(cfg, run_number, scratch):
     additional_keep_keys += [
         'BiasedMuonWeighter', 'BiasedMuonCorridorWeighter',
         'BiasedMESCHotspotWeighter', 'BiasedSimulationWeight',
+        'PROPOSALStorm', 'PROPOSALStormUniformRanges',
+        'MCVetoMuonInjectionInfo', 'MMCTrackListVetoMuon',
+        'CombinedMuonVetoI3MCTree', 'I3MCTreeVetoMuon',
+        'I3MCTreeVetoMuon_preMuonProp',
+        'I3MCTreeVetoMuon_preMuonProp_RNGState',
     ]
 
     tray = I3Tray()
@@ -325,6 +330,7 @@ def main(cfg, run_number, scratch):
                             icetray.I3Frame.Physics,
                             icetray.I3Frame.TrayInfo,
                             icetray.I3Frame.Simulation,
+                            icetray.I3Frame.Stream('m'),
                             icetray.I3Frame.Stream('M')])
     tray.AddModule("TrashCan", "the can")
     tray.Execute()

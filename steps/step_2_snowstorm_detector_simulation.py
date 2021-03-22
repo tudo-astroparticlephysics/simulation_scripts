@@ -134,6 +134,12 @@ def main(cfg, run_number, scratch):
                     ],
                     )
 
+    if not cfg['det_keep_mc_pulses']:
+        tray.Add("Delete", Keys=['I3MCPulseSeriesMapPrimaryIDMap'])
+
+    if not cfg['det_keep_mc_hits']:
+        tray.Add("Delete", Keys=['I3MCPESeriesMapParticleIDMap'])
+
     if cfg['det_remove_keys_from_m_frame']:
         tray.Add("Delete", Keys=cfg['det_remove_keys_from_m_frame'])
 
@@ -147,6 +153,7 @@ def main(cfg, run_number, scratch):
                             icetray.I3Frame.Physics,
                             icetray.I3Frame.TrayInfo,
                             icetray.I3Frame.Simulation,
+                            icetray.I3Frame.Stream('m'),
                             icetray.I3Frame.Stream('M')])
     tray.AddModule("TrashCan", "the can")
     tray.Execute()
