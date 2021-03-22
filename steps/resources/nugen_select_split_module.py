@@ -109,10 +109,6 @@ class NuGenSelectSplitModule(icetray.I3ConditionalModule):
         ----------
         frame : I3Frame
             The current P-Frame.
-        """
-
-        
-        # cut_millipede_out_of_detector(frame)
-        
+        """        
 
         self.PushFrame(frame)

@@ -459,7 +459,7 @@ def get_delta_psi_vector_dir(vec, delta_psi,
     delta_psi = np.expand_dims(delta_psi, axis=-1)
 
     # This calculation is only valid if delta_psi < 90 degree
-    if np.any(delta_psi >= np.deg2rad(90)):
+    if np.any(delta_psi > np.deg2rad(90)):
         msg = 'Delta Psi angle must be smaller than 90 degrees, but it is {!r}'
         raise ValueError(msg.format(np.rad2deg(delta_psi)))
 

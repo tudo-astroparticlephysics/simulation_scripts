@@ -8,14 +8,18 @@ chain_name: nugen_snowstorm_split
 seed: 1337
 
 # Number of the dataset
-dataset_number: 50003
+dataset_number: 80031
 # Events generated for each file
-n_events_per_run: 100000
+n_events_per_run: 200000
 # Number of total runs/file
 n_runs: 10000
 
-e_min: !!float 1e4 
+e_min: !!float 1e4
 e_max: !!float 1e6 
+# Starting zenith
+zenith_min: 80.
+# End zenith
+zenith_max: 180.
 DOMOversizeFactor: 5
 
 resources:
@@ -24,12 +28,12 @@ resources:
     1: 1
   # Indication of needed memory for each step if nothing is set 1GB is assumed as default
   memory:
-    0: 2gb # 5gb  
+    0: 3gb # 5gb  
     1: 3gb
     2: 5gb
     3: 3gb
     4: 3gb
-    5: 3gb
+    5: 5gb
   walltime:
   cpus:
 
@@ -74,9 +78,9 @@ NuGenSelectSplitModule: {
 additional_keep_keys: [
     'I3MapSplit',
     'I3PosOfMaxEnergyLoss',
-    'OldTree',
-    'OnlineL2_SplineMPE',
-    'OnlineL2_SplineMPEFitParams'
+    # 'OldTree',
+    # 'OnlineL2_SplineMPE',
+    # 'OnlineL2_SplineMPEFitParams'
 ]
 
 # Bias Simulation

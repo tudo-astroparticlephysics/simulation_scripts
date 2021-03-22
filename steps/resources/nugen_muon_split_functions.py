@@ -10,6 +10,8 @@ from ic3_labels.labels.utils import muon as mu_utils
 
 from scipy.spatial import ConvexHull
 
+from icecube.icetray.i3logging import log_warn
+
 
 ########### NEW FUNCTIONS ###############################################
 def selection(self, frame, perform_cut=False):
@@ -37,6 +39,8 @@ def selection(self, frame, perform_cut=False):
         'new_zenith': -1,
         'new_azimuth': -1, 
         'delta_psi_in_degree': -1, 
+        'clip_psi': -1,
+        'beta': -1,
         'time': -1,
     }
     
@@ -148,6 +152,7 @@ def insert_deflection_angle(frame, random_service, beta=1):
 
     tree = frame['I3MCTree']
     frame.Put('OldTree', dataclasses.I3MCTree(tree))
+    frame['I3MapSplit']['beta'] = beta
     
     max_p_minor_id = frame['I3MapSplit']['max_p_minor_id']
     if max_p_minor_id == -1:
@@ -159,8 +164,7 @@ def insert_deflection_angle(frame, random_service, beta=1):
     assert muon != None, 'muon = None'
         
     muon_daughters = tree.get_daughters(muon)
-     
-    # Problem: change all angles of tree, not only muon track angles
+    
     for i in range(len(tree)):
         d = tree[i]
         
@@ -183,32 +187,29 @@ def insert_deflection_angle(frame, random_service, beta=1):
             # Muon energy afert maximum energy loss
             E_ = E - frame['I3MapSplit']['max_E_loss']
             if int(d_type) == -2000001004: # NuclInt
-                new_psi = get_new_psi_nuclint(E, E_, random_service) * beta
+                new_psi = get_new_psi_nuclint(E, E_, random_service) 
             elif int(d_type) == -2000001001: # Brems
                 new_psi = get_new_psi_brems(E, E_, random_service) * beta
             elif int(d_type) == -2000001003: # PairProd
-                new_psi = get_new_psi_pairprod(E, E_, random_service) * beta
+                new_psi = get_new_psi_pairprod(E, E_, random_service) 
             elif int(d_type) == -2000001002: # DeltaE
-                new_psi = 0
+                new_psi = get_new_psi_deltaE(E, E_) # 0: no ionization
             else:
-                # Wrong interaction type
-                print('maximum loss: ', frame['I3MapSplit']['max_E_loss']) 
-                print('id: ', d.minor_id)
-                print('type: ', d_type)
-                print(tree)
                 assert False, tree
                 
             # Error in sampling of new_psi
             assert new_psi >= 0, new_psi
 
-            if new_psi > 45:
-                # Result of high beta
-                new_psi = random_service.uniform(10, 45)
+            if new_psi >= 90:
+                # Result of high beta, clip to 90 degree
+                log_warn('new_psi is clipped to 90° from {}°'.format(new_psi))
+                frame['I3MapSplit']['clip_psi'] = new_psi 
+                new_psi = 90
                 
             frame['I3MapSplit']['delta_psi_in_degree'] = new_psi
             
             if new_psi == 0:
-                # in case of DeltaE because until now there is on parametrization
+                # in case of DeltaE because until now there is no parametrization
                 break  
             
             new_zenith_azimuth = get_delta_psi_vector(d.dir.zenith, d.dir.azimuth, random_service=random_service, delta_psi=new_psi, is_degree=True)
@@ -218,16 +219,58 @@ def insert_deflection_angle(frame, random_service, beta=1):
         if found_max == True:
             
             # CHANGE DIR ONLY OF MUON TRACK, NOT WHOLE TREE
-            if tree[i].type_string not in ['MuMinus', 'MuPlus', 'Brems', 'NuclInt', 'DeltaE', 'PairProd']:
+            if d.type_string not in ['MuMinus', 'MuPlus', 'Brems', 'NuclInt', 'DeltaE', 'PairProd']:
                 # Case of stopping muon
                 continue
-            
+                
+            set_new_direction_and_position(i, tree, d, new_zenith_azimuth, muon_split_helper)
+                
+                
+'''            
             # Set new direction
-            tree[i].dir = dataclasses.I3Direction(new_zenith_azimuth[0][0], new_zenith_azimuth[1][0])
+            d.dir = dataclasses.I3Direction(new_zenith_azimuth[0][0], new_zenith_azimuth[1][0])
 
             # Set new position
-            tree[i].pos = muon_split_helper.pos + muon_split_helper.dir * (muon_split_helper.pos - d.pos).magnitude
+            d.pos = muon_split_helper.pos + muon_split_helper.dir * (muon_split_helper.pos - d.pos).magnitude
+            
+            # Change direction and pos of daughters
+            for j in tree.get_daughters(d):
+                i += 1
+                daughter = tree[i]
+                daughter.dir = dataclasses.I3Direction(new_zenith_azimuth[0][0], new_zenith_azimuth[1][0])
+                daughter.pos = d.pos + d.dir * (d.pos - daughter.pos).magnitude
+                #Change daughter daughter
+                for k in tree.get_daughters(tree[i]):
+                    d_helper = tree[i]
+                    i += 1
+                    daughter2 = tree[i]
+                    daughter2.dir = dataclasses.I3Direction(new_zenith_azimuth[0][0], new_zenith_azimuth[1][0])
+                    daughter2.pos = d_helper.pos + d_helper.dir * (d_helper.pos - daughter2.pos).magnitude
+                # Further daughters are neglected
+'''
+
+def set_new_direction_and_position(index, tree, particle, new_zenith_azimuth, muon_split_helper):
+    # Set new direction
+    particle.dir = dataclasses.I3Direction(new_zenith_azimuth[0][0], new_zenith_azimuth[1][0])
+
+    # Set new position
+    particle.pos = muon_split_helper.pos + muon_split_helper.dir * (muon_split_helper.pos - particle.pos).magnitude
+    for p in tree.get_daughters(particle):
+        index += 1
+        index = set_new_direction_and_position(index, tree, tree[index], new_zenith_azimuth, muon_split_helper)
+    return index
         
+        
+'''                    
+def set_new_direction_and_position(tree, particle, new_zenith_azimuth, muon_split_helper):
+    # Set new direction
+    particle.dir = dataclasses.I3Direction(new_zenith_azimuth[0][0], new_zenith_azimuth[1][0])
+
+    # Set new position
+    particle.pos = muon_split_helper.pos + muon_split_helper.dir * (muon_split_helper.pos - particle.pos).magnitude
+    for p in tree.get_daughters(particle):
+        set_new_direction_and_position(tree, p, new_zenith_azimuth, muon_split_helper)
+'''    
 
 def cut_millipede_out_of_detector(frame):
     '''Add new key to frame with list of energy losses only inside the detector.
@@ -244,6 +287,7 @@ def cut_millipede_out_of_detector(frame):
     frame.Put('SplineMPE_MillipedeInsideDetector', dataclasses.I3VectorI3Particle(millipede_in_detector))
 
 
+###################### SAMPLING OF DEFLECTION ANGLES #####################
 def get_new_psi_brems(E, E_, rnd_state, is_degree=True, theta_star=1):
     epsilon = E - E_
     mu = 0.1057 # muon mass
@@ -292,7 +336,35 @@ def get_new_psi_pairprod(E, E_, rnd_state, is_degree=True):
     nu = (E - E_) / (E - m)
     minimum = np.min([a * nu**(1/4) * (1 + b*E) + c * nu / (nu + d), e])
     rms_theta = (2.3 + np.log(E)) * (1- nu)**n / E * (nu - 2 * m_e/E)**2 / nu**2 * minimum
-    theta_mu = abs(rnd_state.normal(0, rms_theta/np.sqrt(2), 1)[0]) 
+    
+    theta_mu = np.sqrt(rnd_state.exponential(rms_theta**2))
+    
+    if is_degree:
+        return np.rad2deg(theta_mu)
+    else:
+        return theta_mu
+    
+def get_new_psi_deltaE(E_mu, E_mu_prime, is_degree=True):
+    # Energy in MeV
+    E_mu *= 1e3
+    E_mu_prime *= 1e3
+    
+    # v_max = 1 - nu_max = 1 - E_f / E_i
+    m_e = 0.511
+    m_mu = 105.658
+    assert E_mu > m_mu, 'incoming energy lower than muon mass'
+    
+    gamma = E_mu / m_mu
+    nu_max = 1 - 2 * m_e * (gamma**2 - 1) / (1 + 2 * gamma * m_e/m_mu + (m_e/m_mu)**2)  / E_mu
+    
+    E_mu_prime = np.max([E_mu_prime, nu_max * E_mu * 1.00000001]) # Check for maximum energy transfer
+    # if E_mu_prime < nu_max * E_mu:
+    #     return 0
+    p_mu = np.sqrt((E_mu + m_mu) * (E_mu - m_mu))
+    p_mu_prime = np.sqrt((E_mu_prime + m_mu) * (E_mu_prime - m_mu))
+    
+    cos_theta = ((E_mu + m_e) * E_mu_prime - E_mu*m_e - m_mu**2) / (p_mu * p_mu_prime)
+    theta_mu = np.arccos(cos_theta)
     if is_degree:
         return np.rad2deg(theta_mu)
     else:
@@ -303,7 +375,7 @@ def get_new_psi_pairprod(E, E_, rnd_state, is_degree=True):
 
 
 
-
+######### old functions ############
 def build_tree_with_muon_split_nugen(frame, new_psi, random_service, beta=1):
     '''Change direction of particles after maximum energy loss happens. First save the old tree, 
     the existing tree will 

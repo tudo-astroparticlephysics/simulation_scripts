@@ -49,7 +49,7 @@ def main(cfg, run_number, scratch):
     click.echo('AzimuthMin: {}'.format(cfg['azimuth_min']))
     click.echo('AzimuthMax: {}'.format(cfg['azimuth_max']))
     if cfg['neutrino_flavor'] is None:
-        click.echo('NeutrinoTypes: {}'.format(cfg['neutrino_types']))
+        click.echo('NeutrinoTypes: {}'.format(cfg['NuTypes'])) # 'neutrino_types'
         click.echo('PrimaryTypeRatio: {}'.format(cfg['primary_type_ratio']))
     else:
         click.echo('NeutrinoFlavor: {}'.format(cfg['neutrino_flavor']))
@@ -109,14 +109,6 @@ def main(cfg, run_number, scratch):
         # We need to add a key named 'I3MCTree', since snowstorm expects this
         # It will propagate the particles for us.
         tray.AddModule('Rename', keys=['I3MCTree_preMuonProp', 'I3MCTree'])
-        
-    # Selection and split module   
-    if 'NuGenSelectSplitModule' in cfg:
-        tray.AddModule(
-            NuGenSelectSplitModule, 
-            'NuGenSelectAndSplitMuonTrack',
-            RandomSeed=int_run_number,
-            **cfg['NuGenSelectSplitModule'])
 
     # Bias simulation if desired
     if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:
@@ -126,6 +118,14 @@ def main(cfg, run_number, scratch):
             random_service=random_services[2],
             **cfg['BaseSimulationBiasSettings']
         )
+        
+    # Selection and split module   
+    if 'NuGenSelectSplitModule' in cfg:
+        tray.AddModule(
+            NuGenSelectSplitModule, 
+            'NuGenSelectAndSplitMuonTrack',
+            RandomSeed=int_run_number,
+            **cfg['NuGenSelectSplitModule'])
 
     if cfg['distance_splits'] is not None:
         import dom_distance_cut as dom_cut

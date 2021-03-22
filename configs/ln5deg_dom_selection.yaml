@@ -2,12 +2,33 @@ chain_name: split_muongun_floodlight
 output_pattern: '{run_folder}/Level0.{step}_split_muongun_floodlight.{dataset_number:6d}.{run_number}.i3.bz2'
 seed: 1337
 dataset_number: 44319
+
+resources:
+  # Indication which steps need GPUs, default is 0
+  gpus:
+    1: 1
+  # Indication of needed memory for each step if nothing is set 1GB is assumed as default
+  memory: 
+    0: 3gb
+    1: 3gb
+    2: 3gb
+    3: 3gb
+    4: 3gb
+    12: 3gb
+    13: 3gb
+    14: 3gb
+    15: 3gb
+  # Indication of the walltime (in hours) for each step, if nothing is set the system default for dagman and 1h for pbs are assumed
+  walltime:
+  # Indication of the number of cores for each step, default is 1
+  cpus:
+
 gcd_2012: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_AVG_55697-57531_PASS2_SPE_withScaledNoise.i3.gz
 gcd_pass2: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_AVG_55697-57531_PASS2_SPE_withScaledNoise.i3.gz
 # gcd: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_IC86_Merged.i3.gz
 gcd: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_AVG_55697-57531_PASS2_SPE_withScaledNoise.i3.gz
 generator: muongun
-n_events_per_run: 100000 
+n_events_per_run: 20000 
 n_runs: 100000
 e_min: !!float 1e3 
 e_max: !!float 1e6
