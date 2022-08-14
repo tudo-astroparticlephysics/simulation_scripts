@@ -23,9 +23,9 @@ export PATH=$PYTHONUSERBASE/bin:$PATH
 export PYTHONPATH=$PYTHONUSERBASE/lib/python2.7/site-packages:$PYTHONPATH
 
 # export CUDA
-export CUDA_HOME=/mnt/lfs7/user/mhuennefeld/software/condor_cuda3/cuda-8.0;
-export PATH=$PATH:/mnt/lfs7/user/mhuennefeld/software/condor_cuda3/cuda-8.0/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mnt/lfs7/user/mhuennefeld/software/condor_cuda3/cuda-8.0/lib64
+export CUDA_HOME=/data/user/mhuennefeld/software/condor_cuda3/cuda-8.0;
+export PATH=$PATH:/data/user/mhuennefeld/software/condor_cuda3/cuda-8.0/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/user/mhuennefeld/software/condor_cuda3/cuda-8.0/lib64
 
 
 echo $FINAL_OUT
