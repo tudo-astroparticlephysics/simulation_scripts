@@ -100,7 +100,6 @@ def main(cfg, run_number, scratch):
 
         # things that should be defined by user:
         'polyplopia': True,
-        'nshowers': 10,
         'eprimarymin': 600,
         'eprimarymax': 100000000,
 
@@ -124,6 +123,7 @@ def main(cfg, run_number, scratch):
         'outputfile': corsika_file,
         'compress': False,
         'runnum': cfg['run_number'],
+        'nshowers': cf['n_events_per_run'],
     })
 
     # execute module
