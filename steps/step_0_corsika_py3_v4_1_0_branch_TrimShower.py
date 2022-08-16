@@ -88,33 +88,6 @@ def main(cfg, run_number, scratch):
     module_class = load_class(cfg['corsika_module'])
     module = module_class()
 
-    default_settings = {
-
-        # things that are probably fine like this most of the time
-        'corsikaVersion': '76900g',
-        'model': 'Sybill-2.3c',
-        'CutoffType': 'EnergyPerNucleon',
-        'oversampling': 1,
-        'trimshower': True,
-        'pnorm': [10, 5, 3, 2, 1],
-        'pgam': [2, 2, 2, 2, 2],
-        'UsePipe': True,
-        'ecuts1': 273.,  # hadron min energy (see corsika docs)
-        'ecuts2': 273.,  # muon min energy (see corsika docs)
-        'ecuts3': 0.003,  # electron min energy (see corsika docs)
-        'ecuts4': 0.003,  # photon min energy (see corsika docs)
-
-        # things that should be defined by user:
-        'polyplopia': True,
-        'eprimarymin': 600,
-        'eprimarymax': 100000000,
-
-    }
-
-    # configure module
-    for name, value in corsika_settings.items():
-        module.SetParameter(name, value)
-
     # add overwrite necessary settings
     corsika_settings.update({
 
@@ -131,6 +104,10 @@ def main(cfg, run_number, scratch):
         'runnum': cfg['run_number'],
         'nshowers': cf['n_events_per_run'],
     })
+
+    # configure module
+    for name, value in corsika_settings.items():
+        module.SetParameter(name, value)
 
     # execute module
     stats = {}
