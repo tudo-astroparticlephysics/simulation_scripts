@@ -62,7 +62,7 @@ def main(cfg, run_number, scratch):
     # --------------------------------------------
     # Create random number generators and settings
     # --------------------------------------------
-    random_services_settings = create_random_services_settings(
+    random_services_settings, _ = create_random_services_settings(
         dataset_number=cfg['dataset_number'],
         run_number=cfg['run_number'],
         seed=cfg['seed'],
