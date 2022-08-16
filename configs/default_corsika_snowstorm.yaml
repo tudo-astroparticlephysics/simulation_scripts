@@ -85,6 +85,10 @@ corsika_settings: {
 # MuonPropagation specific options
 muon_propagation_config : {}
 
+# oversampling to use
+# Note: this isn't used here, but enables us to use the get_pulses scripts
+oversampling_factor:
+
 # -----------------------------
 # Step 1: Snowstorm Propagation
 # -----------------------------
