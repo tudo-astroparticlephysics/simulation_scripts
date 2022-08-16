@@ -85,7 +85,7 @@ def main(cfg, run_number, scratch):
     # -----------------------------------
     # Run script to generate CORSIKA file
     # -----------------------------------
-    corsika_file = outfile + '.corsika_temp.i3'
+    corsika_file = os.path.abspath(outfile + '.corsika_temp.i3')
     module_class = load_class(cfg['corsika_module'])
     module = module_class()
 
