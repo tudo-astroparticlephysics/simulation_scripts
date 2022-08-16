@@ -100,7 +100,7 @@ def main(cfg, run_number, scratch):
         'outputfile': corsika_file,
         'compress': False,
         'runnum': cfg['run_number'],
-        'nshowers': cf['n_events_per_run'],
+        'nshowers': cfg['n_events_per_run'],
     })
 
     # add additional rng info if not using gslrng
