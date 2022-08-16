@@ -131,16 +131,11 @@ def main(cfg, run_number, scratch):
     # propagate muons if config exists in config
     # Note: Snowstorm may perform muon propagation internally
     if 'muon_propagation_config' in cfg:
+        tray.AddModule('Rename', keys=['I3MCTree', 'I3MCTree_preMuonProp'])
         tray.AddSegment(segments.PropagateMuons,
                         'propagate_muons',
                         RandomService=random_service_prop,
                         **cfg['muon_propagation_config'])
-    else:
-        # In this case we are not propagating the I3MCTree yet, but
-        # are letting this be done by snowstorm propagation
-        # We need to add a key named 'I3MCTree', since snowstorm expects this
-        # It will propagate the particles for us.
-        tray.AddModule('Rename', keys=['I3MCTree_preMuonProp', 'I3MCTree'])
 
     # Bias simulation if desired
     if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:
