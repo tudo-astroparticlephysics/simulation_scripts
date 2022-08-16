@@ -67,8 +67,8 @@ corsika_settings: {
     'CutoffType': 'EnergyPerNucleon',
     'oversampling': 1,
     'trimshower': True,
-    'pnorm': [10, 5, 3, 2, 1],
-    'pgam': [2, 2, 2, 2, 2],
+    'pnorm': [10., 5., 3., 2., 1.],
+    'pgam': [2., 2., 2., 2., 2.],
     'UsePipe': True,
     'ecuts1': 273.,  # hadron min energy (see corsika docs)
     'ecuts2': 273.,  # muon min energy (see corsika docs)
