@@ -1,5 +1,6 @@
 #!/bin/sh /cvmfs/icecube.opensciencegrid.org/py3-v4.1.0/icetray-start
 #METAPROJECT /data/user/mhuennefeld/software/icecube/py3-v4.1.0/icetray_trimshower_branch/build
+import os
 import click
 import yaml
 
