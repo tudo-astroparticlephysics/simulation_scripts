@@ -11,7 +11,12 @@ from I3Tray import I3Tray
 from icecube import icetray, dataclasses
 from icecube import sim_services, MuonGun
 
-from utils import create_random_services, get_run_folder, load_class
+from utils import (
+    create_random_services,
+    create_random_services_settings,
+    get_run_folder,
+    load_class,
+)
 from resources.biased_simulation import BaseSimulationBias
 from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
 
