@@ -63,7 +63,7 @@ corsika_settings: {
 
     # things that are probably fine like this most of the time
     'corsikaVersion': '76900g',
-    'model': 'sybill',
+    'model': 'sibyll',
     'CutoffType': 'EnergyPerNucleon',
     'oversampling': 1,
     'trimshower': True,
