@@ -408,9 +408,24 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
                 else:
                     # we found a position in forward direction that is
                     # 1m inside the convex hull
+
+                    # find the closes approach point
+                    # We do this so that we don't get stuck in a local minimum
+                    # when searching for the exit point in the next step
+                    # (Note: we use random large negative value of -100000. A
+                    #  better option would be to pass in convex hull function
+                    #  to class that can compute all intersections with hull.
+                    #  However, this requires restructuring of module, which
+                    #  is avoided at this point and with this less efficient
+                    #  work-around)
+                    pos_closest, dist_closest = self._find_point_on_track(
+                        pos_entry, zenith, azimuth,
+                        desired_distance=-100000,
+                        forwards=True)
+
                     # We'll get the second point now (exit in forward )
                     pos_exit, dist_exit = self._find_point_on_track(
-                        pos_entry, zenith, azimuth,
+                        pos_closest, zenith, azimuth,
                         desired_distance=0,
                         forwards=True,
                     )
