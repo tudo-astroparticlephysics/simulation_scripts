@@ -75,7 +75,7 @@ z_range: [-800,800]
 # Shift sampled vertex back along track to this distance to convex hull
 # Leave empts if no shifting is desired
 shift_vertex_distance:
-# Maximum Distance of vertex to convex hull around IceCube
+# Maximum Distance of (pre-shifted) vertex to convex hull around IceCube
 # Leave empty if no limit is desired.
 max_vertex_distance: 300
 # Maximum Distance of track to convex hull around IceCube

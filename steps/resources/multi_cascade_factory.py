@@ -67,15 +67,15 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
         self.AddParameter(
             'max_vertex_distance',
             'Maximum distance of vertex outside of convex hull '
-            'around IceCube. If the drawn (and shifted) vertex '
+            'around IceCube. If the drawn (pre-shifted) vertex '
             'is further outside of the convex hull than the '
             'specified amount, a new vertex position will be '
             'drawn.'
             'If max_vertex_distance is None, the sampled vertex '
             'position will be accepted regardless of its '
             'distance to the convex hull.'
-            'Note: this setting should not be used in '
-            'combination with `shift_vertex_distance`.',
+            'Note: this check is applied prior to shifting the cascade'
+            ' via the setting `shift_vertex_distance`.',
             None)
         self.AddParameter(
             'max_track_distance',
@@ -325,7 +325,7 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
 
             if forwards and t[0] < 0:
                 return float('inf')
-            elif not forwards and t[0] > 0:
+            elif (not forwards) and t[0] > 0:
                 return float('inf')
 
             pos = vertex + t[0] * direction
@@ -372,6 +372,12 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
                             vertex_y * I3Units.m,
                             vertex_z * I3Units.m)
 
+            # check vertex distance to convex hull
+            if self.max_vertex_distance is not None:
+                dist = self.convex_hull_distance_function(vertex)
+                if dist > self.max_vertex_distance:
+                    continue
+
             # shift vertex to specified distance, abort if not possible
             if self.shift_vertex_distance is not None:
                 vertex, dist_loss = self._find_point_on_track(
@@ -379,12 +385,6 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
                     desired_distance=self.shift_vertex_distance,
                     forwards=False)
                 if dist_loss > 1:
-                    continue
-
-            # check vertex distance to convex hull
-            if self.max_vertex_distance is not None:
-                dist = self.convex_hull_distance_function(vertex)
-                if dist > self.max_vertex_distance:
                     continue
 
             # check track distance to convex hull
