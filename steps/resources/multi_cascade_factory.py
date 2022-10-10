@@ -67,15 +67,15 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
         self.AddParameter(
             'max_vertex_distance',
             'Maximum distance of vertex outside of convex hull '
-            'around IceCube. If the drawn (and shifted) vertex '
+            'around IceCube. If the drawn (pre-shifted) vertex '
             'is further outside of the convex hull than the '
             'specified amount, a new vertex position will be '
             'drawn.'
             'If max_vertex_distance is None, the sampled vertex '
             'position will be accepted regardless of its '
             'distance to the convex hull.'
-            'Note: this setting should not be used in '
-            'combination with `shift_vertex_distance`.',
+            'Note: this check is applied prior to shifting the cascade'
+            ' via the setting `shift_vertex_distance`.',
             None)
         self.AddParameter(
             'max_track_distance',
@@ -87,6 +87,20 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
             'drawn. If max_track_distance is None, the sampled '
             'vertex position will be accepted regardless of the '
             'track distance to the convex hull.',
+            None)
+        self.AddParameter(
+            'min_track_length',
+            'Minimum track length inside the convex hull of an '
+            'infinite track starting at the (shifted) vertex.'
+            'Note that only the length *after* the (shifted) vertex '
+            'is used in the calculation. This does, however, assume '
+            'an infinite track after this vertex.'
+            'If the track length inside the hull is '
+            'smaller than the specified '
+            'minimum amount, a new vertex position will be '
+            'drawn. If min_track_length is None, the sampled '
+            'vertex position will be accepted regardless of the '
+            'track length inside the convex hull.',
             None)
         self.AddParameter(
             'convex_hull_distance_function',
@@ -164,6 +178,7 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
         self.z_range = self.GetParameter('z_range')
         self.max_vertex_distance = self.GetParameter('max_vertex_distance')
         self.max_track_distance = self.GetParameter('max_track_distance')
+        self.min_track_length = self.GetParameter('min_track_length')
         self.shift_vertex_distance = self.GetParameter('shift_vertex_distance')
         self.convex_hull_distance_function = \
             self.GetParameter('convex_hull_distance_function')
@@ -270,7 +285,8 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
         # --------------------
 
     def _find_point_on_track(self, vertex, zenith, azimuth, desired_distance,
-                             forwards=True):
+                             forwards=True, x0=0.,
+                             minimization_method='Nelder-Mead'):
         """Find point on track whose distance to the convex hull is closest
         to the desired distance.
 
@@ -288,6 +304,12 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
         forwards : bool, optional
             Search forward in time starting at the vertex if True.
             If False, search backward in time, e.g. before the vertex.
+        x0 : float, optional
+            Initial guess for minimization.
+            If given an array, the value leading to the smallest loss will
+            be chosen.
+        minimization_method : None, optional
+            Minimization to use for scipy.
 
         Returns
         -------
@@ -298,22 +320,26 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
         """
         direction = dataclasses.I3Direction(zenith, azimuth)
 
-        def get_signed_t(t):
-            if forwards:
-                t = np.abs(t)
-            else:
-                t = -np.abs(t)
-            return t
-
         def distance_loss(t):
             """Distance of point on track at time t to convex hull"""
 
-            pos = vertex + get_signed_t(t[0]) * direction
+            if forwards and t[0] < 0:
+                return float('inf')
+            elif (not forwards) and t[0] > 0:
+                return float('inf')
+
+            pos = vertex + t[0] * direction
             distance_to_hull = self.convex_hull_distance_function(pos)
             return (distance_to_hull - desired_distance)**2
 
-        result = minimize(distance_loss, x0=0., method='Nelder-Mead')
-        result_pos = vertex + get_signed_t(result.x[0]) * direction
+        try:
+            losses = [distance_loss([x_i]) for x_i in x0]
+            x0 = x0[np.argmin(losses)]
+        except Exception as e:
+            pass
+
+        result = minimize(distance_loss, x0=x0, method=minimization_method)
+        result_pos = vertex + result.x[0] * direction
         return result_pos, result.fun
 
     def _sample_vertex(self, zenith, azimuth):
@@ -346,19 +372,20 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
                             vertex_y * I3Units.m,
                             vertex_z * I3Units.m)
 
+            # check vertex distance to convex hull
+            if self.max_vertex_distance is not None:
+                dist = self.convex_hull_distance_function(vertex)
+                if dist > self.max_vertex_distance:
+                    continue
+
             # shift vertex to specified distance, abort if not possible
             if self.shift_vertex_distance is not None:
                 vertex, dist_loss = self._find_point_on_track(
                     vertex, zenith, azimuth,
                     desired_distance=self.shift_vertex_distance,
+                    x0=np.linspace(-1000, 0, 100),
                     forwards=False)
                 if dist_loss > 1:
-                    continue
-
-            # check vertex distance to convex hull
-            if self.max_vertex_distance is not None:
-                dist = self.convex_hull_distance_function(vertex)
-                if dist > self.max_vertex_distance:
                     continue
 
             # check track distance to convex hull
@@ -371,6 +398,67 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
                     forwards=True)
                 dist = self.convex_hull_distance_function(pos)
                 if dist > self.max_track_distance:
+                    continue
+
+            # check track length in convex hull
+            if self.min_track_length is not None:
+
+                # get a point inside the convex hull in forward direction
+                # starting from the (shifted) vertex.
+                # (We're choosing 10000m here as some random number negative
+                #  number that will indicate a point inside the convex hull.)
+                dist = self.convex_hull_distance_function(vertex)
+                if dist < 0:
+                    # the vertex is already inside the hull, so use that
+                    pos_entry = vertex
+                    dist_entry = 0
+                else:
+                    # vertex is outside, let's see if we find a point inside
+                    # if we go further forward
+                    pos_entry, dist_entry = self._find_point_on_track(
+                        vertex, zenith, azimuth,
+                        desired_distance=-1,
+                        forwards=True)
+
+                if dist_entry > 0.9:
+                    # could not find a point in forward direction that is
+                    # at least 1m inside the volume.
+                    # We'll set the track length to 0
+                    length = 0
+                else:
+                    # we found a position in forward direction that is
+                    # 1m inside the convex hull
+
+                    # find the closes approach point
+                    # We do this so that we don't get stuck in a local minimum
+                    # when searching for the exit point in the next step
+                    # (Note: we use random large negative value of -100000. A
+                    #  better option would be to pass in convex hull function
+                    #  to class that can compute all intersections with hull.
+                    #  However, this requires restructuring of module, which
+                    #  is avoided at this point and with this less efficient
+                    #  work-around)
+                    pos_closest, dist_closest = self._find_point_on_track(
+                        pos_entry, zenith, azimuth,
+                        desired_distance=-100000,
+                        forwards=True)
+
+                    # We'll get the second point now (exit in forward )
+                    pos_exit, dist_exit = self._find_point_on_track(
+                        pos_closest, zenith, azimuth,
+                        desired_distance=-1,
+                        forwards=True,
+                        x0=np.linspace(0, 1000, 100),
+                    )
+                    # We should always find an exit point if going forward
+                    # from a point within the convex hull
+                    assert dist_exit < 1, (
+                        dist_exit, vertex, pos_entry, pos_closest, pos_exit)
+
+                    # compute length
+                    length = (pos_exit - pos_entry).magnitude + 2
+
+                if length < self.min_track_length:
                     continue
 
             # everything is good

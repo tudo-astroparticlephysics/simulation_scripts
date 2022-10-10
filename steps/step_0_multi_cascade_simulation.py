@@ -73,6 +73,7 @@ def main(cfg, run_number, scratch):
     click.echo('Shift vertex dist.: {}'.format(cfg['shift_vertex_distance']))
     click.echo('Max vertex dist.: {}'.format(cfg['max_vertex_distance']))
     click.echo('Max track dist.: {}'.format(cfg['max_track_distance']))
+    click.echo('Min track length: {}'.format(cfg['min_track_length']))
 
     # crate random services
     if 'random_service_use_gslrng' not in cfg:
@@ -118,6 +119,7 @@ def main(cfg, run_number, scratch):
         shift_vertex_distance=cfg['shift_vertex_distance'],
         max_vertex_distance=cfg['max_vertex_distance'],
         max_track_distance=cfg['max_track_distance'],
+        min_track_length=cfg['min_track_length'],
         convex_hull_distance_function=cfg[
             'convex_hull_distance_function'],
         flavors=cfg['flavors'],
