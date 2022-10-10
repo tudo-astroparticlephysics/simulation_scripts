@@ -333,8 +333,7 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
             return (distance_to_hull - desired_distance)**2
 
         try:
-            losses = [distance_loss(x_i) for x_i in x0]
-            print('losses', losses)
+            losses = [distance_loss([x_i]) for x_i in x0]
             x0 = x0[np.argmin(losses)]
         except Exception as e:
             pass
@@ -448,7 +447,7 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
                         pos_closest, zenith, azimuth,
                         desired_distance=-1,
                         forwards=True,
-                        x0=np.linspace(0, 1000, 100),
+                        x0=np.linspace(0, 1000, 10),
                     )
                     # We should always find an exit point if going forward
                     # from a point within the convex hull
