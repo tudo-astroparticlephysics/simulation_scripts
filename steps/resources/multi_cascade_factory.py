@@ -285,7 +285,9 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
         # --------------------
 
     def _find_point_on_track(self, vertex, zenith, azimuth, desired_distance,
-                             forwards=True, x0=0., minimization_method=None):
+                             forwards=True, x0=0.,
+                             x0_to_test=np.array([0.]),
+                             minimization_method='Nelder-Mead'):
         """Find point on track whose distance to the convex hull is closest
         to the desired distance.
 
@@ -305,6 +307,11 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
             If False, search backward in time, e.g. before the vertex.
         x0 : float, optional
             Initial guess for minimization.
+            If None, the best value will be chosen from the `x0_to_test`
+            array.
+        x0_to_test : array, optional
+            Values to test.
+            The value leading to the smallest loss will be chosen.
         minimization_method : None, optional
             Minimization to use for scipy.
 
@@ -317,22 +324,24 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
         """
         direction = dataclasses.I3Direction(zenith, azimuth)
 
-        def get_signed_t(t):
-            if forwards:
-                t = np.abs(t)
-            else:
-                t = -np.abs(t)
-            return t
-
         def distance_loss(t):
             """Distance of point on track at time t to convex hull"""
 
-            pos = vertex + get_signed_t(t[0]) * direction
+            if forwards and t[0] < 0:
+                return float('inf')
+            elif not forwards and t[0] > 0:
+                return float('inf')
+
+            pos = vertex + t[0] * direction
             distance_to_hull = self.convex_hull_distance_function(pos)
             return (distance_to_hull - desired_distance)**2
 
+        if x0 is None:
+            losses = distance_loss(x0_to_test)
+            x0 = x0_to_test[np.argmin(losses)]
+
         result = minimize(distance_loss, x0=x0, method=minimization_method)
-        result_pos = vertex + get_signed_t(result.x[0]) * direction
+        result_pos = vertex + result.x[0] * direction
         return result_pos, result.fun
 
     def _sample_vertex(self, zenith, azimuth):
