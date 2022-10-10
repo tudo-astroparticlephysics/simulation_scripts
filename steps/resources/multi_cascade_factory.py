@@ -286,7 +286,6 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
 
     def _find_point_on_track(self, vertex, zenith, azimuth, desired_distance,
                              forwards=True, x0=0.,
-                             x0_to_test=np.array([0.]),
                              minimization_method='Nelder-Mead'):
         """Find point on track whose distance to the convex hull is closest
         to the desired distance.
@@ -307,11 +306,8 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
             If False, search backward in time, e.g. before the vertex.
         x0 : float, optional
             Initial guess for minimization.
-            If None, the best value will be chosen from the `x0_to_test`
-            array.
-        x0_to_test : array, optional
-            Values to test.
-            The value leading to the smallest loss will be chosen.
+            If given an array, the value leading to the smallest loss will
+            be chosen.
         minimization_method : None, optional
             Minimization to use for scipy.
 
@@ -336,9 +332,9 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
             distance_to_hull = self.convex_hull_distance_function(pos)
             return (distance_to_hull - desired_distance)**2
 
-        if x0 is None:
-            losses = distance_loss(x0_to_test)
-            x0 = x0_to_test[np.argmin(losses)]
+        if not isinstance(x0, (float, int)):
+            losses = distance_loss(x0)
+            x0 = x0[np.argmin(losses)]
 
         result = minimize(distance_loss, x0=x0, method=minimization_method)
         result_pos = vertex + result.x[0] * direction
