@@ -445,7 +445,7 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
                         pos_closest, zenith, azimuth,
                         desired_distance=-1,
                         forwards=True,
-                        x0_to_test=np.linspace(0, 1000, 100),
+                        x0=np.linspace(0, 1000, 100),
                     )
                     # We should always find an exit point if going forward
                     # from a point within the convex hull
