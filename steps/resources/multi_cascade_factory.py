@@ -332,9 +332,14 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
             distance_to_hull = self.convex_hull_distance_function(pos)
             return (distance_to_hull - desired_distance)**2
 
-        if not isinstance(x0, (float, int)):
+        try:
+            print('x0', x0)
             losses = distance_loss(x0)
+            print('losses', losses)
             x0 = x0[np.argmin(losses)]
+        except Exception as e:
+            print(e)
+            pass
 
         result = minimize(distance_loss, x0=x0, method=minimization_method)
         result_pos = vertex + result.x[0] * direction
