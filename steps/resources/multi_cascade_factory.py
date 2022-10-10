@@ -434,15 +434,16 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
                     # We'll get the second point now (exit in forward )
                     pos_exit, dist_exit = self._find_point_on_track(
                         pos_closest, zenith, azimuth,
-                        desired_distance=0,
+                        desired_distance=-1,
                         forwards=True,
                     )
                     # We should always find an exit point if going forward
                     # from a point within the convex hull
-                    assert dist_exit < 1, dist_exit
+                    assert dist_exit < 1, (
+                        dist_exit, vertex, pos_entry, pos_closest, pos_exit)
 
                     # compute length
-                    length = (pos_exit - pos_entry).magnitude
+                    length = (pos_exit - pos_entry).magnitude + 2
 
                 if length < self.min_track_length:
                     continue
