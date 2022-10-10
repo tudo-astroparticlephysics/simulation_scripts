@@ -333,12 +333,10 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
             return (distance_to_hull - desired_distance)**2
 
         try:
-            print('x0', x0)
-            losses = distance_loss(x0)
+            losses = [distance_loss(x_i) for x_i in x0]
             print('losses', losses)
             x0 = x0[np.argmin(losses)]
         except Exception as e:
-            print(e)
             pass
 
         result = minimize(distance_loss, x0=x0, method=minimization_method)
