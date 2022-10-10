@@ -448,12 +448,22 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
                         pos_closest, zenith, azimuth,
                         desired_distance=-1,
                         forwards=True,
-                        x0=np.linspace(0, 1000, 100),
+                        x0=np.linspace(0, 2000, 200),
                     )
                     # We should always find an exit point if going forward
                     # from a point within the convex hull
-                    assert dist_exit < 1, (
-                        dist_exit, vertex, pos_entry, pos_closest, pos_exit)
+                    if dist_exit > 1:
+                        print(
+                            'Found potential minimization issue - exit point '
+                            'is not at convex hull boundary. Will re-sample '
+                            'event.'
+                        )
+                        print('dist_exit:', dist_exit)
+                        print('vertex:', vertex)
+                        print('pos_entry:', pos_entry)
+                        print('pos_closest:', pos_closest)
+                        print('pos_exit:', pos_exit)
+                        continue
 
                     # compute length
                     length = (pos_exit - pos_entry).magnitude + 2
