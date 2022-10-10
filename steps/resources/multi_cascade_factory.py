@@ -285,7 +285,7 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
         # --------------------
 
     def _find_point_on_track(self, vertex, zenith, azimuth, desired_distance,
-                             forwards=True):
+                             forwards=True, x0=0., minimization_method=None):
         """Find point on track whose distance to the convex hull is closest
         to the desired distance.
 
@@ -303,6 +303,10 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
         forwards : bool, optional
             Search forward in time starting at the vertex if True.
             If False, search backward in time, e.g. before the vertex.
+        x0 : float, optional
+            Initial guess for minimization.
+        minimization_method : None, optional
+            Minimization to use for scipy.
 
         Returns
         -------
@@ -327,7 +331,7 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
             distance_to_hull = self.convex_hull_distance_function(pos)
             return (distance_to_hull - desired_distance)**2
 
-        result = minimize(distance_loss, x0=0., method='Nelder-Mead')
+        result = minimize(distance_loss, x0=x0, method=minimization_method)
         result_pos = vertex + get_signed_t(result.x[0]) * direction
         return result_pos, result.fun
 
