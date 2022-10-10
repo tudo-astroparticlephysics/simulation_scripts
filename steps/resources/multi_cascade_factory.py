@@ -89,6 +89,17 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
             'track distance to the convex hull.',
             None)
         self.AddParameter(
+            'min_track_length',
+            'Minimum track length inside the convex hull of an '
+            'infinite track starting at the (shifted) vertex.'
+            'If the track length inside the hull is '
+            'smaller than the specified '
+            'minimum amount, a new vertex position will be '
+            'drawn. If min_track_length is None, the sampled '
+            'vertex position will be accepted regardless of the '
+            'track length inside the convex hull.',
+            None)
+        self.AddParameter(
             'convex_hull_distance_function',
             'This defines which convex hull distance function '
             'to use in case '
@@ -164,6 +175,7 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
         self.z_range = self.GetParameter('z_range')
         self.max_vertex_distance = self.GetParameter('max_vertex_distance')
         self.max_track_distance = self.GetParameter('max_track_distance')
+        self.min_track_length = self.GetParameter('min_track_length')
         self.shift_vertex_distance = self.GetParameter('shift_vertex_distance')
         self.convex_hull_distance_function = \
             self.GetParameter('convex_hull_distance_function')
@@ -371,6 +383,59 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
                     forwards=True)
                 dist = self.convex_hull_distance_function(pos)
                 if dist > self.max_track_distance:
+                    continue
+
+            # check track length in convex hull
+            if self.min_track_length is not None:
+
+                # get closest approach point of infinite track
+                # (We're choosing 10000m here as some random number.
+                #  This isn't really all that great. Doing this better
+                #  would require us to modify the class to instead pass
+                #  a function that computes all intersections with the
+                #  convex hull instead of only the distance of a point.)
+                pos1, dist_loss1 = self._find_point_on_track(
+                    vertex, zenith, azimuth,
+                    desired_distance=self.max_track_distance - 10000,
+                    forwards=True)
+
+                pos2, dist_loss2 = self._find_point_on_track(
+                    vertex, zenith, azimuth,
+                    desired_distance=self.max_track_distance - 10000,
+                    forwards=False)
+
+                if dist_loss1 < dist_loss2:
+                    pos_closest = pos1
+                else:
+                    pos_closest = pos2
+
+                # check if closest approach is inside volume
+                dist = self.convex_hull_distance_function(pos_closest)
+
+                # inside convex hull if this distance is negative
+                if dist < 0:
+
+                    # find closest point to convex hull in forward direction
+                    pos_forward, dist_loss = self._find_point_on_track(
+                        pos_closest, zenith, azimuth,
+                        desired_distance=0,
+                        forwards=True)
+
+                    # find closest point to convex hull in backward direction
+                    pos_backward, dist_loss = self._find_point_on_track(
+                        pos_closest, zenith, azimuth,
+                        desired_distance=0,
+                        forwards=False)
+
+                    # compute distance between these intersections
+                    length = (pos_forward - pos_backward).magnitude
+
+                # closest approach is outside of convex hull, so track length
+                # inside the
+                else:
+                    length = 0.
+
+                if length < self.min_track_length:
                     continue
 
             # everything is good
