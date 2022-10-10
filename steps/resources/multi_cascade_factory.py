@@ -464,8 +464,6 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
                         print('pos_closest:', pos_closest)
                         print('pos_exit:', pos_exit)
                         continue
-                    assert dist_exit < 1, (
-                        dist_exit, vertex, pos_entry, pos_closest, pos_exit)
 
                     # compute length
                     length = (pos_exit - pos_entry).magnitude + 2
