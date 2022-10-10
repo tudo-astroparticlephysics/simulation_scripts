@@ -383,6 +383,7 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
                 vertex, dist_loss = self._find_point_on_track(
                     vertex, zenith, azimuth,
                     desired_distance=self.shift_vertex_distance,
+                    x0=np.linspace(-1000, 0, 100),
                     forwards=False)
                 if dist_loss > 1:
                     continue
