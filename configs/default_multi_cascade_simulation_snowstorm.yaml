@@ -81,6 +81,9 @@ max_vertex_distance: 300
 # Maximum Distance of track to convex hull around IceCube
 # Leave empty if no limit is desired.
 max_track_distance:
+# Minimum length inside hull of infinite track starting at (shifted) vertex
+# Leave empty if no limit is desired.
+min_track_length:
 # The convex hull to use if required ['IceCube' or 'DeepCore']
 convex_hull_distance_function: 'IceCube'
 # flavors. Options are: 'NuE', 'NuMu', 'NuTau'

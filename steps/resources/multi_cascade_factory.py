@@ -92,6 +92,9 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
             'min_track_length',
             'Minimum track length inside the convex hull of an '
             'infinite track starting at the (shifted) vertex.'
+            'Note that only the length *after* the (shifted) vertex '
+            'is used in the calculation. This does, however, assume '
+            'an infinite track after this vertex.'
             'If the track length inside the hull is '
             'smaller than the specified '
             'minimum amount, a new vertex position will be '
@@ -388,52 +391,35 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
             # check track length in convex hull
             if self.min_track_length is not None:
 
-                # get closest approach point of infinite track
-                # (We're choosing 10000m here as some random number.
-                #  This isn't really all that great. Doing this better
-                #  would require us to modify the class to instead pass
-                #  a function that computes all intersections with the
-                #  convex hull instead of only the distance of a point.)
-                pos1, dist_loss1 = self._find_point_on_track(
+                # get a point inside the convex hull in forward direction
+                # starting from the (shifted) vertex.
+                # (We're choosing 10000m here as some random number negative
+                #  number that will indicate a point inside the convex hull.)
+                pos_entry, dist_entry = self._find_point_on_track(
                     vertex, zenith, azimuth,
-                    desired_distance=self.max_track_distance - 10000,
+                    desired_distance=-1,
                     forwards=True)
 
-                pos2, dist_loss2 = self._find_point_on_track(
-                    vertex, zenith, azimuth,
-                    desired_distance=self.max_track_distance - 10000,
-                    forwards=False)
-
-                if dist_loss1 < dist_loss2:
-                    pos_closest = pos1
+                if dist_entry > 0.9:
+                    # could not find a point in forward direction that is
+                    # at least 1m inside the volume.
+                    # We'll set the track length to 0
+                    length = 0
                 else:
-                    pos_closest = pos2
-
-                # check if closest approach is inside volume
-                dist = self.convex_hull_distance_function(pos_closest)
-
-                # inside convex hull if this distance is negative
-                if dist < 0:
-
-                    # find closest point to convex hull in forward direction
-                    pos_forward, dist_loss = self._find_point_on_track(
-                        pos_closest, zenith, azimuth,
+                    # we found a position in forward direction that is
+                    # 1m inside the convex hull
+                    # We'll get the second point now (exit in forward )
+                    pos_exit, dist_exit = self._find_point_on_track(
+                        pos_entry, zenith, azimuth,
                         desired_distance=0,
-                        forwards=True)
+                        forwards=True,
+                    )
+                    # We should always find an exit point if going forward
+                    # from a point within the convex hull
+                    assert dist_exit < 1, dist_exit
 
-                    # find closest point to convex hull in backward direction
-                    pos_backward, dist_loss = self._find_point_on_track(
-                        pos_closest, zenith, azimuth,
-                        desired_distance=0,
-                        forwards=False)
-
-                    # compute distance between these intersections
-                    length = (pos_forward - pos_backward).magnitude
-
-                # closest approach is outside of convex hull, so track length
-                # inside the
-                else:
-                    length = 0.
+                    # compute length
+                    length = (pos_exit - pos_entry).magnitude
 
                 if length < self.min_track_length:
                     continue
