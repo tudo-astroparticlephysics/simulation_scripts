@@ -395,10 +395,18 @@ class MultiCascadeFactory(icetray.I3ConditionalModule):
                 # starting from the (shifted) vertex.
                 # (We're choosing 10000m here as some random number negative
                 #  number that will indicate a point inside the convex hull.)
-                pos_entry, dist_entry = self._find_point_on_track(
-                    vertex, zenith, azimuth,
-                    desired_distance=-1,
-                    forwards=True)
+                dist = self.convex_hull_distance_function(vertex)
+                if dist < 0:
+                    # the vertex is already inside the hull, so use that
+                    pos_entry = vertex
+                    dist_entry = 0
+                else:
+                    # vertex is outside, let's see if we find a point inside
+                    # if we go further forward
+                    pos_entry, dist_entry = self._find_point_on_track(
+                        vertex, zenith, azimuth,
+                        desired_distance=-1,
+                        forwards=True)
 
                 if dist_entry > 0.9:
                     # could not find a point in forward direction that is
