@@ -26,6 +26,15 @@ def create_random_services_settings(
         streamnum = run_number + (MAX_RUN_NUMBER * i)
 
         if use_gslrng:
+            if MAX_RUN_NUMBER * n_services > (2 ** 31 - 1 - streamnum) / seed:
+                raise ValueError(
+                    'Integer 32bit overflow encountered in seed generation. '
+                    'This can cause issues with CORSIKA simulations. '
+                    + 'Combined GSLRNG seed: {} | '.format(
+                        seed*MAX_RUN_NUMBER*n_services + streamnum)
+                    + 'MAX_RUN_NUMBER: {} | n_services: {} | seed: {}'.format(
+                        MAX_RUN_NUMBER, n_services, seed)
+                )
             settings_list.append(dict(
                 seed=seed*MAX_RUN_NUMBER*n_services + streamnum))
         else:
