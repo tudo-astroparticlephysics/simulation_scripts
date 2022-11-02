@@ -436,7 +436,7 @@ def run_snowstorm_propagation(cfg, infile, outfile):
             UseOnlyDeviceNumber=cfg['UseOnlyDeviceNumber']
         )
         server = sim_services.I3PhotonPropagationServer(
-            address, clsim.I3CLSimStepToPhotonConverterSeries(converters))
+            address, sim_services.I3StepToPhotonConverterSeries(converters))
 
         # stash server instance in the context to keep it alive
         tray.context['CLSimServer'] = server
