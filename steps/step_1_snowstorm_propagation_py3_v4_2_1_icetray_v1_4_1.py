@@ -37,6 +37,7 @@ import tempfile
 
 from I3Tray import I3Tray
 from icecube import icetray, dataclasses, dataio, phys_services, clsim
+from icecube import sim_services
 from icecube.clsim.traysegments.common import \
     setupPropagators, setupDetector, configureOpenCLDevices
 from icecube.clsim.traysegments.I3CLSimMakePhotons import \
@@ -434,7 +435,7 @@ def run_snowstorm_propagation(cfg, infile, outfile):
             DoNotParallelize=cfg['DoNotParallelize'],
             UseOnlyDeviceNumber=cfg['UseOnlyDeviceNumber']
         )
-        server = clsim.I3PhotonPropagationServer(
+        server = sim_services.I3PhotonPropagationServer(
             address, clsim.I3CLSimStepToPhotonConverterSeries(converters))
 
         # stash server instance in the context to keep it alive
