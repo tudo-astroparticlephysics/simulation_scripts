@@ -91,7 +91,9 @@ nugen_snowstorm_proposalstorm:
 
 corsika_snowstorm_prompt:
   default_config: configs/default_corsika_snowstorm.yaml
-  job_template: job_templates/py3-v4.2.1.sh
+  job_template: job_templates/py3-v4.1.0.sh
+  job_templates:
+    0: job_templates/py3-v4.2.1.sh
   steps:
     0: step_0_corsika_py3_v4_2_1_prompt_muons
     1: step_1_snowstorm_propagation
