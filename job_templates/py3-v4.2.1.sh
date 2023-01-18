@@ -16,11 +16,11 @@ KEEP_CRASHED_FILES={keep_crashed_files}
 echo 'Starting job on Host: '$HOSTNAME
 echo 'Loading py3-v4.2.1'
 eval `/cvmfs/icecube.opensciencegrid.org/py3-v4.2.1/setup.sh`
-export PYTHONUSERBASE=/INSERT/PATH/HERE
+export PYTHONUSERBASE=/data/user/lneste/prompt_muons/py3-v4.2.1
 echo 'Using PYTHONUSERBASE: '${PYTHONUSERBASE}
 
 export PATH=$PYTHONUSERBASE/bin:$PATH
-export PYTHONPATH=$PYTHONUSERBASE/lib/python3.7/site-packages:$PYTHONPATH
+export PYTHONPATH=$PYTHONUSERBASE/lib/python3.10/site-packages:$PYTHONPATH
 
 echo $FINAL_OUT
 if [ -z ${PBS_JOBID} ] && [ -z ${_CONDOR_SCRATCH_DIR} ]
