@@ -277,3 +277,14 @@ nancy_2012_muon_l3:
 
     42: level2
     43: step_0_2012_muon_L3_nancy_mc
+
+select_neutrino:
+  default_config: configs/default_select_neutrino.yaml
+  job_template: job_templates/py3-v4.3.0.sh
+  steps:
+    0: step_-1_select_neutrino
+    1: step_0_neutrino_generator
+    2: step_1_snowstorm_propagation_py3_v4_3_0_icetray_v1_8_1
+    3: step_2_snowstorm_detector_simulation_py3_v4_3_0_icetray_v1_8_1
+    4: step_3_pass2_L1_py3_v4_3_0_icetray_v1_8_1
+    5: step_4_pass2_L2_py3_v4_3_0_icetray_v1_8_1
