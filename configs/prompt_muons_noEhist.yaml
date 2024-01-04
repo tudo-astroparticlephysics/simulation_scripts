@@ -28,17 +28,19 @@ corsika_settings: {
     # 'ecuts3': !!float 1e20,  # electron min energy (see corsika docs)
     # 'ecuts4': !!float 1e20,  # photon min energy (see corsika docs)
     # 'CVMFS': '/home/pgutjahr/simulation_scripts/pgutjahr_icesoft/corsika/',
-    'CVMFS': '/data/user/pgutjahr/software/CORSIKA/',
+    'CVMFS': '/data/user/pgutjahr/software/CORSIKA_noEhist/',
     # 'tmpdir': '/data/user/pgutjahr/tmpdir/',
     # 'CVMFS': '/data/user/lneste/corsikas' ,
     # things that should be defined by user:
     'polyplopia': False,
     'eprimarymin': 600,
-    'eprimarymax': !!float 5e10,
-    'nuaddi': False, #True,
+    'eprimarymax': !!float 1e6,
+    # 'nuaddi': True,
 }
 muon_propagation_config : {
     'PROPOSAL_config_file': '/data/user/lwitthaus/configs/config_proposal.json',
 }
 
-UseGPUs: False
+
+  
+UseGPUs: True

@@ -13,6 +13,8 @@ FINAL_OUT={final_out}
 KEEP_CRASHED_FILES={keep_crashed_files}
 
 
+cd
+echo 'PWD: '$(pwd)
 echo 'Starting job on Host: '$HOSTNAME
 echo 'Loading py3-v4.2.1'
 eval `/cvmfs/icecube.opensciencegrid.org/py3-v4.2.1/setup.sh`
