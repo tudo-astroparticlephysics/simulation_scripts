@@ -1,1 +1,0 @@
-{"count_g:ncall": 0.0, "count_g:sys": 0.007911000000000026, "count_g:usr": 0.09037000000000152, "merge:ncall": 5237.0, "merge:sys": 0.045301999999999995, "merge:usr": 1.0734999999999997, "reader:ncall": 0.0, "reader:sys": 0.07426100000000009, "reader:usr": 1.0452169999999996, "writer:ncall": 0.0, "writer:sys": 0.07480900000000014, "writer:usr": 0.7466560000000011}
