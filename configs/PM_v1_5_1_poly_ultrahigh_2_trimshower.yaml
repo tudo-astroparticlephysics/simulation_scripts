@@ -1,0 +1,67 @@
+chain_name: corsika_snowstorm_prompt_v1_5_1
+n_events_per_run: 10
+n_runs: 10000
+
+dataset_number: 30013
+seed: 4
+
+corsika_module: 'icecube.simprod.modules.Corsika5ComponentGenerator'
+corsika_settings: {
+
+    # things that are pirobably fine like this most of the time
+    'corsikaVersion': '77420',
+    'model': 'SIBYLL',
+    'CutoffType': 'EnergyPerParticle',
+    'oversampling': 1,
+    'trimshower': True,
+    'pnorm': [10., 5., 3., 2., 1.],
+    'pgam': [1., 1., 1., 1., 1.],
+    'UsePipe': True,
+    
+    'ecuts1': 273.,  # hadron min energy (see corsika docs)
+    'ecuts2': 273.,  # muon min energy (see corsika docs)
+    # 'ecuts3': 0.003,  # electron min energy (see corsika docs)
+    # 'ecuts4': 0.003,  # photon min energy (see corsika docs)
+    
+    # 'ecuts1': !!float 1e3,  # hadron min energy (see corsika docs)
+    # 'ecuts2': !!float 1e3,  # muon min energy (see corsika docs)
+    'ecuts3': !!float 1e20,  # electron min energy (see corsika docs)
+    'ecuts4': !!float 1e20,  # photon min energy (see corsika docs)
+    # 'CVMFS': '/home/pgutjahr/simulation_scripts/pgutjahr_icesoft/corsika/',
+    'CVMFS': '/data/user/pgutjahr/software/CORSIKA/',
+    # 'tmpdir': '/data/user/pgutjahr/tmpdir/',
+    # 'CVMFS': '/data/user/lneste/corsikas' ,
+    # things that should be defined by user:
+    'polyplopia': True,
+    'mctree_polyplopia': 'I3MCTree',
+    'eprimarymin': !!float 1e9,
+    'eprimarymax': !!float 5e10,
+    'nuaddi': True,
+}
+muon_propagation_config : {
+#   'PROPOSAL_config_file': '/data/user/lwitthaus/configs/config_proposal.json',
+    'PROPOSAL_config_file': '/data/user/pgutjahr/software/icetray/v1.5.0/src/PROPOSAL/resources/config_icesim.json',
+}
+
+UseGPUs: True
+
+resources:
+  # Indication which steps need GPUs, default is 0
+  gpus:
+    1: 1
+  # Indication of needed memory for each step if nothing is set 1GB is assumed as default
+  memory:
+    0: 4gb
+    1: 6gb
+    2: 5gb
+    3: 3gb
+    4: 3gb
+    5: 3gb
+    12: 3gb
+    13: 3gb
+    14: 3gb
+    15: 3gb
+  # Indication of the walltime (in hours) for each step, if nothing is set the system default for dagman and 1h for pbs are assumed
+  walltime:
+  # Indication of the number of cores for each step, default is 1
+  cpus:

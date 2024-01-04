@@ -11,6 +11,7 @@ from icecube.simprod import segments
 from I3Tray import I3Tray
 from icecube import icetray, dataclasses
 from icecube import sim_services, MuonGun
+import time
 
 from utils import (
     create_random_services,
@@ -54,6 +55,8 @@ def main(cfg, run_number, scratch):
         click.echo('Apply simulation bias: False')
 
     tray = I3Tray()
+
+    start_time = time.time()
 
     if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:
         n_services = 3
@@ -147,6 +150,18 @@ def main(cfg, run_number, scratch):
             **cfg['BaseSimulationBiasSettings']
         )
 
+
+    # -----------------------------------
+    # Delete keys 
+    # -----------------------------------
+    if 'delete_preSamplingTree' in cfg and cfg['delete_preSamplingTree']:
+        tray.AddModule('Delete', 'delete_preSamplingTree',
+                       Keys=['I3MCTree_preSampling'])
+
+    if 'delete_I3MCTree' in cfg and cfg['delete_I3MCTree']:
+        tray.AddModule('Delete', 'delete_I3MCTree',
+                       Keys=['I3MCTree'])
+
     if cfg['distance_splits'] is not None:
         import dom_distance_cut as dom_cut
         click.echo('Oversizestreams')
@@ -188,6 +203,9 @@ def main(cfg, run_number, scratch):
     # remove temporarily created CORSIKA file
     print('Cleaning up temp CORSIKA file: {}'.format(corsika_file))
     os.remove(corsika_file)
+
+    end_time = time.time()
+    print("That took "+str(end_time - start_time)+" seconds.")
 
 
 if __name__ == '__main__':

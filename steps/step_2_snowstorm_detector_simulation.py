@@ -19,6 +19,7 @@ from icecube import sim_services
 from icecube import vuvuzela
 from icecube import DOMLauncher
 from icecube import trigger_sim
+import time
 
 MCPE_SERIES_MAP = 'I3MCPESeriesMap'
 
@@ -48,6 +49,8 @@ def main(cfg, run_number, scratch):
     print('Outfile != $FINAL_OUT clean up for crashed scripts not possible!')
 
     tray = I3Tray()
+
+    start_time = time.time()
 
     tray.context['I3FileStager'] = dataio.get_stagers()
 
@@ -153,6 +156,9 @@ def main(cfg, run_number, scratch):
     tray.AddModule("TrashCan", "the can")
     tray.Execute()
     tray.Finish()
+
+    end_time = time.time()
+    print("That took "+str(end_time - start_time)+" seconds.")
 
 
 if __name__ == '__main__':
