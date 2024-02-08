@@ -30,6 +30,13 @@ corsika_settings: {
     'eprimarymax': !!float 1e9,
     'nuaddi': True,
 }
+
+# Delete keys from the frame after step 0
+step_0_delete_keys: [
+  'I3MCTree_preSampling',
+  'I3MCTree',
+]
+
 muon_propagation_config : {}
 
 UseGPUs: True

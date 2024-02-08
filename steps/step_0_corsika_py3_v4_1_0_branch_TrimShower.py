@@ -151,17 +151,11 @@ def main(cfg, run_number, scratch):
         )
 
 
-    # -----------------------------------
-    # Delete keys 
-    # -----------------------------------
-    if 'delete_preSamplingTree' in cfg and cfg['delete_preSamplingTree']:
-        tray.AddModule('Delete', 'delete_preSamplingTree',
-                       Keys=['I3MCTree_preSampling'])
+    # Delete keys if specified
+    if "step_0_delete_keys" in cfg:
+        tray.Add("Delete", Keys=[cfg["step_0_delete_keys"]])
 
-    if 'delete_I3MCTree' in cfg and cfg['delete_I3MCTree']:
-        tray.AddModule('Delete', 'delete_I3MCTree',
-                       Keys=['I3MCTree'])
-
+    # write output
     if cfg['distance_splits'] is not None:
         import dom_distance_cut as dom_cut
         click.echo('Oversizestreams')

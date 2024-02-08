@@ -82,6 +82,11 @@ corsika_settings: {
 
 }
 
+# Delete keys from the frame after step 0
+step_0_delete_keys: [
+  'I3MCTree_preSampling',
+]
+
 # MuonPropagation specific options
 muon_propagation_config : {}
 
