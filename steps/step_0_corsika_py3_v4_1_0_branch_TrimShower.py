@@ -19,7 +19,6 @@ from utils import (
     get_run_folder,
     load_class,
 )
-from resources.biased_simulation import BaseSimulationBias
 from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
 
 
@@ -143,6 +142,8 @@ def main(cfg, run_number, scratch):
 
     # Bias simulation if desired
     if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:
+        from resources.biased_simulation import BaseSimulationBias
+        
         tray.AddModule(
             BaseSimulationBias,
             'BaseSimulationBias',
@@ -153,7 +154,7 @@ def main(cfg, run_number, scratch):
 
     # Delete keys if specified
     if "step_0_delete_keys" in cfg:
-        tray.Add("Delete", Keys=[cfg["step_0_delete_keys"]])
+        tray.Add("Delete", Keys=cfg["step_0_delete_keys"])
 
     # write output
     if cfg['distance_splits'] is not None:

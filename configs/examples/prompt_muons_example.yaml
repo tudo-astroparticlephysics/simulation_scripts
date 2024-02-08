@@ -1,5 +1,5 @@
 chain_name: corsika_snowstorm_prompt_v1_9_1
-n_events_per_run: 100
+n_events_per_run: 10
 n_runs: 10000
 
 dataset_number: 30012
@@ -26,15 +26,15 @@ corsika_settings: {
     # things that should be defined by user:
     'polyplopia': True,
     'mctree_polyplopia': 'I3MCTree',
-    'eprimarymin': !!float 1e8,
-    'eprimarymax': !!float 1e9,
+    'eprimarymin': !!float 5e2,
+    'eprimarymax': !!float 1e6,
     'nuaddi': True,
 }
 
 # Delete keys from the frame after step 0
 step_0_delete_keys: [
-  'I3MCTree_preSampling',
-  'I3MCTree',
+  # 'I3MCTree_preSampling',
+  # 'I3MCTree',
 ]
 
 muon_propagation_config : {}
