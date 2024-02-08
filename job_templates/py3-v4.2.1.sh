@@ -21,8 +21,10 @@ eval `/cvmfs/icecube.opensciencegrid.org/py3-v4.2.1/setup.sh`
 export PYTHONUSERBASE=/data/user/lneste/prompt_muons/py3-v4.2.1
 echo 'Using PYTHONUSERBASE: '${PYTHONUSERBASE}
 
+export ENV_SITE_PACKGES=$(find ${PYTHONUSERBASE}/lib* -maxdepth 2 -type d -name "site-packages")
+export PYTHONPATH=$ENV_SITE_PACKGES:$PYTHONPATH
 export PATH=$PYTHONUSERBASE/bin:$PATH
-export PYTHONPATH=$PYTHONUSERBASE/lib/python3.10/site-packages:$PYTHONPATH
+echo 'Using PYTHONPATH: '${PYTHONPATH}
 
 echo $FINAL_OUT
 if [ -z ${PBS_JOBID} ] && [ -z ${_CONDOR_SCRATCH_DIR} ]
