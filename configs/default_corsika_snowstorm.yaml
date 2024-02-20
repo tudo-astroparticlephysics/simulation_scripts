@@ -115,9 +115,10 @@ ExtraArgumentsToI3CLSimClientModule:
 snowstorm_config:
   # Config for the full-scale systematics dataset
   # (after alignment with the calibration group)
+  # Link: https://wiki.icecube.wisc.edu/index.php/Ice_models
   # baseline ice-model and hole-ice parametrization
-  IceModelLocation: "$I3_BUILD/ice-models/resources/models/ICEMODEL/spice_3.2.1"
-  HoleIceParameterization: "$I3_BUILD/ice-models/resources/models/ANGSENS/angsens/as.flasher_p1_0.30_p2_-1"
+  IceModelLocation: "$I3_BUILD/ice-models/resources/models/ICEMODEL/spice_ftp-v3m"
+  HoleIceParameterization: "$I3_BUILD/ice-models/resources/models/ANGSENS/angsens_unified/as.set50_p0=-0.27_p1=-0.042"
   # Control ice model perturbations:
   Perturbations:
       # IceWavePlusModes for depth dependent absorption/scattering scaling
@@ -128,17 +129,18 @@ snowstorm_config:
       Scattering:
           type: uniform
           uniform:
-              limits: [[0.9, 1.1]]
+              limits: [[0.913, 1.087]]
       # Global ice absorption scaling
       Absorption:
           type: uniform
           uniform:
-              limits: [[0.9, 1.1]]
-      # Ice anisotropy scaling
-      AnisotropyScale:
-          type: uniform
-          uniform:
-              limits: [[0., 2.0]]
+              limits: [[0.913, 1.087]]
+      # # Ice anisotropy scaling
+      # # Note: no SnowStorm anisotropy parameter exists yet for SpiceFTP
+      # AnisotropyScale:
+      #     type: uniform
+      #     uniform:
+      #         limits: [[0., 2.0]]
       # DOM efficiency scaling
       DOMEfficiency:
           type: uniform
@@ -150,7 +152,7 @@ snowstorm_config:
       HoleIceForward_Unified:
           type: uniform
           uniform:
-                  limits: [[-0.65, 0.60], [-0.08, 0.08]]
+                  limits: [[-0.5, 0.3], [-0.1, 0.05]]
 
 
 # -----------------------------
