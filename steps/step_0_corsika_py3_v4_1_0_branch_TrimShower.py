@@ -98,6 +98,8 @@ def main(cfg, run_number, scratch):
         'usegslrng': cfg['random_service_use_gslrng'],
         'seed': corsika_rng_cfg['seed'],
         'corsikaseed': corsika_rng_cfg['seed'],
+        'procnum': cfg['run_number'],
+        'nproc': utils.MAX_RUN_NUMBER,
 
         'gcdfile': cfg['gcd'],
         'outputfile': corsika_file,
@@ -105,14 +107,6 @@ def main(cfg, run_number, scratch):
         'runnum': cfg['run_number'],
         'nshowers': cfg['n_events_per_run'],
     })
-
-    # add additional rng info if not using gslrng
-    if not cfg['random_service_use_gslrng']:
-        corsika_settings.update({
-            # random number generator
-            'procnum': corsika_rng_cfg['streamnum'],
-            'nproc': corsika_rng_cfg['nstreams'],
-        })
 
     # configure module
     for name, value in corsika_settings.items():

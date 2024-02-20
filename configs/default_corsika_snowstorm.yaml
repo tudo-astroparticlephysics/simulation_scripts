@@ -40,8 +40,7 @@ seed: 1337
 # Whether file after IceTray should be kept
 keep_crashed_files: 0
 # If True: use I3GSLRandomService, otherwise use I3SPRNGRandomService
-# (Newer cmvfs python and icecube builds do not have I3SPRNGRandomService)
-random_service_use_gslrng: True
+random_service_use_gslrng: False
 
 # PATH to the GCD File
 gcd: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_2020.Run134142.Pass2_V0.i3.gz
@@ -74,6 +73,10 @@ corsika_settings: {
     'ecuts2': 273.,  # muon min energy (see corsika docs)
     'ecuts3': 0.003,  # electron min energy (see corsika docs)
     'ecuts4': 0.003,  # photon min energy (see corsika docs)
+
+    # Set Atmosphere
+    'ratmo': -1, 
+    'atmospheres': [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41],
 
     # things that should be defined by user:
     'polyplopia': True,
