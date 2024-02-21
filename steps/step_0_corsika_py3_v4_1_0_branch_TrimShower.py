@@ -14,6 +14,7 @@ from icecube import sim_services, MuonGun
 import time
 
 from utils import (
+    MAX_RUN_NUMBER,
     create_random_services,
     create_random_services_settings,
     get_run_folder,
@@ -99,7 +100,7 @@ def main(cfg, run_number, scratch):
         'seed': corsika_rng_cfg['seed'],
         'corsikaseed': corsika_rng_cfg['seed'],
         'procnum': cfg['run_number'],
-        'nproc': utils.MAX_RUN_NUMBER,
+        'nproc': MAX_RUN_NUMBER,
 
         'gcdfile': cfg['gcd'],
         'outputfile': corsika_file,
