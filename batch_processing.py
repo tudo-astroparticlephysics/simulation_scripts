@@ -23,7 +23,10 @@ def write_onejob_file(config,
     log_dir = os.path.join(scratch_folder, 'logs')
     if not os.path.isdir(log_dir):
         os.makedirs(log_dir)
-    lines.append('should_transfer_files = YES')
+    if 'should_transfer_files' in config:
+        lines.append('should_transfer_files = {}'.format(config['should_transfer_files']))
+    else:
+        lines.append('should_transfer_files = YES')
     lines.append('when_to_transfer_output = ON_EXIT')
     lines.append('output = {}/$(processname).out'.format(log_dir))
     lines.append('error = {}/$(processname).err'.format(log_dir))
@@ -136,7 +139,7 @@ def create_dagman_files(config,
                                      run_numbers,
                                      onejob_file,
                                      scratch_folder)
-    cmd = 'condor_submit_dag -config {} -notification Complete {}'.format(
+    cmd = 'condor_submit_dag -config {} {}'.format(
         config_file, options_file)
     run_script = os.path.join(scratch_folder, 'start_dagman.sh')
     with open(run_script, 'w') as open_file:

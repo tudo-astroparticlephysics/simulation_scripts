@@ -8,7 +8,7 @@
 #PBS -o {processing_folder}/logs/{step_name}_run_{run_number}_${PBS_JOBID}.out
 #PBS -e {processing_folder}/logs/{step_name}_run_{run_number}_${PBS_JOBID}.err
 #PBS -q long
-#PBS -S /cvmfs/icecube.opensciencegrid.org/py3-v4.2.1/icetray-start
+#PBS -S /cvmfs/icecube.opensciencegrid.org/py3-v4.3.0/icetray-start
 FINAL_OUT={final_out}
 KEEP_CRASHED_FILES={keep_crashed_files}
 
@@ -16,8 +16,8 @@ KEEP_CRASHED_FILES={keep_crashed_files}
 cd
 echo 'PWD: '$(pwd)
 echo 'Starting job on Host: '$HOSTNAME
-echo 'Loading py3-v4.2.1'
-eval `/cvmfs/icecube.opensciencegrid.org/py3-v4.2.1/setup.sh`
+echo 'Loading py3-v4.3.0'
+eval `/cvmfs/icecube.opensciencegrid.org/py3-v4.3.0/setup.sh`
 
 # optionally set a different python userbase
 # Note: this should be avoided if possible

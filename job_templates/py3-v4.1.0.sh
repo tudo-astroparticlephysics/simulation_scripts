@@ -19,8 +19,10 @@ eval `/cvmfs/icecube.opensciencegrid.org/py3-v4.1.0/setup.sh`
 export PYTHONUSERBASE=/data/user/mhuennefeld/DNN_reco/virtualenvs/tensorflow_gpu_py3-v4.1.0
 echo 'Using PYTHONUSERBASE: '${PYTHONUSERBASE}
 
+export ENV_SITE_PACKGES=$(find ${PYTHONUSERBASE}/lib* -maxdepth 2 -type d -name "site-packages")
+export PYTHONPATH=$ENV_SITE_PACKGES:$PYTHONPATH
 export PATH=$PYTHONUSERBASE/bin:$PATH
-export PYTHONPATH=$PYTHONUSERBASE/lib/python3.7/site-packages:$PYTHONPATH
+echo 'Using PYTHONPATH: '${PYTHONPATH}
 
 # export CUDA
 export CUDA_HOME=/usr/local/cuda-10.0;
