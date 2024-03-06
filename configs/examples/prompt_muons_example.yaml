@@ -42,6 +42,10 @@ corsika_settings: {
     'polyplopia': True,
     'mctree_polyplopia': 'I3MCTree',
     'nuaddi': True,
+
+    # Set Atmosphere
+    'ratmo': -1, 
+    'atmospheres': [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41],
     
     # energ cuts under which particles are not simulated
     'ecuts1': 273.,  # hadron min energy (see corsika docs)
