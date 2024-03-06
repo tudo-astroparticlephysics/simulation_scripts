@@ -364,6 +364,9 @@ def run_snowstorm_propagation(cfg, infile, outfile):
     inputStream = dataio.I3FrameSequence([infile])
     summary = dataclasses.I3MapStringDouble()
     intermediateOutputFiles = []
+    
+    # set GCD frames for Perturber
+    perturber.set_gcd(gcdFrames)
 
     # --------------
     # Run PhotonProp

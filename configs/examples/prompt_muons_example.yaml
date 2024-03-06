@@ -64,3 +64,66 @@ step_0_delete_keys: [
 ]
 
 muon_propagation_config : {}
+
+
+# -----------------------------
+# Step 1: Snowstorm Propagation
+# -----------------------------
+NumEventsPerModel: 100
+DOMOversizeFactor: 1.
+UseI3PropagatorService: False
+UseGPUs: True
+SummaryFile:
+
+# These arguments will be passed on to the CLSIM Client Module
+ExtraArgumentsToI3CLSimClientModule:
+  # Sources with no DOMs within this distance (meter) are *not* simulated
+  ClosestDOMDistanceCutoff: 500.
+
+# Snowstorm Configuration
+snowstorm_config:
+  # Config for the full-scale systematics dataset
+  # (after alignment with the calibration group)
+  # Link: https://wiki.icecube.wisc.edu/index.php/Ice_models
+  # baseline ice-model and hole-ice parametrization
+  IceModelLocation: "$I3_BUILD/ice-models/resources/models/ICEMODEL/spice_ftp-v3m"
+  HoleIceParameterization: "$I3_BUILD/ice-models/resources/models/ANGSENS/angsens_unified/as.set50_p0=-0.27_p1=-0.042"
+  # Control ice model perturbations:
+  Perturbations:
+      # IceWavePlusModes for depth dependent absorption/scattering scaling
+      IceWavePlusModes:
+          apply: False
+          type: default
+      # Global ice scattering scaling
+      Scattering:
+          type: uniform
+          uniform:
+              limits: [[0.913, 1.087]]
+      # Global ice absorption scaling
+      Absorption:
+          type: uniform
+          uniform:
+              limits: [[0.913, 1.087]]
+      # # Ice anisotropy scaling
+      # # Note: no SnowStorm anisotropy parameter exists yet for SpiceFTP
+      # AnisotropyScale:
+      #     type: uniform
+      #     uniform:
+      #         limits: [[0., 2.0]]
+      # DOM efficiency scaling
+      DOMEfficiency:
+          type: uniform
+          uniform:
+              limits: [[0.9, 1.1]]
+
+      # DOM angular acceptance according to the Unified HoleIce model
+      # see: https://github.com/philippeller/angular_acceptance
+      # HoleIceForward_Unified:
+      #     type: uniform
+      #     uniform:
+      #             limits: [[-0.5, 0.3], [-0.1, 0.05]]
+      
+      HoleIceForward_Unified_zdep:
+          type: uniform
+          uniform:
+                  limits: [[-0.5, 0.3], [-0.1, 0.05], [-0.2, 0.2], [-0.05, 0.05]]
