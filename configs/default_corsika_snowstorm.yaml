@@ -40,7 +40,7 @@ seed: 1337
 # Whether file after IceTray should be kept
 keep_crashed_files: 0
 # If True: use I3GSLRandomService, otherwise use I3SPRNGRandomService
-random_service_use_gslrng: False
+random_service_use_gslrng: True
 
 # PATH to the GCD File
 gcd: /cvmfs/icecube.opensciencegrid.org/data/GCD/GeoCalibDetectorStatus_2020.Run134142.Pass2_V0.i3.gz
