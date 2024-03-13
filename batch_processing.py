@@ -139,8 +139,8 @@ def create_dagman_files(config,
                                      run_numbers,
                                      onejob_file,
                                      scratch_folder)
-    cmd = 'condor_submit_dag -config {} {}'.format(
-        config_file, options_file)
+    cmd = 'condor_submit_dag -batch-name {} -config {} {}'.format(
+        os.path.basename(scratch_folder), config_file, options_file)
     run_script = os.path.join(scratch_folder, 'start_dagman.sh')
     with open(run_script, 'w') as open_file:
         open_file.write(cmd)
