@@ -1,4 +1,4 @@
-chain_name: corsika_snowstorm_prompt_v1_9_1
+chain_name: corsika_snowstorm_prompt_v1_10_0
 n_events_per_run: 100
 n_runs: 10000
 

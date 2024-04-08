@@ -1,6 +1,5 @@
 #!/bin/sh /cvmfs/icecube.opensciencegrid.org/py3-v4.3.0/icetray-start
-#METAPROJECT /data/user/mhuennefeld/software/icecube/py3-v4.3.0/v1.9.1_dev/build
-# --METAPROJECT icetray/v1.9.1
+#METAPROJECT icetray/v1.10.0
 from step_0_corsika_py3_v4_1_0_branch_TrimShower import *
 
 if __name__ == '__main__':

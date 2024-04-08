@@ -89,15 +89,15 @@ nugen_snowstorm_proposalstorm:
     4: step_4_pass2_L2_py3_v4_1_0
     5: step_5_final_level_numu
 
-corsika_snowstorm_prompt_v1_9_1:
+corsika_snowstorm_prompt_v1_10_0:
   default_config: configs/default_corsika_snowstorm.yaml
   job_template: job_templates/py3-v4.3.0.sh
   steps:
-    0: step_0_corsika_py3_v4_3_0_icetray_v1_9_1
-    1: step_1_snowstorm_propagation_py3_v4_3_0_icetray_v1_9_1
-    2: step_2_snowstorm_detector_simulation_py3_v4_3_0_icetray_v1_9_1
-    3: step_3_pass2_L1_py3_v4_3_0_icetray_v1_9_1
-    4: step_4_pass2_L2_py3_v4_3_0_icetray_v1_9_1
+    0: step_0_corsika_py3_v4_3_0_icetray_v1_10_0
+    1: step_1_snowstorm_propagation_py3_v4_3_0_icetray_v1_10_0
+    2: step_2_snowstorm_detector_simulation_py3_v4_3_0_icetray_v1_10_0
+    3: step_3_pass2_L1_py3_v4_3_0_icetray_v1_10_0
+    4: step_4_pass2_L2_py3_v4_3_0_icetray_v1_10_0
 
 corsika_snowstorm_trimshower:
   default_config: configs/default_corsika_snowstorm.yaml
