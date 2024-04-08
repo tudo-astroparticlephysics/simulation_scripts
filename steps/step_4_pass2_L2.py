@@ -19,6 +19,7 @@ from icecube.filterscripts.offlineL2.level2_all_filters import OfflineFilter
 from icecube.filterscripts.offlineL2 import SpecialWriter
 
 from utils import get_run_folder
+import time
 
 
 PHOTONICS_DIR = '/cvmfs/icecube.opensciencegrid.org/data/photon-tables'
@@ -55,6 +56,9 @@ def main(cfg, run_number, scratch):
     print('Outfile != $FINAL_OUT clean up for crashed scripts not possible!')
 
     tray = I3Tray()
+
+    start_time = time.time()
+
     """The main L1 script"""
     tray.AddModule('I3Reader',
                    'i3 reader',
@@ -81,6 +85,8 @@ def main(cfg, run_number, scratch):
     tray.Finish()
     del tray
 
+    end_time = time.time()
+    print("That took "+str(end_time - start_time)+" seconds.")
 
 if __name__ == '__main__':
     main()

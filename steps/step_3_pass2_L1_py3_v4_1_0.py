@@ -74,6 +74,9 @@ def main(cfg, run_number, scratch):
     ]
 
     tray = I3Tray()
+
+    start_time = time.time()
+
     """The main L1 script"""
     tray.AddModule('I3Reader',
                    'i3 reader',
@@ -327,6 +330,9 @@ def main(cfg, run_number, scratch):
     tray.AddModule("TrashCan", "the can")
     tray.Execute()
     tray.Finish()
+
+    end_time = time.time()
+    print("That took "+str(end_time - start_time)+" seconds.")
 
 
 if __name__ == '__main__':
