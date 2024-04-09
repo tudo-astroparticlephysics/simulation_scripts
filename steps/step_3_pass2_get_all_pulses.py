@@ -133,6 +133,7 @@ def main(cfg, run_number, scratch):
         'SplitUncleanedInIceDSTPulsesTimeRange',
         'I3TriggerHierarchy',
         'GCFilter_GCFilterMJD',
+        default_get_mc_pulses_kwargs['OutputKey'],
         ]
     keys_to_keep += filter_globals.inice_split_keeps + \
         filter_globals.onlinel2filter_keeps
