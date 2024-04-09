@@ -265,7 +265,7 @@ class GetMCPulses(icetray.I3ConditionalModule):
                           'MCPulses')
         self.AddParameter('CreatePFrames', 'Create P frames from q frames?.',
                           True)
-        self.AddParameter('WrtiteToQFrame', 'Add MC pulses to Q-Frame instead of P-frame.', False)
+        self.AddParameter('WriteToQFrame', 'Add MC pulses to Q-Frame instead of P-frame.', False)
 
     def Configure(self):
         """Configure the module.
@@ -273,7 +273,7 @@ class GetMCPulses(icetray.I3ConditionalModule):
         self._mcpe_series = self.GetParameter('I3MCPESeriesMap')
         self._output_key = self.GetParameter('OutputKey')
         self._create_p_frames = self.GetParameter('CreatePFrames')
-        self._write_to_q_frame = self.GetParameter('WrtiteToQFrame')
+        self._write_to_q_frame = self.GetParameter('WriteToQFrame')
         
         assert isinstance(self._create_p_frames, bool), \
             'Expected CreatePFrames to be a boolean, but got {!r}'.format(
