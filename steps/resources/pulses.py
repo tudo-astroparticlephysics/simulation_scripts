@@ -1,4 +1,4 @@
-from icecube import icetray, dataclasses
+from icecube import icetray, dataclasses, simclasses
 from I3Tray import I3Units
 from icecube.filterscripts import filter_globals
 from icecube.filterscripts.baseproc import BaseProcessing
