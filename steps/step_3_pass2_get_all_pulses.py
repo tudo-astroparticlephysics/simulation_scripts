@@ -54,17 +54,11 @@ def main(cfg, run_number, scratch):
                    'i3 reader',
                    FilenameList=[cfg['gcd_pass2'], infile])
 
-    # get reco pulses
-    if cfg['get_reco_pulses']:
-        tray.AddSegment(
-            GetPulses, "GetPulses", decode=False, simulation=True,
-        )
-    
     if cfg['get_mc_pulses']:
         default_get_mc_pulses_kwargs = {
             'I3MCPESeriesMap': 'I3MCPESeriesMap',
             'OutputKey': 'MCPulses',
-            'CreatePFrames': True,
+            'CreatePFrames': False,
             'WrtiteToQFrame': True,
         }
         if ('get_mc_pulses_kwargs' in cfg['get_mc_pulses_kwargs'] and 
@@ -73,6 +67,12 @@ def main(cfg, run_number, scratch):
             
         tray.AddModule(
             GetMCPulses, "GetMCPulses", **default_get_mc_pulses_kwargs
+        )
+        
+    # get reco pulses
+    if cfg['get_reco_pulses']:
+        tray.AddSegment(
+            GetPulses, "GetPulses", decode=False, simulation=True,
         )
 
     # Throw out unneeded streams and keys
