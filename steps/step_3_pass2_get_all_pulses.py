@@ -1,19 +1,11 @@
-#!/bin/sh /cvmfs/icecube.opensciencegrid.org/py2-v2/icetray-start
-#METAPROJECT icerec/V05-01-06
-import os
-import sys
+#!/bin/sh /cvmfs/icecube.opensciencegrid.org/py3-v4.3.0/icetray-start
+#METAPROJECT icetray/v1.10.0
 import time
-
 import click
 import yaml
 
-from I3Tray import I3Tray, I3Units
-from icecube import icetray, dataclasses
+from icecube import icetray
 from icecube.filterscripts import filter_globals
-from icecube.filterscripts.baseproc import BaseProcessing
-from icecube.STTools.seededRT.configuration_services import \
-    I3DOMLinkSeededRTConfigurationService
-from icecube import filter_tools
 
 from utils import get_run_folder
 
@@ -25,8 +17,9 @@ from resources.pulses import MergeOversampledEvents
 @click.argument('cfg', type=click.Path(exists=True))
 @click.argument('run_number', type=int)
 @click.option('--scratch/--no-scratch', default=True)
-@click.argument('do_merging_if_necessary', type=bool, default=True)
-def main(cfg, run_number, scratch, do_merging_if_necessary):
+def main(cfg, run_number, scratch):
+    start_time = time.time()
+    
     with open(cfg, 'r') as stream:
         if int(yaml.__version__[0]) < 5:
             # backwards compatibility for yaml versions before version 5
@@ -58,11 +51,25 @@ def main(cfg, run_number, scratch, do_merging_if_necessary):
                    'i3 reader',
                    FilenameList=[cfg['gcd_pass2'], infile])
 
-    # get pulses
-    tray.AddSegment(GetPulses, "GetPulses",
-                    decode=False,
-                    simulation=True,
-                    )
+    # get reco pulses
+    if cfg['get_reco_pulses']:
+        tray.AddSegment(
+            GetPulses, "GetPulses", decode=False, simulation=True,
+        )
+    
+    if cfg['get_mc_pulses']:
+        default_get_mc_pulses_kwargs = {
+            'I3MCPESeriesMap': 'I3MCPESeriesMap',
+            'OutputKey': 'MCPulses',
+            'CreatePFrames': True,
+        }
+        if ('get_mc_pulses_kwargs' in cfg['get_mc_pulses_kwargs'] and 
+                cfg['get_mc_pulses_kwargs'] is not None):
+            default_get_mc_pulses_kwargs.update(cfg['get_mc_pulses_kwargs'])
+            
+        tray.AddModule(
+            GetMCPulses, "GetMCPulses", **default_get_mc_pulses_kwargs
+        )
 
     # Throw out unneeded streams and keys
     if 'oversampling_keep_keys' not in cfg:
@@ -79,16 +86,28 @@ def main(cfg, run_number, scratch, do_merging_if_necessary):
                    KeepKeys=['do_not_keep_anything'])
 
     # merge oversampled events: calculate average hits
-    if cfg['oversampling_factor'] is not None and do_merging_if_necessary:
-        if 'oversampling_merge_events' in cfg:
-            merge_events = cfg['oversampling_merge_events']
-        else:
-            # backward compability
-            merge_events = True
+    if cfg['oversampling_factor'] is not None:
+        if cfg['oversampling_merge_events']:
+            
+            if cfg['get_reco_pulses'] and cfg['get_mc_pulses']:
+                raise NotImplementedError(
+                    'Merging of multiple pulses at the same time is not implemented yet'
+            )
+                
+            if cfg['get_reco_pulses']:
+                tray.AddModule(
+                    MergeOversampledEvents, 'MergeOversampledEvents',
+                    OversamplingFactor=cfg['oversampling_factor'],
+                    PulseKey='InIceDSTPulses',
+                )
+            if cfg['get_mc_pulses']:
+                tray.AddModule(
+                    MergeOversampledEvents, 'MergeOversampledEvents',
+                    OversamplingFactor=cfg['oversampling_factor'],
+                    PulseKey=default_get_mc_pulses_kwargs['OutputKey'],
+                )
 
-        if merge_events:
-            tray.AddModule(MergeOversampledEvents, 'MergeOversampledEvents',
-                           OversamplingFactor=cfg['oversampling_factor'])
+            
     keys_to_keep = [
         'TimeShift',
         'I3MCTree_preMuonProp',
@@ -121,6 +140,10 @@ def main(cfg, run_number, scratch, do_merging_if_necessary):
 
     tray.AddModule("Keep", "keep_before_merge",
                    keys=keys_to_keep + cfg['oversampling_keep_keys'])
+    
+    # Make space and delete uneeded keys
+    if 'keys_to_delete' in cfg and cfg["keys_to_delete"] is not None:
+        tray.AddModule('Delete', 'DeleteKeys', keys=cfg["keys_to_delete"])
 
     tray.AddModule("I3Writer", "EventWriter",
                    filename=outfile,
@@ -133,6 +156,8 @@ def main(cfg, run_number, scratch, do_merging_if_necessary):
     tray.Execute()
     tray.Finish()
 
+    end_time = time.time()
+    print("That took "+str(end_time - start_time)+" seconds.")
 
 if __name__ == '__main__':
     main()

@@ -1,6 +1,7 @@
 #!/bin/sh /cvmfs/icecube.opensciencegrid.org/py2-v3.0.1/icetray-start
 #METAPROJECT simulation/V06-00-03
 from __future__ import division
+import time
 import click
 import yaml
 import numpy as np
@@ -47,6 +48,8 @@ class DummyMCTreeRenaming(icetray.I3ConditionalModule):
 @click.argument('run_number', type=int)
 @click.option('--scratch/--no-scratch', default=True)
 def main(cfg, run_number, scratch):
+    start_time = time.time()
+    
     with open(cfg, 'r') as stream:
         cfg = yaml.full_load(stream)
     cfg['run_number'] = run_number
@@ -189,6 +192,9 @@ def main(cfg, run_number, scratch):
     tray.AddModule("TrashCan", "the can")
     tray.Execute()
     tray.Finish()
+    
+    end_time = time.time()
+    print("That took "+str(end_time - start_time)+" seconds.")
 
 
 if __name__ == '__main__':
