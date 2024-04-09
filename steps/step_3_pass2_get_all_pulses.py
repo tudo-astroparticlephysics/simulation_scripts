@@ -46,7 +46,7 @@ def main(cfg, run_number, scratch):
     outfile = outfile.replace('2012_pass2', 'pass2')
     print('Outfile != $FINAL_OUT clean up for crashed scripts not possible!')
 
-    tray = I3Tray()
+    tray = icetray.I3Tray()
     tray.AddModule('I3Reader',
                    'i3 reader',
                    FilenameList=[cfg['gcd_pass2'], infile])
