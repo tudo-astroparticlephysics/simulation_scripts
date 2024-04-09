@@ -265,6 +265,7 @@ class GetMCPulses(icetray.I3ConditionalModule):
                           'MCPulses')
         self.AddParameter('CreatePFrames', 'Create P frames from q frames?.',
                           True)
+        self.AddParameter('WrtiteToQFrame', 'Add MC pulses to Q-Frame instead of P-frame.', False)
 
     def Configure(self):
         """Configure the module.
@@ -272,7 +273,8 @@ class GetMCPulses(icetray.I3ConditionalModule):
         self._mcpe_series = self.GetParameter('I3MCPESeriesMap')
         self._output_key = self.GetParameter('OutputKey')
         self._create_p_frames = self.GetParameter('CreatePFrames')
-
+        self._write_to_q_frame = self.GetParameter('WrtiteToQFrame')
+        
         assert isinstance(self._create_p_frames, bool), \
             'Expected CreatePFrames to be a boolean, but got {!r}'.format(
                 self._create_p_frames)
@@ -285,19 +287,30 @@ class GetMCPulses(icetray.I3ConditionalModule):
         frame : I3Frame
             The current I3Frame.
         """
+        if self._write_to_q_frame:
+            # add MC reco pulses from I3MCPESeriesMap
+            self._add_mc_pulses(frame, frame[self._mcpe_series])
+            
+            # Detector simulation creates trigger and shifts times relative
+            # to this trigger. If detector simulation is skipped,
+            # we must manually add the TimeShift key to the frame.
+            if 'TimeShift' not in frame:
+                frame['TimeShift'] = dataclasses.I3Double(0.)
+                
         self.PushFrame(frame)
 
         if self._create_p_frames:
             p_frame = icetray.I3Frame(icetray.I3Frame.Physics)
 
-            # add MC reco pulses from I3MCPESeriesMap
-            self._add_mc_pulses(p_frame, frame[self._mcpe_series])
+            if not self._write_to_q_frame:
+                # add MC reco pulses from I3MCPESeriesMap
+                self._add_mc_pulses(p_frame, frame[self._mcpe_series])
 
-            # Detector simulation creates trigger and shifts times relative
-            # to this trigger. If detector simulation is skipped,
-            # we must manually add the TimeShift key to the frame.
-            if 'TimeShift' not in frame:
-                p_frame['TimeShift'] = dataclasses.I3Double(0.)
+                # Detector simulation creates trigger and shifts times relative
+                # to this trigger. If detector simulation is skipped,
+                # we must manually add the TimeShift key to the frame.
+                if 'TimeShift' not in frame:
+                    p_frame['TimeShift'] = dataclasses.I3Double(0.)
             self.PushFrame(p_frame)
 
     def Physics(self, frame):
@@ -308,7 +321,7 @@ class GetMCPulses(icetray.I3ConditionalModule):
         frame : I3Frame
             The current I3Frame.
         """
-        if not self._create_p_frames:
+        if not self._create_p_frames and not self._write_to_q_frame:
 
             # add MC reco pulses from I3MCPESeriesMap
             self._add_mc_pulses(frame, frame[self._mcpe_series])

@@ -65,6 +65,7 @@ def main(cfg, run_number, scratch):
             'I3MCPESeriesMap': 'I3MCPESeriesMap',
             'OutputKey': 'MCPulses',
             'CreatePFrames': True,
+            'WrtiteToQFrame': True,
         }
         if ('get_mc_pulses_kwargs' in cfg['get_mc_pulses_kwargs'] and 
                 cfg['get_mc_pulses_kwargs'] is not None):
