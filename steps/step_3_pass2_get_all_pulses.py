@@ -9,8 +9,11 @@ from icecube.filterscripts import filter_globals
 
 from utils import get_run_folder
 
-from resources.pulses import GetPulses
-from resources.pulses import MergeOversampledEvents
+from resources.pulses import (
+    GetMCPulses,
+    GetPulses,
+    MergeOversampledEvents,
+)
 
 
 @click.command()
