@@ -348,7 +348,7 @@ class GetMCPulses(icetray.I3ConditionalModule):
                     mc_pulse.flags = 1
                 
                 # mis-use the width field to store the minor particle ID
-                mc_pulse.width = mcpe.ID..minorID
+                mc_pulse.width = mcpe.ID.minorID
 
                 # append pulse
                 mc_pulses.append(mc_pulse)
