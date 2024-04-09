@@ -168,7 +168,7 @@ cascade_snowstorm_v1_10_0:
     0: step_0_cascade_simulation_py3_v4_3_0_icetray_v1_10_0
     1: step_1_snowstorm_propagation_py3_v4_3_0_icetray_v1_10_0
     2: step_2_snowstorm_detector_simulation_py3_v4_3_0_icetray_v1_10_0
-    3: step_3_pass2_get_all_pulses.py
+    3: step_3_pass2_get_all_pulses
 
 cascade_ppc:
   default_config: configs/default_cascade_ppc.yaml
@@ -188,7 +188,7 @@ cascade_ppc_v1_10_0:
     0: step_0_cascade_simulation_py3_v4_3_0_icetray_v1_10_0
     1: step_1_ppc_photon_propagation_py3_v4_3_0_icetray_v1_10_0
     2: step_2_snowstorm_detector_simulation_py3_v4_3_0_icetray_v1_10_0
-    3: step_3_pass2_get_all_pulses.py
+    3: step_3_pass2_get_all_pulses
 
 multi_cascade_injection_snowstorm:
   default_config: configs/default_multi_cascade_simulation_snowstorm.yaml
