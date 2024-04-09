@@ -147,14 +147,24 @@ def main(cfg, run_number, scratch):
     # Make space and delete uneeded keys
     if 'keys_to_delete' in cfg and cfg["keys_to_delete"] is not None:
         tray.AddModule('Delete', 'DeleteKeys', keys=cfg["keys_to_delete"])
+    
+    
+    if "i3_streams" in cfg and cfg["i3_streams"] is not None:
+        i3_streams = [
+            icetray.I3Frame.Stream(s) for s in cfg["i3_streams"]
+        ]
+    else:
+        i3_streams = [
+            icetray.I3Frame.DAQ,
+            icetray.I3Frame.Physics,
+            icetray.I3Frame.TrayInfo,
+            icetray.I3Frame.Simulation,
+            icetray.I3Frame.Stream("M"),
+        ]
 
     tray.AddModule("I3Writer", "EventWriter",
                    filename=outfile,
-                   Streams=[icetray.I3Frame.DAQ,
-                            icetray.I3Frame.Physics,
-                            icetray.I3Frame.TrayInfo,
-                            icetray.I3Frame.Simulation,
-                            icetray.I3Frame.Stream('M')])
+                   Streams=i3_streams)
     tray.AddModule("TrashCan", "the can")
     tray.Execute()
     tray.Finish()
