@@ -499,7 +499,6 @@ def run_snowstorm_propagation(cfg, infile, outfile):
         # measure CLSimTray time
         time_CLSimTray_start = time.time()
 
-        # Execute Tray
         tray.Execute()
 
         # measure CLSimTray time

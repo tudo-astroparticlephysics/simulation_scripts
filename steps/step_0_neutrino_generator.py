@@ -63,6 +63,9 @@ def main(cfg, run_number, scratch):
             if "NuGPrimary" in frame:
                     event_count += 1
     
+    if "NEvents" in cfg:
+        event_count = min(event_count, cfg["NEvents"])
+
     # --------------------------------------
     # Build IceTray
     # --------------------------------------
@@ -73,6 +76,7 @@ def main(cfg, run_number, scratch):
     tray.AddModule("I3Reader", "reader", FilenameList=files)
 
     nugen_config = cfg["neutrino_generator_config"]
+
     propmode = neutrino_generator.to_propagation_mode(nugen_config["propmode"])
 
 
@@ -98,13 +102,15 @@ def main(cfg, run_number, scratch):
     tray.AddService("I3NuGSteeringFactory", "NuGSteer",
                     EarthModelName = "EarthModelService",
                     NEvents = event_count,
-                    CylinderParams = cylinderparams
+                    CylinderParams = cylinderparams,
+                    SimMode = nugen_config["simmode"],
                     )
     tray.AddService("I3NuGInteractionInfoDifferentialFactory", "interaction",
                 RandomService = random_services[1],
                 SteeringName = "NuGSteer",
                 CrossSectionModel = nugen_config["xsecmodel"],
                 )
+                
     tray.AddModule("I3NeutrinoGenerator","generator",
                     RandomService = random_services[1],
                     SteeringName = "NuGSteer",
@@ -117,32 +123,32 @@ def main(cfg, run_number, scratch):
     #Note: Snowstorm may perform muon propagation internally
     if 'muon_propagation_config' in cfg:
         tray.Add('Rename', Keys=['I3MCTree', 'I3MCTree_preMuonProp'])
-        # tray.AddSegment(segments.PropagateMuons,
-        #                 'propagate_muons',
-        #                 RandomService=random_services[1],
-        #                 **cfg['muon_propagation_config'])
-        propagators = get_propagators()
-        if "I3ParticleTypePropagatorServiceMap" in tray.context:
-            propagator_map = tray.context["I3ParticleTypePropagatorServiceMap"]
-            for k, v in propagators.items():
-                propagator_map[k] = v
-        else:
-            propagator_map = propagators
+        tray.AddSegment(segments.PropagateMuons,
+                        'propagate_muons',
+                        RandomService=random_services[1],
+                        **cfg['muon_propagation_config'])
+        # propagators = get_propagators()
+        # if "I3ParticleTypePropagatorServiceMap" in tray.context:
+        #     propagator_map = tray.context["I3ParticleTypePropagatorServiceMap"]
+        #     for k, v in propagators.items():
+        #         propagator_map[k] = v
+        # else:
+        #     propagator_map = propagators
 
-        tray.AddModule("I3PropagatorModule", "propagator",
-                    PropagatorServices=propagator_map,
-                    RandomService=random_services[1],
-                    InputMCTreeName="I3MCTree_preMuonProp",
-                    OutputMCTreeName="I3MCTree")
+        # tray.AddModule("I3PropagatorModule", "propagator",
+        #             PropagatorServices=propagator_map,
+        #             RandomService=random_services[1],
+        #             InputMCTreeName="I3MCTree_preMuonProp",
+        #             OutputMCTreeName="I3MCTree")
 
-        # Add empty MMCTrackList objects for events that have none.
-        def add_empty_tracklist(frame):
-            if "MMCTrackList" not in frame:
-                frame["MMCTrackList"] = simclasses.I3MMCTrackList()
-            return True
+        # # Add empty MMCTrackList objects for events that have none.
+        # def add_empty_tracklist(frame):
+        #     if "MMCTrackList" not in frame:
+        #         frame["MMCTrackList"] = simclasses.I3MMCTrackList()
+        #     return True
 
-        tray.AddModule(add_empty_tracklist, "add_empty_tracklist",
-                    Streams=[icetray.I3Frame.DAQ])        
+        # tray.AddModule(add_empty_tracklist, "add_empty_tracklist",
+        #             Streams=[icetray.I3Frame.DAQ])        
 
     click.echo('Output: {}'.format(outfile))
     tray.AddModule("I3Writer", "writer",

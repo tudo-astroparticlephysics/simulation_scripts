@@ -1,7 +1,7 @@
 # Number of the dataset
 # dataset_number: 
 # Number of total runs/file
-n_runs: 1000
+#n_runs: 1000
 
 # Pattern for the outputfile
 output_pattern: '{run_folder}/Level0.{step}_{generator}_IC86.2012_pass2.{dataset_number:6d}.{run_number}.i3.bz2'
@@ -56,25 +56,20 @@ generator: corsika
 
 # SelectNeutrino specific options
 
-select_neutrino_cfg:
-    #Neutrino is selected with pow(energy [GeV], index)",
-    EnergyBiasPowerIndex: 1
-    # "Bias ratio for NuE:NuEBar:NuMu:NuMuBar:NuTau:NuTauBar. "
-    # ParticleBiases: [1, 1, 1, 1, 1, 1]
-    #KeepDarkNeutrinos: false
-    #UseZeVForm: false
+inject_neutrino_cfg:
+
 
 # NeutrinoGenerator specific options
 neutrino_generator_config:
     earth: ["PREM_mmc"]
     material: ["Standard"]
     icecapmodel: "IceSheet"
-    simmode: "Full"
+    simmode: "Detector"
     xsecmodel: "csms_differential_v1.0"
     xsecdir : ""
     propmode: "AutoDetect"
-    #CylinderRadiusInM: 950
-    #CylinderHeightInM: 1900
+    CylinderRadiusInM: 600
+    CylinderHeightInM: 1200
 
 # MuonPropagation specific options
 muon_propagation_config : {}
