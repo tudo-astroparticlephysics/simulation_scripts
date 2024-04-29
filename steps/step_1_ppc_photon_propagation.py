@@ -4,6 +4,7 @@ from __future__ import division
 import os
 import click
 import yaml
+import time
 
 from I3Tray import I3Tray
 from icecube import icetray, dataio
@@ -16,6 +17,9 @@ from utils import create_random_services, get_run_folder
 @click.argument('run_number', type=int)
 @click.option('--scratch/--no-scratch', default=True)
 def main(cfg, run_number, scratch):
+    
+    start_time = time.time()
+    
     with open(cfg, 'r') as stream:
         cfg = yaml.full_load(stream)
     cfg['run_number'] = run_number
@@ -106,6 +110,9 @@ def main(cfg, run_number, scratch):
     tray.AddModule("TrashCan", "the can")
     tray.Execute()
     tray.Finish()
+    
+    end_time = time.time()
+    print("That took "+str(end_time - start_time)+" seconds.")
 
 
 if __name__ == '__main__':
