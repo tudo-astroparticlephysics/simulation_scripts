@@ -57,12 +57,8 @@ def main(cfg, run_number, scratch):
 
     click.echo('PPC Settings:')
     for key, value in ppc_environment_variables.items():
-        try:
-            _value = os.path.expandvars(value)
-        except TypeError:
-            _value = value
-        click.echo('\t{}: {}'.format(key, _value))
-        os.putenv(key, _value)
+        click.echo('\t{}: {}'.format(key, os.path.expandvars(value)))
+        os.putenv(key, os.path.expandvars(value))
 
     click.echo('PPC Arguments:')
     for key, value in ppc_arguments.items():
