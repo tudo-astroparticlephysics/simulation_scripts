@@ -6,7 +6,7 @@ import click
 import yaml
 
 from I3Tray import I3Tray
-from icecube import icetray
+from icecube import icetray, dataio
 
 from utils import create_random_services, get_run_folder
 
