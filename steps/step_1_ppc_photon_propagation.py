@@ -49,6 +49,48 @@ def main(cfg, run_number, scratch):
     }
     ppc_environment_variables = dict(default_ppc_environment_variables)
     ppc_environment_variables.update(ppc_config['environment_variables'])
+    
+    ice_model = os.path.basename(ppc_environment_variables['ICEMODELDIR'])
+    
+    if ice_model in [
+        "spice_3",
+        "spice_3.1",
+        "spice_3.2",
+        "spice_3.2.1",
+        "spice_3.2.2",
+        "spice_3.2.2-for_clsim",
+        "spice_3.2_emrmspice_ftp-v1",
+        "spice_lea",
+        "spice_mie",
+        "spice_bfr-v1",
+        "spice_bfr-v2",
+        "spice_ftp-v0",
+        "spice_ftp-v1",
+        "spice_ftp-v2",
+        "spice_ftp-v3",
+    ]:
+        if "BFRM" in ppc_environment_variables:
+            if ppc_environment_variables["BFRM"] != 0:
+                raise ValueError(
+                    "The BFRM environment variable must be set to 0 for the older ice models."
+                )
+    elif ice_model in [
+        "spice_ftp-v3m",
+    ]:
+        if 'BFRM' not in ppc_environment_variables:
+            ppc_environment_variables['BFRM'] = 2
+        else:
+            if ppc_environment_variables['BFRM'] != 2:
+                raise ValueError(
+                    "The BFRM environment variable must be set to 2 for the spice_ftp-v3m ice model."
+                )
+    else:
+        # let's be safe and throw an error for newer ice models
+        # We want to make sure that the BFRM and any other potentially
+        # required environment variables are set correctly.
+        raise ValueError(
+            "The ice model {} is not supported.".format(ice_model)
+        )
 
     # define default PPC arguments
     default_ppc_arguments = {
