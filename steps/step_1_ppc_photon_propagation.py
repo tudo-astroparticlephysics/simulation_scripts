@@ -73,18 +73,19 @@ def main(cfg, run_number, scratch):
         "spice_ftp-v3",
     ]:
         if "BFRM" in ppc_environment_variables:
-            if ppc_environment_variables["BFRM"] != 0:
+            if ppc_environment_variables["BFRM"] != "0":
                 raise ValueError(
                     "The BFRM environment variable must be set to 0 for"
                     " the older ice models."
                 )
+                
     elif ice_model in [
         "spice_ftp-v3m",
     ]:
         if 'BFRM' not in ppc_environment_variables:
-            ppc_environment_variables['BFRM'] = 2
+            ppc_environment_variables['BFRM'] = "2"
         else:
-            if ppc_environment_variables['BFRM'] != 2:
+            if ppc_environment_variables['BFRM'] != "2":
                 raise ValueError(
                     "The BFRM environment variable must be set to 2 for"
                     " the spice_ftp-v3m ice model."
@@ -100,7 +101,7 @@ def main(cfg, run_number, scratch):
         else:
             # peform some sanity checks
             if "ftp-v3m" in ice_model.lower():
-                if not ppc_environment_variables["BFRM"] == 2:
+                if not ppc_environment_variables["BFRM"] == "2":
                     raise ValueError(
                         "The BFRM environment variable must be set to 2 for"
                         " the spice_ftp-v3m ice model."
