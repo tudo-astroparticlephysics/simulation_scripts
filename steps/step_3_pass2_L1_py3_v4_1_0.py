@@ -193,6 +193,7 @@ def main(cfg, run_number, scratch):
         'SplitUncleanedInIceDSTPulsesTimeRange',
         'CalibrationErrata',
         'SaturationWindows',
+        'DOMDeadTimesMC',
         'InIceRawData',  # keep raw data for now
         'IceTopRawData',
     ] + simulation_keeps

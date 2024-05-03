@@ -128,6 +128,7 @@ def main(cfg, run_number, scratch):
         'InIceDSTPulsesTimeRange',
         'CalibrationErrata',
         'SaturationWindows',
+        'DOMDeadTimesMC',
         'SplitUncleanedInIcePulses',
         'SplitUncleanedInIcePulsesTimeRange',
         'SplitUncleanedInIceDSTPulsesTimeRange',
