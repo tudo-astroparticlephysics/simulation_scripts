@@ -52,6 +52,9 @@ def main(cfg, run_number, scratch):
     
     ice_model = os.path.basename(ppc_environment_variables['ICEMODELDIR'])
     
+    # ------------------------------------------------------------------------
+    # Sanity checks to ensure that the environment variables are set correctly
+    # ------------------------------------------------------------------------
     if ice_model in [
         "spice_3",
         "spice_3.1",
@@ -87,12 +90,22 @@ def main(cfg, run_number, scratch):
                     " the spice_ftp-v3m ice model."
                 )
     else:
-        # let's be safe and throw an error for newer ice models
-        # We want to make sure that the BFRM and any other potentially
-        # required environment variables are set correctly.
-        raise ValueError(
-            "The ice model {} is not supported.".format(ice_model)
-        )
+        if 'BFRM' not in ppc_environment_variables:
+            # let's be safe and throw an error for newer ice models
+            # We want to make sure that the BFRM and any other potentially
+            # required environment variables are set correctly.
+            raise ValueError(
+                "The BFRM environment variable must be set!"
+            )
+        else:
+            # peform some sanity checks
+            if "ftp-v3m" in ice_model.lower():
+                if not ppc_environment_variables["BFRM"] == 2:
+                    raise ValueError(
+                        "The BFRM environment variable must be set to 2 for"
+                        " the spice_ftp-v3m ice model."
+                    )
+    # ------------------------------------------------------------------------
 
     # define default PPC arguments
     default_ppc_arguments = {
