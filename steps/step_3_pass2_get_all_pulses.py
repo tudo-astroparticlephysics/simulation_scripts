@@ -185,7 +185,7 @@ def main(cfg, run_number, scratch):
                    filename=outfile,
                    Streams=i3_streams)
     tray.AddModule("TrashCan", "the can")
-    tray.Execute(15)
+    tray.Execute()
     tray.Finish()
 
     end_time = time.time()
