@@ -248,8 +248,8 @@ class MergeOversampledEvents(icetray.I3ConditionalModule):
 
         else:
             self.PushFrame(frame)
-            
-            
+
+
 class GetMCPulses(icetray.I3ConditionalModule):
 
     """Creates I3RecoPulseSeriesMap from I3MCPESeriesMap and optionally
@@ -274,7 +274,7 @@ class GetMCPulses(icetray.I3ConditionalModule):
         self._output_key = self.GetParameter('OutputKey')
         self._create_p_frames = self.GetParameter('CreatePFrames')
         self._write_to_q_frame = self.GetParameter('WriteToQFrame')
-        
+
         assert isinstance(self._create_p_frames, bool), \
             'Expected CreatePFrames to be a boolean, but got {!r}'.format(
                 self._create_p_frames)
@@ -290,13 +290,13 @@ class GetMCPulses(icetray.I3ConditionalModule):
         if self._write_to_q_frame:
             # add MC reco pulses from I3MCPESeriesMap
             self._add_mc_pulses(frame, frame[self._mcpe_series])
-            
+
             # Detector simulation creates trigger and shifts times relative
             # to this trigger. If detector simulation is skipped,
             # we must manually add the TimeShift key to the frame.
             if 'TimeShift' not in frame:
                 frame['TimeShift'] = dataclasses.I3Double(0.)
-                
+
         self.PushFrame(frame)
 
         if self._create_p_frames:
@@ -360,7 +360,7 @@ class GetMCPulses(icetray.I3ConditionalModule):
                         mc_pulse.flags = 0
                     else:
                         mc_pulse.flags = 1
-                    
+
                     # mis-use the width field to store the minor particle ID
                     mc_pulse.width = mcpe.ID.minorID
 
@@ -370,7 +370,7 @@ class GetMCPulses(icetray.I3ConditionalModule):
                     mc_pulse = dataclasses.I3RecoPulse()
                     mc_pulse.time = mcpe.time
                     mc_pulse.charge = mcpe.charge
-                    
+
                     # check if we can find the origin particle ID
                     id_map = frame[self._mcpe_series + "ParticleIDMap"][omkey]
                     origin_id = None
@@ -386,7 +386,7 @@ class GetMCPulses(icetray.I3ConditionalModule):
                         mc_pulse.flags = 1
                         # mis-use the width field to store the minor particle ID
                         mc_pulse.width = origin_id.minorID
-                    
+
                 else:
                     msg = 'Expected I3MCPulse or I3MCPE, but got {!r}'
                     raise TypeError(msg.format(type(mcpe)))
@@ -398,3 +398,115 @@ class GetMCPulses(icetray.I3ConditionalModule):
 
         # write to frame
         frame[self._output_key] = mc_pulse_map
+
+
+class MergePulsesNearbyInTime(icetray.I3ConditionalModule):
+
+    """Merge pulses nearby in time.
+
+    Note: merging of pulses will disregard the pulse flags and widths!
+    """
+
+    def __init__(self, context):
+        icetray.I3ConditionalModule.__init__(self, context)
+        self.AddParameter('PulseKeys', 'The pulses to merge.',)
+        self.AddParameter(
+            'TimeThreshold',
+            'Pulses within this time difference are merged togehter. '
+            'Note that this will dicsard the pulse flags and widths!',
+        )
+        self.AddParameter(
+            'OutputKeys',
+            'Output keys for merged pulses. If None, input is overwritten.',
+            None,
+        )
+        self.AddParameter(
+            'RunOnQFrames',
+            'If True, run on Q-frames, otherwise P-frames',
+            True,
+        )
+
+    def Configure(self):
+        """Configure the module.
+        """
+        self._pulse_keys = self.GetParameter('PulseKeys')
+        self._time_threshold = self.GetParameter('TimeThreshold')
+        self._output_keys = self.GetParameter('OutputKeys')
+        self._run_on_q_frames = self.GetParameter('RunOnQFrames')
+
+        if self._output_keys is None:
+            self._output_keys = self._pulse_keys
+        else:
+            assert len(self._output_keys) == len(self._pulse_keys)
+
+    def DAQ(self, frame):
+        """Merge pulses on DAQ frames.
+
+        Parameters
+        ----------
+        frame : I3Frame
+            The current I3Frame.
+        """
+        if self._run_on_q_frames:
+            # add MC reco pulses from I3MCPESeriesMap
+            merge_pulses_in_time(
+                frame=frame,
+                pulse_keys=self._pulse_keys,
+                time_threshold=self._time_threshold,
+                output_keys=self._output_keys,
+            )
+
+        self.PushFrame(frame)
+
+    def Physics(self, frame):
+        """Merge pulses on Physics frames.
+
+        Parameters
+        ----------
+        frame : I3Frame
+            The current I3Frame.
+        """
+        if not self._run_on_q_frames:
+            # add MC reco pulses from I3MCPESeriesMap
+            merge_pulses_in_time(
+                frame=frame,
+                pulse_keys=self._pulse_keys,
+                time_threshold=self._time_threshold,
+                output_keys=self._output_keys,
+            )
+
+        self.PushFrame(frame)
+
+
+def merge_pulses_in_time(frame, pulse_keys, time_threshold, output_keys=None):
+    """Merge pulses nearby in time.
+
+    Note: merging of pulses will disregard the pulse flags and widths!
+
+    Parameters
+    ----------
+    frame : I3Frame
+        The current I3Frame.
+    pulse_keys : list of str
+        The pulse keys to merge.
+    time_threshold : float
+        The time threshold in ns. Pulses that fall within this time window
+        will be merged together.
+    output_keys : list of str, optional
+        The output keys to store the merged pulses. If None, the original
+        pulse key will be overwritten.
+    """
+    from ic3_data.ext_boost import merge_pulses
+
+    if output_keys is None:
+        output_keys = pulse_keys
+    else:
+        assert len(output_keys) == len(pulse_keys)
+
+
+    for pulse_key, output_key in zip(pulse_keys, output_keys):
+        merged_pulses = merge_pulses(frame, pulse_key, time_threshold)
+
+        if output_key in frame:
+            del frame[output_key]
+        frame[output_key] = merged_pulses

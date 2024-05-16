@@ -14,6 +14,7 @@ from resources.pulses import (
     GetMCPulses,
     GetPulses,
     MergeOversampledEvents,
+    MergePulsesNearbyInTime,
 )
 
 
@@ -23,7 +24,7 @@ from resources.pulses import (
 @click.option('--scratch/--no-scratch', default=True)
 def main(cfg, run_number, scratch):
     start_time = time.time()
-    
+
     with open(cfg, 'r') as stream:
         if int(yaml.__version__[0]) < 5:
             # backwards compatibility for yaml versions before version 5
@@ -60,7 +61,7 @@ def main(cfg, run_number, scratch):
         tray.AddSegment(
             GetPulses, "GetPulses", decode=False, simulation=True,
         )
-    
+
     # get mc pulses
     output_keys = []
     if cfg['get_mc_pulses']:
@@ -75,21 +76,31 @@ def main(cfg, run_number, scratch):
             }
             default_get_mc_pulses_kwargs.update(mc_pulses_cfg)
             output_keys.append(default_get_mc_pulses_kwargs['OutputKey'])
-            
+
             # compress I3MCPESeriesMap
             time_window = default_get_mc_pulses_kwargs.pop("TimeWindowCompression")
             mcpe_series = default_get_mc_pulses_kwargs.pop('I3MCPESeriesMap')
             if time_window is not None:
                 tray.AddModule(
                     "I3MCPEMerger", f"I3MCPEMerger_{i:03d}",
-                    Input=mcpe_series, 
+                    Input=mcpe_series,
                     Output=mcpe_series,
                     timeWindow=time_window * icetray.I3Units.ns,
                 )
-            
+
             tray.AddModule(
                 GetMCPulses, f"GetMCPulses_{i:03d}", **default_get_mc_pulses_kwargs
             )
+
+    # merge reco and mc pulses in time
+    if "merge_pulses_cfg" in cfg and cfg["merge_pulses_cfg"]:
+        print("Merging pulses:", cfg["merge_pulses_cfg"])
+        tray.AddModule(
+            MergePulsesNearbyInTime, "MergePulsesNearbyInTime",
+            **cfg["merge_pulses_cfg"]
+        )
+        if "OutputKeys" in cfg["merge_pulses_cfg"]:
+            output_keys += cfg["merge_pulses_cfg"]["OutputKeys"]
 
     # Throw out unneeded streams and keys
     if 'oversampling_keep_keys' not in cfg:
@@ -108,12 +119,12 @@ def main(cfg, run_number, scratch):
     # merge oversampled events: calculate average hits
     if cfg['oversampling_factor'] is not None:
         if cfg['oversampling_merge_events']:
-            
+
             if cfg['get_reco_pulses'] and cfg['get_mc_pulses']:
                 raise NotImplementedError(
                     'Merging of multiple pulses at the same time is not implemented yet'
             )
-                
+
             if cfg['get_reco_pulses']:
                 tray.AddModule(
                     MergeOversampledEvents, 'MergeOversampledEvents',
@@ -127,7 +138,7 @@ def main(cfg, run_number, scratch):
                     PulseKey=default_get_mc_pulses_kwargs['OutputKey'],
                 )
 
-            
+
     keys_to_keep = [
         'TimeShift',
         'I3MCTree_preMuonProp',
@@ -162,12 +173,12 @@ def main(cfg, run_number, scratch):
 
     tray.AddModule("Keep", "keep_before_merge",
                    keys=keys_to_keep + cfg['oversampling_keep_keys'])
-    
+
     # Make space and delete uneeded keys
     if 'keys_to_delete' in cfg and cfg["keys_to_delete"] is not None:
         tray.AddModule('Delete', 'DeleteKeys', keys=cfg["keys_to_delete"])
-    
-    
+
+
     if "i3_streams" in cfg and cfg["i3_streams"] is not None:
         i3_streams = [
             icetray.I3Frame.Stream(s) for s in cfg["i3_streams"]
