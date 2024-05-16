@@ -258,7 +258,7 @@ class GetMCPulses(icetray.I3ConditionalModule):
 
     def __init__(self, context):
         icetray.I3ConditionalModule.__init__(self, context)
-        self.AddParameter('I3MCPESeriesMap', 'I3MCPESeriesMap to use.',
+        self.AddParameter('I3MCPEorPulseSeriesMap', 'MC PE or Pulse series to use.',
                           'I3MCPESeriesMapWithoutNoise')
         self.AddParameter('OutputKey',
                           'Output key to which the MC hits will be stored.',
@@ -270,7 +270,7 @@ class GetMCPulses(icetray.I3ConditionalModule):
     def Configure(self):
         """Configure the module.
         """
-        self._mcpe_series = self.GetParameter('I3MCPESeriesMap')
+        self._mcpe_series = self.GetParameter('I3MCPEorPulseSeriesMap')
         self._output_key = self.GetParameter('OutputKey')
         self._create_p_frames = self.GetParameter('CreatePFrames')
         self._write_to_q_frame = self.GetParameter('WriteToQFrame')
@@ -348,20 +348,48 @@ class GetMCPulses(icetray.I3ConditionalModule):
         for omkey, mcpe_series in mcpe_series_map.items():
 
             mc_pulses = []
-            for mcpe in mcpe_series:
+            for idx, mcpe in enumerate(mcpe_series):
 
-                # create I3RecoPulse with corresponding time and 'charge'
-                # The charge is set to the number of photo electrons (npe)
-                mc_pulse = dataclasses.I3RecoPulse()
-                mc_pulse.time = mcpe.time
-                mc_pulse.charge = mcpe.npe
-                if mcpe.ID == dataclasses.I3ParticleID(0, 0):
-                    mc_pulse.flags = 0
+                if isinstance(mcpe, simclasses.I3MCPE):
+                    # create I3RecoPulse with corresponding time and 'charge'
+                    # The charge is set to the number of photo electrons (npe)
+                    mc_pulse = dataclasses.I3RecoPulse()
+                    mc_pulse.time = mcpe.time
+                    mc_pulse.charge = mcpe.npe
+                    if mcpe.ID == dataclasses.I3ParticleID(0, 0):
+                        mc_pulse.flags = 0
+                    else:
+                        mc_pulse.flags = 1
+                    
+                    # mis-use the width field to store the minor particle ID
+                    mc_pulse.width = mcpe.ID.minorID
+
+                elif isinstance(mcpe, simclasses.I3MCPulse):
+                    # create I3RecoPulse with corresponding time and 'charge'
+                    # The charge is set to the number of photo electrons (npe)
+                    mc_pulse = dataclasses.I3RecoPulse()
+                    mc_pulse.time = mcpe.time
+                    mc_pulse.charge = mcpe.charge
+                    
+                    # check if we can find the origin particle ID
+                    id_map = frame[self._mcpe_series + "ParticleIDMap"][omkey]
+                    origin_id = None
+                    for particle_id, idx_list in id_map:
+                        if idx in idx_list:
+                            origin_id = particle_id
+                            break
+
+                    if origin_id is None:
+                        mc_pulse.flags = 0
+                        mc_pulse.width = 0
+                    else:
+                        mc_pulse.flags = 1
+                        # mis-use the width field to store the minor particle ID
+                        mc_pulse.width = origin_id.minorID
+                    
                 else:
-                    mc_pulse.flags = 1
-                
-                # mis-use the width field to store the minor particle ID
-                mc_pulse.width = mcpe.ID.minorID
+                    msg = 'Expected I3MCPulse or I3MCPE, but got {!r}'
+                    raise TypeError(msg.format(type(mcpe)))
 
                 # append pulse
                 mc_pulses.append(mc_pulse)

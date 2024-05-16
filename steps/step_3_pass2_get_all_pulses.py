@@ -5,6 +5,7 @@ import click
 import yaml
 
 from icecube import icetray
+from icecube import sim_services  # for 'I3MCPEMerger'
 from icecube.filterscripts import filter_globals
 
 from utils import get_run_folder
@@ -60,20 +61,35 @@ def main(cfg, run_number, scratch):
             GetPulses, "GetPulses", decode=False, simulation=True,
         )
     
+    # get mc pulses
+    output_keys = []
     if cfg['get_mc_pulses']:
-        default_get_mc_pulses_kwargs = {
-            'I3MCPESeriesMap': 'I3MCPESeriesMap',
-            'OutputKey': 'MCPulses',
-            'CreatePFrames': False,
-            'WriteToQFrame': True,
-        }
-        if ('get_mc_pulses_kwargs' in cfg['get_mc_pulses_kwargs'] and 
-                cfg['get_mc_pulses_kwargs'] is not None):
-            default_get_mc_pulses_kwargs.update(cfg['get_mc_pulses_kwargs'])
+        for i, mc_pulses_cfg in enumerate(cfg['get_mc_pulses_kwargs_list']):
+            default_get_mc_pulses_kwargs = {
+                'I3MCPESeriesMap': 'I3MCPESeriesMap',
+                'TimeWindowCompression': 1,
+                'I3MCPEorPulseSeriesMap': 'I3MCPESeriesMap',
+                'OutputKey': 'MCPEs',
+                'CreatePFrames': False,
+                'WriteToQFrame': True,
+            }
+            default_get_mc_pulses_kwargs.update(mc_pulses_cfg)
+            output_keys.append(default_get_mc_pulses_kwargs['OutputKey'])
             
-        tray.AddModule(
-            GetMCPulses, "GetMCPulses", **default_get_mc_pulses_kwargs
-        )
+            # compress I3MCPESeriesMap
+            time_window = default_get_mc_pulses_kwargs.pop("TimeWindowCompression")
+            mcpe_series = default_get_mc_pulses_kwargs.pop('I3MCPESeriesMap')
+            if time_window is not None:
+                tray.AddModule(
+                    "I3MCPEMerger", f"I3MCPEMerger_{i:03d}",
+                    Input=mcpe_series, 
+                    Output=mcpe_series,
+                    timeWindow=time_window * icetray.I3Units.ns,
+                )
+            
+            tray.AddModule(
+                GetMCPulses, f"GetMCPulses_{i:03d}", **default_get_mc_pulses_kwargs
+            )
 
     # Throw out unneeded streams and keys
     if 'oversampling_keep_keys' not in cfg:
@@ -134,10 +150,10 @@ def main(cfg, run_number, scratch):
         'SplitUncleanedInIceDSTPulsesTimeRange',
         'I3TriggerHierarchy',
         'GCFilter_GCFilterMJD',
-        default_get_mc_pulses_kwargs['OutputKey'],
         ]
-    keys_to_keep += filter_globals.inice_split_keeps + \
-        filter_globals.onlinel2filter_keeps
+    keys_to_keep += filter_globals.inice_split_keeps
+    keys_to_keep += filter_globals.onlinel2filter_keeps
+    keys_to_keep += output_keys
 
     if 'event_import_settings' in cfg:
         import_keys = [cfg['event_import_settings']['rename_dict'].get(k, k)
@@ -169,7 +185,7 @@ def main(cfg, run_number, scratch):
                    filename=outfile,
                    Streams=i3_streams)
     tray.AddModule("TrashCan", "the can")
-    tray.Execute()
+    tray.Execute(15)
     tray.Finish()
 
     end_time = time.time()

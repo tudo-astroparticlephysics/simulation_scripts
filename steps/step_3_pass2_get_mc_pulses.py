@@ -59,7 +59,7 @@ def main(cfg, run_number, scratch, do_merging_if_necessary):
 
     # get MC pulses
     tray.AddModule(GetMCPulses, "GetMCPulses",
-                   I3MCPESeriesMap='I3MCPESeriesMapWithoutNoise',
+                   I3MCPEorPulseSeriesMap='I3MCPESeriesMapWithoutNoise',
                    OutputKey='MCPulses',
                    CreatePFrames=True)
 
