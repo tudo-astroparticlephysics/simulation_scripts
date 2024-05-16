@@ -400,6 +400,101 @@ class GetMCPulses(icetray.I3ConditionalModule):
         frame[self._output_key] = mc_pulse_map
 
 
+class CompressPulses(icetray.I3ConditionalModule):
+    """Compress charge and time from pulses.
+
+    Note: compression of pulses will discard the pulse flags and widths!
+    """
+
+    def __init__(self, context):
+        icetray.I3ConditionalModule.__init__(self, context)
+        self.AddParameter('PulseKeys', 'The pulses to compress.',)
+        self.AddParameter(
+            'OutputKeys', 'Output keys for compressed pulses.',  None,
+        )
+        self.AddParameter(
+            'RunOnQFrames',
+            'If True, run on Q-frames, otherwise P-frames',
+            True,
+        )
+
+    def Configure(self):
+        """Configure the module.
+        """
+        self._pulse_keys = self.GetParameter('PulseKeys')
+        self._output_keys = self.GetParameter('OutputKeys')
+        self._run_on_q_frames = self.GetParameter('RunOnQFrames')
+
+        if self._output_keys is None:
+            self._output_keys = [None] * len(self._pulse_keys)
+        else:
+            assert len(self._output_keys) == len(self._pulse_keys)
+
+    def DAQ(self, frame):
+        """Merge pulses on DAQ frames.
+
+        Parameters
+        ----------
+        frame : I3Frame
+            The current I3Frame.
+        """
+        if self._run_on_q_frames:
+            self.compress_pulses(frame)
+        self.PushFrame(frame)
+
+    def Physics(self, frame):
+        """Merge pulses on Physics frames.
+
+        Parameters
+        ----------
+        frame : I3Frame
+            The current I3Frame.
+        """
+        if not self._run_on_q_frames:
+            self.compress_pulses(frame)
+        self.PushFrame(frame)
+
+    def compress_pulses(self, frame):
+        for pulse_key, output_base in zip(
+            self._pulse_keys, self._output_keys,
+        ):
+            compress_pulses(
+                frame=frame,
+                pulse_key=pulse_key,
+                output_base=output_base,
+            )
+
+
+def compress_pulses(frame, pulse_key="MCPulses", output_base=None):
+    """Add compressed charge and time from pulses to frame.
+
+    Parameters
+    ----------
+    frame : I3Frame
+        The current I3Frame.
+    pulse_key : str, optional
+        The pulse key to compress.
+    output_base : str, optional
+        The output base for the compressed pulses. If None, the output key
+        will be the pulse key with "Compressed" appended.
+    """
+    try:
+        series_map = frame[pulse_key].apply(frame)
+    except:
+        series_map = frame[pulse_key]
+    compressed_times = dataclasses.I3MapKeyVectorDouble()
+    compressed_charges = dataclasses.I3MapKeyVectorDouble()
+    for key, pulses in series_map:
+        compressed_charges[key] = [p.charge for p in pulses]
+        compressed_times[key] = [p.time for p in pulses]
+
+    if output_base is None:
+        output_base = pulse_key + "Compressed"
+
+    frame[output_base + "Times"] = compressed_times
+    frame[output_base + "Charges"] = compressed_charges
+
+
 class MergePulsesNearbyInTime(icetray.I3ConditionalModule):
 
     """Merge pulses nearby in time.

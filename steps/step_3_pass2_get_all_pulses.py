@@ -15,6 +15,7 @@ from resources.pulses import (
     GetPulses,
     MergeOversampledEvents,
     MergePulsesNearbyInTime,
+    CompressPulses,
 )
 
 
@@ -131,13 +132,18 @@ def main(cfg, run_number, scratch):
                     OversamplingFactor=cfg['oversampling_factor'],
                     PulseKey='InIceDSTPulses',
                 )
-            if cfg['get_mc_pulses']:
+            for pulse_key in output_keys:
                 tray.AddModule(
                     MergeOversampledEvents, 'MergeOversampledEvents',
                     OversamplingFactor=cfg['oversampling_factor'],
-                    PulseKey=default_get_mc_pulses_kwargs['OutputKey'],
+                    PulseKey=pulse_key,
                 )
 
+    if "compress_pulses_cfg" in cfg and cfg["compress_pulses_cfg"]:
+        tray.AddModule(
+            CompressPulses, "CompressPulses",
+            **cfg["compress_pulses_cfg"]
+        )
 
     keys_to_keep = [
         'TimeShift',
