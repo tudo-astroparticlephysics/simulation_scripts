@@ -144,6 +144,15 @@ def main(cfg, run_number, scratch):
             CompressPulses, "CompressPulses",
             **cfg["compress_pulses_cfg"]
         )
+        if "OutputKeys" in cfg["compress_pulses_cfg"]:
+            out_bases = cfg["compress_pulses_cfg"]["OutputKeys"]
+        else:
+            out_bases = [
+                k + "Compressed" for k in cfg["compress_pulses_cfg"]["PulseKeys"]
+            ]
+        for out_base in out_bases:
+            output_keys.append(out_base + "Times")
+            output_keys.append(out_base + "Charges")
 
     keys_to_keep = [
         'TimeShift',
