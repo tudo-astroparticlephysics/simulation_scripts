@@ -13,10 +13,15 @@ FINAL_OUT={final_out}
 KEEP_CRASHED_FILES={keep_crashed_files}
 
 
+cd
+echo 'PWD: '$(pwd)
 echo 'Starting job on Host: '$HOSTNAME
 echo 'Loading py3-v4.1.0'
 eval `/cvmfs/icecube.opensciencegrid.org/py3-v4.1.0/setup.sh`
-export PYTHONUSERBASE=/data/user/mhuennefeld/DNN_reco/virtualenvs/tensorflow_gpu_py3-v4.1.0
+
+# optionally set a different python userbase
+# Note: this should be avoided if possible
+export PYTHONUSERBASE={python_user_base}
 echo 'Using PYTHONUSERBASE: '${PYTHONUSERBASE}
 
 export ENV_SITE_PACKGES=$(find ${PYTHONUSERBASE}/lib* -maxdepth 2 -type d -name "site-packages")
