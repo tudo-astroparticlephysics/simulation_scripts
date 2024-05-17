@@ -5,6 +5,7 @@ from icecube.filterscripts.baseproc import BaseProcessing
 from icecube.STTools.seededRT.configuration_services import \
     I3DOMLinkSeededRTConfigurationService
 from icecube import filter_tools
+import numpy as np
 
 
 @icetray.traysegment
@@ -199,10 +200,9 @@ class MergeOversampledEvents(icetray.I3ConditionalModule):
         frame : I3Frame
             The current I3Frame.
         """
-        pulses = frame[self.pulse_key]
-        if isinstance(pulses, dataclasses.I3RecoPulseSeriesMapMask) or \
-                isinstance(pulses, dataclasses.I3RecoPulseSeriesMapUnion):
-            pulses = pulses.apply(frame)
+        pulses = dataclasses.I3RecoPulseSeriesMap.from_frame(
+            frame, self.pulse_key,
+        )
         return dataclasses.I3RecoPulseSeriesMap(pulses)
 
     def DAQ(self, frame):
@@ -426,7 +426,7 @@ class CompressPulses(icetray.I3ConditionalModule):
         self._run_on_q_frames = self.GetParameter('RunOnQFrames')
 
         if self._output_keys is None:
-            self._output_keys = [None] * len(self._pulse_keys)
+            self._output_keys = self._pulse_keys
         else:
             assert len(self._output_keys) == len(self._pulse_keys)
 
@@ -455,45 +455,13 @@ class CompressPulses(icetray.I3ConditionalModule):
         self.PushFrame(frame)
 
     def compress_pulses(self, frame):
-        for pulse_key, output_base in zip(
+        for pulse_key, output_key in zip(
             self._pulse_keys, self._output_keys,
         ):
-            compress_pulses(
-                frame=frame,
-                pulse_key=pulse_key,
-                output_base=output_base,
-            )
-
-
-def compress_pulses(frame, pulse_key="MCPulses", output_base=None):
-    """Add compressed charge and time from pulses to frame.
-
-    Parameters
-    ----------
-    frame : I3Frame
-        The current I3Frame.
-    pulse_key : str, optional
-        The pulse key to compress.
-    output_base : str, optional
-        The output base for the compressed pulses. If None, the output key
-        will be the pulse key with "Compressed" appended.
-    """
-    try:
-        series_map = frame[pulse_key].apply(frame)
-    except:
-        series_map = frame[pulse_key]
-    compressed_times = dataclasses.I3MapKeyVectorDouble()
-    compressed_charges = dataclasses.I3MapKeyVectorDouble()
-    for key, pulses in series_map:
-        compressed_charges[key] = [p.charge for p in pulses]
-        compressed_times[key] = [p.time for p in pulses]
-
-    if output_base is None:
-        output_base = pulse_key + "Compressed"
-
-    frame[output_base + "Times"] = compressed_times
-    frame[output_base + "Charges"] = compressed_charges
-
+            pulses = frame[pulse_key]
+            if output_key in frame:
+                del frame[output_key]
+            frame[output_key] = dataclasses.I3SuperDST(pulses)
 
 class MergePulsesNearbyInTime(icetray.I3ConditionalModule):
 
