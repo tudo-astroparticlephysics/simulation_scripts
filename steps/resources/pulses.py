@@ -2,6 +2,7 @@ from icecube import icetray, dataclasses, simclasses
 from I3Tray import I3Units
 from icecube.filterscripts import filter_globals
 from icecube.filterscripts.baseproc import BaseProcessing
+from icecube.icetray.i3logging import log_error, log_warn
 from icecube.STTools.seededRT.configuration_services import \
     I3DOMLinkSeededRTConfigurationService
 from icecube import filter_tools
@@ -454,14 +455,52 @@ class CompressPulses(icetray.I3ConditionalModule):
             self.compress_pulses(frame)
         self.PushFrame(frame)
 
+    def discard_early_pulses(self, pulses, min_time=-512, max_removed=10):
+        """Discard pulses that are too early.
+
+        Parameters
+        ----------
+        pulses : I3RecoPulseSeriesMap
+            The pulses to filter.
+        min_time : float, optional
+            The minimum time in ns a pulse must have to be kept.
+        max_removed : int, optional
+            The maximum number of pulses that are allowed to be removed.
+            If more pulses are removed, an error is raised.
+
+        Returns
+        -------
+        Same as input, but with pulses that are too early removed.
+        """
+        n_removed = 0
+        new_pulses = type(pulses)()
+        for omkey, pulse_series in pulses.items():
+            new_pulses[omkey] = type(pulse_series)([
+                pulse for pulse in pulse_series if pulse.time > min_time
+            ])
+            n_removed += len(pulse_series) - len(new_pulses[omkey])
+
+        if n_removed > 0:
+            log_warn('Removed {} pulses with time < {}ns.'.format(
+                n_removed, min_time))
+
+        if n_removed > max_removed:
+            log_error(
+                'Removed too many pulses! Removed {} pulses, but only {} '
+                'pulses are allowed to be removed.'.format(
+                    n_removed, max_removed)
+            )
+        return new_pulses
+
     def compress_pulses(self, frame):
         for pulse_key, output_key in zip(
             self._pulse_keys, self._output_keys,
         ):
             pulses = frame[pulse_key]
+            pulses_trimmed = self.discard_early_pulses(pulses)
             if output_key in frame:
                 del frame[output_key]
-            frame[output_key] = dataclasses.I3SuperDST(pulses)
+            frame[output_key] = dataclasses.I3SuperDST(pulses_trimmed)
 
 class MergePulsesNearbyInTime(icetray.I3ConditionalModule):
 
