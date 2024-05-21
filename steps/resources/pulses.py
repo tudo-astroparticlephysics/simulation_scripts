@@ -458,6 +458,9 @@ class CompressPulses(icetray.I3ConditionalModule):
     def discard_early_pulses(self, pulses, min_time=-512, max_removed=10):
         """Discard pulses that are too early.
 
+        I3SuperDST expects pulses to have times later than -512ns. This
+        function removes pulses that are too early.
+
         Parameters
         ----------
         pulses : I3RecoPulseSeriesMap
@@ -490,6 +493,8 @@ class CompressPulses(icetray.I3ConditionalModule):
                 'pulses are allowed to be removed.'.format(
                     n_removed, max_removed)
             )
+            raise ValueError('Too many pulses removed!', pulses, n_removed)
+
         return new_pulses
 
     def compress_pulses(self, frame):
