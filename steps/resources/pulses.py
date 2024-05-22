@@ -455,7 +455,9 @@ class CompressPulses(icetray.I3ConditionalModule):
             self.compress_pulses(frame)
         self.PushFrame(frame)
 
-    def discard_early_pulses(self, pulses, min_time=-512, max_removed=10):
+    def discard_early_pulses(
+        self, pulses, min_time=-512, max_removed=100, max_fraction=0.05,
+    ):
         """Discard pulses that are too early.
 
         I3SuperDST expects pulses to have times later than -512ns. This
@@ -470,30 +472,37 @@ class CompressPulses(icetray.I3ConditionalModule):
         max_removed : int, optional
             The maximum number of pulses that are allowed to be removed.
             If more pulses are removed, an error is raised.
+        max_fraction : float, optional
+            The maximum fraction of pulses that are allowed to be removed.
+            If more pulses are removed, an error is raised.
 
         Returns
         -------
         Same as input, but with pulses that are too early removed.
         """
         n_removed = 0
+        n_total = 0
         new_pulses = type(pulses)()
         for omkey, pulse_series in pulses.items():
             new_pulses[omkey] = type(pulse_series)([
                 pulse for pulse in pulse_series if pulse.time > min_time
             ])
             n_removed += len(pulse_series) - len(new_pulses[omkey])
+            n_total += len(pulse_series)
 
         if n_removed > 0:
-            log_warn('Removed {} pulses with time < {}ns.'.format(
+            log_error('Removed {} pulses with time < {}ns.'.format(
                 n_removed, min_time))
 
-        if n_removed > max_removed:
+        fraction_removed = n_removed / n_total
+        if n_removed > max_removed or fraction_removed > max_fraction:
+            print(pulses)
             log_error(
-                'Removed too many pulses! Removed {} pulses, but only {} '
-                'pulses are allowed to be removed.'.format(
-                    n_removed, max_removed)
+                'Removed too many pulses! Removed {} pulses from {} [{6.3f} %]'
+                ', but only {} pulses are allowed to be removed.'.format(
+                    n_removed, n_total, fraction_removed*100, max_removed)
             )
-            raise ValueError('Too many pulses removed!', pulses, n_removed)
+            raise ValueError('Too many pulses removed: {}!'.format(n_removed))
 
         return new_pulses
 
