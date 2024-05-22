@@ -2,7 +2,7 @@ from icecube import icetray, dataclasses, simclasses
 from I3Tray import I3Units
 from icecube.filterscripts import filter_globals
 from icecube.filterscripts.baseproc import BaseProcessing
-from icecube.icetray.i3logging import log_error, log_warn
+from icecube.icetray.i3logging import log_error, log_fatal
 from icecube.STTools.seededRT.configuration_services import \
     I3DOMLinkSeededRTConfigurationService
 from icecube import filter_tools
@@ -497,12 +497,15 @@ class CompressPulses(icetray.I3ConditionalModule):
         fraction_removed = n_removed / n_total
         if n_removed > max_removed or fraction_removed > max_fraction:
             print(pulses)
-            log_error(
-                'Removed too many pulses! Removed {} pulses from {} [{6.3f} %]'
-                ', but only {} pulses are allowed to be removed.'.format(
-                    n_removed, n_total, fraction_removed*100, max_removed)
-            )
-            raise ValueError('Too many pulses removed: {}!'.format(n_removed))
+            log_fatal(
+                'Removed {} pulses from {} [{:6.3f} %], but only {}'
+                '[{:6.3f} %] pulses are allowed to be removed.'.format(
+                    n_removed,
+                    n_total,
+                    fraction_removed*100,
+                    max_removed,
+                    max_fraction*100,
+            ))
 
         return new_pulses
 
