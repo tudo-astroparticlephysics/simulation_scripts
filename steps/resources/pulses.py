@@ -456,7 +456,7 @@ class CompressPulses(icetray.I3ConditionalModule):
         self.PushFrame(frame)
 
     def discard_early_pulses(
-        self, pulses, min_time=-512, max_removed=100, max_fraction=0.2,
+        self, pulses, min_time=-512, max_removed=100, max_fraction=0.45,
     ):
         """Discard pulses that are too early.
 
