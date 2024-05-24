@@ -434,7 +434,7 @@ def run_snowstorm_propagation(cfg, infile, outfile):
             OverrideApproximateNumberOfWorkItems=cfg[
                                     'OverrideApproximateNumberOfWorkItems'],
             DoNotParallelize=cfg['DoNotParallelize'],
-            UseOnlyDeviceNumber=cfg['UseOnlyDeviceNumber']
+            UseOnlyDeviceNumber=cfg['UseOnlyDeviceNumber'],
             **cfg["ExtraArgumentsToSetupPropagators"]
         )
         server = sim_services.I3PhotonPropagationServer(
