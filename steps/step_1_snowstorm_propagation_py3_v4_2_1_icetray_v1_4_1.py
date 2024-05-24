@@ -220,6 +220,7 @@ def run_snowstorm_propagation(cfg, infile, outfile):
         'OverrideApproximateNumberOfWorkItems': None,
         'IgnoreSubdetectors': ["IceTop"],
         'ExtraArgumentsToI3PhotonPropagationClientModule': dict(),
+        'ExtraArgumentsToSetupPropagators': dict(),
     }
 
     # overwrite default settings
@@ -434,6 +435,7 @@ def run_snowstorm_propagation(cfg, infile, outfile):
                                     'OverrideApproximateNumberOfWorkItems'],
             DoNotParallelize=cfg['DoNotParallelize'],
             UseOnlyDeviceNumber=cfg['UseOnlyDeviceNumber']
+            **cfg["ExtraArgumentsToSetupPropagators"]
         )
         server = sim_services.I3PhotonPropagationServer(
             address, sim_services.I3StepToPhotonConverterSeries(converters))
