@@ -57,6 +57,19 @@ generator: corsika
 # SelectNeutrino specific options
 
 inject_neutrino_cfg:
+  #TreeKey: "I3MCTree"
+  # The maximum energy the generated neutrinos can have
+  MaxNeutrinoEnergy: 1_000_000
+  # The minimum energy the generated neutrinos can have
+  MinNeutrinoEnergy: 1_000
+  # The minimal ratio to the muon bundle energy at entry the generated neutrinos can have
+  MinEnergyRatio: 1
+  # The generation ratios of the different neutrino types
+  # [nu_e, nu_e_bar, nu_mu, nu_mu_bar, nu_tau, nu_tau_bar]
+  TypeRatios: [1,1,0,0,0,0]
+  # Removes all frames with lower bundle energy at detector entry than this value
+  MinMuonBundleEnergy: 100
+  SpectralIndex: -2
 
 
 # NeutrinoGenerator specific options
@@ -68,8 +81,12 @@ neutrino_generator_config:
     xsecmodel: "csms_differential_v1.0"
     xsecdir : ""
     propmode: "AutoDetect"
-    CylinderRadiusInM: 600
-    CylinderHeightInM: 1200
+    CylinderRadiusInM: 550
+    CylinderHeightInM: 1000
+    muonrangeextension: False
+    ccfactor: 1.0
+    ncfactor: 0.0
+    grfactor: 0.0
 
 # MuonPropagation specific options
 muon_propagation_config : {}
@@ -82,7 +99,7 @@ oversampling_factor:
 # Step 1: Snowstorm Propagation
 # -----------------------------
 NumEventsPerModel: 100
-DOMOversizeFactor: 1.
+DOMOversizeFactor: 5.
 UseI3PropagatorService: False
 UseGPUs: True
 SummaryFile:

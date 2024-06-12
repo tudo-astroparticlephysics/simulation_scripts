@@ -73,8 +73,12 @@ neutrino_generator_config:
     xsecmodel: "csms_differential_v1.0"
     xsecdir : ""
     propmode: "AutoDetect"
+    muonrangeextension: True
     #CylinderRadiusInM: 950
     #CylinderHeightInM: 1900
+    ccfactor: 1.0
+    ncfactor: 0.0
+    grfactor: 0.0
 
 # MuonPropagation specific options
 muon_propagation_config : {}

@@ -1,5 +1,5 @@
 #!/bin/sh /cvmfs/icecube.opensciencegrid.org/py3-v4.3.0/icetray-start
-#METAPROJECT icetray/v1.8.1
+#METAPROJECT icetray/v1.10.0
 from __future__ import division
 import click
 import yaml
@@ -104,6 +104,7 @@ def main(cfg, run_number, scratch):
                     NEvents = event_count,
                     CylinderParams = cylinderparams,
                     SimMode = nugen_config["simmode"],
+                    DoMuonRangeExtension = nugen_config["muonrangeextension"],
                     )
     tray.AddService("I3NuGInteractionInfoDifferentialFactory", "interaction",
                 RandomService = random_services[1],
@@ -116,6 +117,9 @@ def main(cfg, run_number, scratch):
                     SteeringName = "NuGSteer",
                     InteractionInfoName = "interaction",
                     PropagationWeightMode = propmode,
+                    InteractionCCFactor = nugen_config["ccfactor"],
+                    InteractionNCFactor = nugen_config["ncfactor"],
+                    InteractionGRFactor = nugen_config["grfactor"],
                     If = lambda frame: "NuGPrimary" in frame
                 )
 
@@ -127,28 +131,6 @@ def main(cfg, run_number, scratch):
                         'propagate_muons',
                         RandomService=random_services[1],
                         **cfg['muon_propagation_config'])
-        # propagators = get_propagators()
-        # if "I3ParticleTypePropagatorServiceMap" in tray.context:
-        #     propagator_map = tray.context["I3ParticleTypePropagatorServiceMap"]
-        #     for k, v in propagators.items():
-        #         propagator_map[k] = v
-        # else:
-        #     propagator_map = propagators
-
-        # tray.AddModule("I3PropagatorModule", "propagator",
-        #             PropagatorServices=propagator_map,
-        #             RandomService=random_services[1],
-        #             InputMCTreeName="I3MCTree_preMuonProp",
-        #             OutputMCTreeName="I3MCTree")
-
-        # # Add empty MMCTrackList objects for events that have none.
-        # def add_empty_tracklist(frame):
-        #     if "MMCTrackList" not in frame:
-        #         frame["MMCTrackList"] = simclasses.I3MMCTrackList()
-        #     return True
-
-        # tray.AddModule(add_empty_tracklist, "add_empty_tracklist",
-        #             Streams=[icetray.I3Frame.DAQ])        
 
     click.echo('Output: {}'.format(outfile))
     tray.AddModule("I3Writer", "writer",
