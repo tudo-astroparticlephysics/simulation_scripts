@@ -11,14 +11,15 @@ from icecube.simprod import segments
 from I3Tray import I3Tray
 from icecube import icetray, dataclasses
 from icecube import sim_services, MuonGun
+import time
 
 from utils import (
+    MAX_RUN_NUMBER,
     create_random_services,
     create_random_services_settings,
     get_run_folder,
     load_class,
 )
-from resources.biased_simulation import BaseSimulationBias
 from dom_distance_cut import OversizeSplitterNSplits, generate_stream_object
 
 
@@ -54,6 +55,8 @@ def main(cfg, run_number, scratch):
         click.echo('Apply simulation bias: False')
 
     tray = I3Tray()
+
+    start_time = time.time()
 
     if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:
         n_services = 3
@@ -96,6 +99,8 @@ def main(cfg, run_number, scratch):
         'usegslrng': cfg['random_service_use_gslrng'],
         'seed': corsika_rng_cfg['seed'],
         'corsikaseed': corsika_rng_cfg['seed'],
+        'procnum': cfg['run_number'],
+        'nproc': MAX_RUN_NUMBER,
 
         'gcdfile': cfg['gcd'],
         'outputfile': corsika_file,
@@ -103,14 +108,6 @@ def main(cfg, run_number, scratch):
         'runnum': cfg['run_number'],
         'nshowers': cfg['n_events_per_run'],
     })
-
-    # add additional rng info if not using gslrng
-    if not cfg['random_service_use_gslrng']:
-        corsika_settings.update({
-            # random number generator
-            'procnum': corsika_rng_cfg['streamnum'],
-            'nproc': corsika_rng_cfg['nstreams'],
-        })
 
     # configure module
     for name, value in corsika_settings.items():
@@ -140,6 +137,8 @@ def main(cfg, run_number, scratch):
 
     # Bias simulation if desired
     if 'ApplyBaseSimulationBias' in cfg and cfg['ApplyBaseSimulationBias']:
+        from resources.biased_simulation import BaseSimulationBias
+        
         tray.AddModule(
             BaseSimulationBias,
             'BaseSimulationBias',
@@ -147,6 +146,12 @@ def main(cfg, run_number, scratch):
             **cfg['BaseSimulationBiasSettings']
         )
 
+
+    # Delete keys if specified
+    if "step_0_delete_keys" in cfg:
+        tray.Add("Delete", Keys=cfg["step_0_delete_keys"])
+
+    # write output
     if cfg['distance_splits'] is not None:
         import dom_distance_cut as dom_cut
         click.echo('Oversizestreams')
@@ -188,6 +193,9 @@ def main(cfg, run_number, scratch):
     # remove temporarily created CORSIKA file
     print('Cleaning up temp CORSIKA file: {}'.format(corsika_file))
     os.remove(corsika_file)
+
+    end_time = time.time()
+    print("That took "+str(end_time - start_time)+" seconds.")
 
 
 if __name__ == '__main__':

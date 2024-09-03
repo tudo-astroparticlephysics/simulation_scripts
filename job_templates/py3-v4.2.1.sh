@@ -13,14 +13,21 @@ FINAL_OUT={final_out}
 KEEP_CRASHED_FILES={keep_crashed_files}
 
 
+cd
+echo 'PWD: '$(pwd)
 echo 'Starting job on Host: '$HOSTNAME
 echo 'Loading py3-v4.2.1'
 eval `/cvmfs/icecube.opensciencegrid.org/py3-v4.2.1/setup.sh`
-export PYTHONUSERBASE=/INSERT/PATH/HERE
+
+# optionally set a different python userbase
+# Note: this should be avoided if possible
+export PYTHONUSERBASE=/INSERT/PATH/HERE/IF/NEEDED
 echo 'Using PYTHONUSERBASE: '${PYTHONUSERBASE}
 
+export ENV_SITE_PACKGES=$(find ${PYTHONUSERBASE}/lib* -maxdepth 2 -type d -name "site-packages")
+export PYTHONPATH=$ENV_SITE_PACKGES:$PYTHONPATH
 export PATH=$PYTHONUSERBASE/bin:$PATH
-export PYTHONPATH=$PYTHONUSERBASE/lib/python3.7/site-packages:$PYTHONPATH
+echo 'Using PYTHONPATH: '${PYTHONPATH}
 
 echo $FINAL_OUT
 if [ -z ${PBS_JOBID} ] && [ -z ${_CONDOR_SCRATCH_DIR} ]
