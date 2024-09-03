@@ -30,8 +30,12 @@ from ic3_labels.labels.utils.detector import icecube_hull
 from utils import create_random_services, get_run_folder
 
 
-# Transform uniform distribution to power law distribution
+
 def p(x, x0, x1, n):
+    """Power law distribution."""
+    """x0 and x1 are the minimum and maximum values of the distribution"""
+    """n is the spectral index"""
+    """x is the random number between 0 and 1"""
     return (x1**(n+1)-x0**(n+1)*x+x0**(n+1))**(1/(n+1))
 
 class InjectNeutrinoIntoShower(icetray.I3ConditionalModule):
