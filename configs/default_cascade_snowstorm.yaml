@@ -183,3 +183,6 @@ det_dom_eff_resmapling_generated_efficiency: 0.
 
 # Keep untriggered events substream and keys
 L1_keep_untriggered: True
+
+# any keys to delete from frame
+keys_to_delete:

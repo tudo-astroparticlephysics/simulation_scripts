@@ -21,7 +21,7 @@ eval `/cvmfs/icecube.opensciencegrid.org/py3-v4.3.0/setup.sh`
 
 # optionally set a different python userbase
 # Note: this should be avoided if possible
-export PYTHONUSERBASE=/INSERT/PATH/HERE/IF/NEEDED
+export PYTHONUSERBASE={python_user_base}
 echo 'Using PYTHONUSERBASE: '${PYTHONUSERBASE}
 
 export ENV_SITE_PACKGES=$(find ${PYTHONUSERBASE}/lib* -maxdepth 2 -type d -name "site-packages")

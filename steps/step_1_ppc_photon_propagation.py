@@ -4,9 +4,10 @@ from __future__ import division
 import os
 import click
 import yaml
+import time
 
 from I3Tray import I3Tray
-from icecube import icetray
+from icecube import icetray, dataio
 
 from utils import create_random_services, get_run_folder
 
@@ -16,6 +17,9 @@ from utils import create_random_services, get_run_folder
 @click.argument('run_number', type=int)
 @click.option('--scratch/--no-scratch', default=True)
 def main(cfg, run_number, scratch):
+    
+    start_time = time.time()
+    
     with open(cfg, 'r') as stream:
         cfg = yaml.full_load(stream)
     cfg['run_number'] = run_number
@@ -45,6 +49,64 @@ def main(cfg, run_number, scratch):
     }
     ppc_environment_variables = dict(default_ppc_environment_variables)
     ppc_environment_variables.update(ppc_config['environment_variables'])
+    
+    ice_model = os.path.basename(ppc_environment_variables['ICEMODELDIR'])
+    
+    # ------------------------------------------------------------------------
+    # Sanity checks to ensure that the environment variables are set correctly
+    # ------------------------------------------------------------------------
+    if ice_model in [
+        "spice_3",
+        "spice_3.1",
+        "spice_3.2",
+        "spice_3.2.1",
+        "spice_3.2.2",
+        "spice_3.2.2-for_clsim",
+        "spice_3.2_emrmspice_ftp-v1",
+        "spice_lea",
+        "spice_mie",
+        "spice_bfr-v1",
+        "spice_bfr-v2",
+        "spice_ftp-v0",
+        "spice_ftp-v1",
+        "spice_ftp-v2",
+        "spice_ftp-v3",
+    ]:
+        if "BFRM" in ppc_environment_variables:
+            if ppc_environment_variables["BFRM"] != "0":
+                raise ValueError(
+                    "The BFRM environment variable must be set to 0 for"
+                    " the older ice models."
+                )
+                
+    elif ice_model in [
+        "spice_ftp-v3m",
+    ]:
+        if 'BFRM' not in ppc_environment_variables:
+            ppc_environment_variables['BFRM'] = "2"
+        else:
+            if ppc_environment_variables['BFRM'] != "2":
+                raise ValueError(
+                    "The BFRM environment variable must be set to 2 for"
+                    " the spice_ftp-v3m ice model."
+                )
+    else:
+        if 'BFRM' not in ppc_environment_variables:
+            # let's be safe and throw an error for newer ice models
+            # We want to make sure that the BFRM and any other potentially
+            # required environment variables are set correctly.
+            raise ValueError(
+                "The BFRM environment variable must be set!"
+            )
+        else:
+            # peform some sanity checks
+            if "ftp-v3m" in ice_model.lower():
+                if not ppc_environment_variables["BFRM"] == "2":
+                    raise ValueError(
+                        "The BFRM environment variable must be set to 2 for"
+                        " the spice_ftp-v3m ice model."
+                    )
+    # ------------------------------------------------------------------------
 
     # define default PPC arguments
     default_ppc_arguments = {
@@ -106,6 +168,9 @@ def main(cfg, run_number, scratch):
     tray.AddModule("TrashCan", "the can")
     tray.Execute()
     tray.Finish()
+    
+    end_time = time.time()
+    print("That took "+str(end_time - start_time)+" seconds.")
 
 
 if __name__ == '__main__':

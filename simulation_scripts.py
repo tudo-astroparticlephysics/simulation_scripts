@@ -84,6 +84,8 @@ def write_job_files(config, step, check_existing=False,
     output_base = os.path.join(config['processing_folder'], 'jobs')
     if 'name_addition' not in config.keys():
         config['name_addition'] = ''
+    if 'python_user_base' not in config.keys():
+        config['python_user_base'] = ''
     if not os.path.isdir(output_base):
         os.makedirs(output_base)
     log_dir = os.path.join(config['processing_folder'], 'logs')
