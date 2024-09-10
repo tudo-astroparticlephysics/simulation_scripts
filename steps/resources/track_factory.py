@@ -6,30 +6,6 @@ from icecube.icetray import I3Units
 from . import geometry
 
 
-class SphereBundleFactory(SphereTrackFactory):
-    def __init__(self, context):
-        raise NotImplementedError
-
-    def _generate_daughters(self, primary, track_energy, **kwargs):
-        """Generate daughter particles.
-
-        Parameters
-        ----------
-        primary : I3Particle
-            The primary particle.
-        track_energy : float
-            The energy of the track.
-        **kwargs
-            Additional keyword arguments
-
-        Returns
-        -------
-        list
-            A list of daughter particles.
-        """
-        raise NotImplementedError
-
-
 class SphereTrackFactory(icetray.I3ConditionalModule):
     def __init__(self, context):
         """Class to create and inject Tracks.
@@ -374,3 +350,27 @@ class SphereTrackFactory(icetray.I3ConditionalModule):
         self.events_done += 1
         if self.events_done >= self.num_events:
             self.RequestSuspension()
+
+
+class SphereBundleFactory(SphereTrackFactory):
+    def __init__(self, context):
+        raise NotImplementedError
+
+    def _generate_daughters(self, primary, track_energy, **kwargs):
+        """Generate daughter particles.
+
+        Parameters
+        ----------
+        primary : I3Particle
+            The primary particle.
+        track_energy : float
+            The energy of the track.
+        **kwargs
+            Additional keyword arguments
+
+        Returns
+        -------
+        list
+            A list of daughter particles.
+        """
+        raise NotImplementedError
