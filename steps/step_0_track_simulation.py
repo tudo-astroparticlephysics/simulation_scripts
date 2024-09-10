@@ -66,9 +66,9 @@ def main(cfg, run_number, scratch):
     click.echo('Anchor x: [{},{}]'.format(*cfg['x_range']))
     click.echo('Anchor y: [{},{}]'.format(*cfg['y_range']))
     click.echo('Anchor z: [{},{}]'.format(*cfg['z_range']))
-    click.echo('Max anchor dist: {}'.format(*cfg['max_anchor_distance']))
-    click.echo('Inj. radius: {}'.format(*cfg['injection_sphere_radius']))
-    click.echo('Sample uniformly: {}'.format(*cfg['sample_uniformly_on_sphere']))
+    click.echo('Max anchor dist: {}'.format(cfg['max_anchor_distance']))
+    click.echo('Inj. radius: {}'.format(cfg['injection_sphere_radius']))
+    click.echo('Sample uniformly: {}'.format(cfg['sample_uniformly_on_sphere']))
 
     # crate random services
     if 'random_service_use_gslrng' not in cfg:
@@ -106,7 +106,7 @@ def main(cfg, run_number, scratch):
                    zenith_range=cfg['zenith_range'],
                    sample_uniformly_on_sphere=cfg[
                                         'sample_uniformly_on_sphere'],
-                   track_energy_range=cfg['primary_energy_range'],
+                   track_energy_range=cfg['track_energy_range'],
                    time_range=cfg['time_range'],
                    x_range=cfg['x_range'],
                    y_range=cfg['y_range'],
