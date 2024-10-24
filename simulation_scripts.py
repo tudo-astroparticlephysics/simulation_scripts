@@ -39,8 +39,9 @@ def fetch_chain(chain_name):
         processing_chains = SafeDict(yaml.full_load(stream))
     try:
         chain_definition = processing_chains[chain_name]
-    except KeyError:
-        click.echo("Not chain called '' found!".format(chain_name))
+    except KeyError as e:
+        click.echo("No chain called '{}' found!".format(chain_name))
+        raise e
     else:
         default_config = chain_definition['default_config']
         if not os.path.isabs(default_config):

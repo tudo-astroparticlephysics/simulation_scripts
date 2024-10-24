@@ -129,6 +129,15 @@ muon_resimulation:
     14: step_4_2012_L2
     15: step_5_2012_2017OnlineL2
 
+track_snowstorm:
+  default_config: configs/default_track_snowstorm.yaml
+  job_template: job_templates/py3-v4.3.0.sh
+  steps:
+    0: step_0_track_simulation
+    1: step_1_snowstorm_propagation_py3_v4_3_0_icetray_v1_10_0
+    2: step_2_snowstorm_detector_simulation_py3_v4_3_0_icetray_v1_10_0
+    3: step_3_pass2_get_all_pulses
+
 cascade_simulation:
   default_config: configs/default_cascade_simulation.yaml
   job_template: job_templates/general_py2-v3.0.1.sh
