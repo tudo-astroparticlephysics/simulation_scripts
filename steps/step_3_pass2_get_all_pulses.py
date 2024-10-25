@@ -88,7 +88,7 @@ def main(cfg, run_number, scratch):
                     Output=mcpe_series,
                     timeWindow=time_window * icetray.I3Units.ns,
                 )
-                default_get_mc_pulses_kwargs["PulseWindow"] = time_window * icetray.I3Units.ns
+                default_get_mc_pulses_kwargs["PulseWidth"] = time_window * icetray.I3Units.ns
 
             tray.AddModule(
                 GetMCPulses, f"GetMCPulses_{i:03d}", **default_get_mc_pulses_kwargs
