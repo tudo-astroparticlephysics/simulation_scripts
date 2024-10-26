@@ -416,7 +416,7 @@ class GetMCPulses(icetray.I3ConditionalModule):
 class CompressPulses(icetray.I3ConditionalModule):
     """Compress charge and time from pulses.
 
-    Note: compression of pulses will discard the pulse flags and widths!
+    Note: compression of pulses will modify the pulse flags
     """
 
     def __init__(self, context):

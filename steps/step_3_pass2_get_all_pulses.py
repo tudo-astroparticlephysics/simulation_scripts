@@ -81,13 +81,15 @@ def main(cfg, run_number, scratch):
             # compress I3MCPESeriesMap
             time_window = default_get_mc_pulses_kwargs.pop("TimeWindowCompression")
             mcpe_series = default_get_mc_pulses_kwargs.pop('I3MCPESeriesMap')
-            if time_window is not None:
+            if time_window is not None and mcpe_series is not None:
                 tray.AddModule(
                     "I3MCPEMerger", f"I3MCPEMerger_{i:03d}",
                     Input=mcpe_series,
                     Output=mcpe_series,
                     timeWindow=time_window * icetray.I3Units.ns,
                 )
+
+            if time_window is not None:
                 default_get_mc_pulses_kwargs["PulseWidth"] = time_window * icetray.I3Units.ns
 
             tray.AddModule(
