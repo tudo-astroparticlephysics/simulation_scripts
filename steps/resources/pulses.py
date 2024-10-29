@@ -267,6 +267,7 @@ class GetMCPulses(icetray.I3ConditionalModule):
         self.AddParameter('CreatePFrames', 'Create P frames from q frames?.',
                           True)
         self.AddParameter('WriteToQFrame', 'Add MC pulses to Q-Frame instead of P-frame.', False)
+        self.AddParameter('PulseWidth', 'The width of each MCPE in ns. ', 0.2)
 
     def Configure(self):
         """Configure the module.
@@ -275,6 +276,7 @@ class GetMCPulses(icetray.I3ConditionalModule):
         self._output_key = self.GetParameter('OutputKey')
         self._create_p_frames = self.GetParameter('CreatePFrames')
         self._write_to_q_frame = self.GetParameter('WriteToQFrame')
+        self._pulse_width = self.GetParameter('PulseWidth')
 
         assert isinstance(self._create_p_frames, bool), \
             'Expected CreatePFrames to be a boolean, but got {!r}'.format(
@@ -290,7 +292,9 @@ class GetMCPulses(icetray.I3ConditionalModule):
         """
         if self._write_to_q_frame:
             # add MC reco pulses from I3MCPESeriesMap
-            self._add_mc_pulses(frame, frame[self._mcpe_series])
+            self._add_mc_pulses(
+                frame, frame[self._mcpe_series], self._pulse_width
+            )
 
             # Detector simulation creates trigger and shifts times relative
             # to this trigger. If detector simulation is skipped,
@@ -305,7 +309,9 @@ class GetMCPulses(icetray.I3ConditionalModule):
 
             if not self._write_to_q_frame:
                 # add MC reco pulses from I3MCPESeriesMap
-                self._add_mc_pulses(p_frame, frame[self._mcpe_series])
+                self._add_mc_pulses(
+                    p_frame, frame[self._mcpe_series], self._pulse_width
+                )
 
                 # Detector simulation creates trigger and shifts times relative
                 # to this trigger. If detector simulation is skipped,
@@ -325,12 +331,14 @@ class GetMCPulses(icetray.I3ConditionalModule):
         if not self._create_p_frames and not self._write_to_q_frame:
 
             # add MC reco pulses from I3MCPESeriesMap
-            self._add_mc_pulses(frame, frame[self._mcpe_series])
+            self._add_mc_pulses(
+                frame, frame[self._mcpe_series], self._pulse_width
+            )
 
         # push frame on to next modules
         self.PushFrame(frame)
 
-    def _add_mc_pulses(self, frame, mcpe_series_map):
+    def _add_mc_pulses(self, frame, mcpe_series_map, pulse_width):
         '''Create MC reco pulses from I3MCPESeriesMap
 
         This is a dirty hack, so that other modules can be used without
@@ -344,6 +352,9 @@ class GetMCPulses(icetray.I3ConditionalModule):
             The I3Frame to which the MC Pulses will be added to.
         mcpe_series_map : I3MCPESeriesMap
             The I3MCPESeriesMap which will be converted.
+        pulse_width : float
+            The width of each MCPE in ns. The created
+            I3RecoPulses will have this width.
         '''
         mc_pulse_map = dataclasses.I3RecoPulseSeriesMap()
         for omkey, mcpe_series in mcpe_series_map.items():
@@ -357,13 +368,14 @@ class GetMCPulses(icetray.I3ConditionalModule):
                     mc_pulse = dataclasses.I3RecoPulse()
                     mc_pulse.time = mcpe.time
                     mc_pulse.charge = mcpe.npe
+                    mc_pulse.width = pulse_width
+
+                    # mis-use flags to store if the pulse is from a
+                    # primary particle or noise
                     if mcpe.ID == dataclasses.I3ParticleID(0, 0):
                         mc_pulse.flags = 0
                     else:
                         mc_pulse.flags = 1
-
-                    # mis-use the width field to store the minor particle ID
-                    mc_pulse.width = mcpe.ID.minorID
 
                 elif isinstance(mcpe, simclasses.I3MCPulse):
                     # create I3RecoPulse with corresponding time and 'charge'
@@ -371,6 +383,7 @@ class GetMCPulses(icetray.I3ConditionalModule):
                     mc_pulse = dataclasses.I3RecoPulse()
                     mc_pulse.time = mcpe.time
                     mc_pulse.charge = mcpe.charge
+                    mc_pulse.width = pulse_width
 
                     # check if we can find the origin particle ID
                     id_map = frame[self._mcpe_series + "ParticleIDMap"][omkey]
@@ -380,13 +393,12 @@ class GetMCPulses(icetray.I3ConditionalModule):
                             origin_id = particle_id
                             break
 
+                    # mis-use flags to store if the pulse is from a
+                    # primary particle or noise
                     if origin_id is None:
                         mc_pulse.flags = 0
-                        mc_pulse.width = 0
                     else:
                         mc_pulse.flags = 1
-                        # mis-use the width field to store the minor particle ID
-                        mc_pulse.width = origin_id.minorID
 
                 else:
                     msg = 'Expected I3MCPulse or I3MCPE, but got {!r}'
@@ -404,7 +416,7 @@ class GetMCPulses(icetray.I3ConditionalModule):
 class CompressPulses(icetray.I3ConditionalModule):
     """Compress charge and time from pulses.
 
-    Note: compression of pulses will discard the pulse flags and widths!
+    Note: compression of pulses will modify the pulse flags
     """
 
     def __init__(self, context):
