@@ -114,7 +114,7 @@ def main(cfg, run_number, scratch):
                 "det_skip_noise_generation"
             )
 
-        tray.AddSegment(segments.DetectorSim, "Detector5Sim_WithoutNoise
+        tray.AddSegment(segments.DetectorSim, "DetectorSim_WithoutNoise",
             RandomService='I3RandomService',
             RunID=run_id,
             GCDFile=cfg['gcd_pass2'],
