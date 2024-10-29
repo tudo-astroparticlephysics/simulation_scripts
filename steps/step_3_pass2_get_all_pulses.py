@@ -63,6 +63,34 @@ def main(cfg, run_number, scratch):
             GetPulses, "GetPulses", decode=False, simulation=True,
         )
 
+        if "add_no_noise_pulses" in cfg and cfg["add_no_noise_pulses"]:
+
+            # save the original MC and reco pulses, rename MCPulses to utilize
+            tray.Add(
+                "Rename", "RenameToRunWithoutNoise",
+                Keys=[
+                    "MCPulses", "temp_MCPulses",
+                    "InIceDSTPulses", "temp_InIceDSTPulses",
+                    "MCPulses_WithoutNoise", "MCPulses",
+                ],
+            )
+
+            # run reco pulses without noise
+            tray.AddSegment(
+                GetPulses, "GetPulses", decode=False, simulation=True,
+            )
+
+            # rename the created reco pulses, and revert previous ones
+            tray.Add(
+                "Rename", "RenameToRevert",
+                Keys=[
+                    "InIceDSTPulses", "InIceDSTPulses_WithoutNoise",
+                    "MCPulses", "MCPulses_WithoutNoise",
+                    "temp_MCPulses", "MCPulses",
+                    "temp_InIceDSTPulses", "InIceDSTPulses",
+                ],
+            )
+
     # get mc pulses
     output_keys = []
     if cfg['get_mc_pulses']:
