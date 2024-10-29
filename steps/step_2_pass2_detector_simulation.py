@@ -83,7 +83,10 @@ def main(cfg, run_number, scratch):
         )
         tray.Add(
             "Rename", "RenameNoNoisePulses",
-            Keys=["MCPulses", "MCPulses_WithoutNoise"],
+            Keys=[
+                "I3MCPulseSeriesMap", "I3MCPulseSeriesMap_WithoutNoise",
+                "I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapParticleIDMap_WithoutNoise",
+            ],
         )
 
     tray.AddSegment(segments.DetectorSim, "Detector5Sim",
