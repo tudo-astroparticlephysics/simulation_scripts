@@ -42,7 +42,7 @@ def GetPulses(tray, name,
     #     Feature extraction, pulse cleaning (seeded RT, and Time Window),
     #     PoleMuonLineit, PoleMuonLlh, Cuts module and Mue on PoleMuonLlh
     if sdstarchive:
-        tray.AddSegment(BaseProcessing, "BaseProc",
+        tray.AddSegment(BaseProcessing, name + "BaseProc",
                         pulses=filter_globals.CleanedMuonPulses,
                         decode=decode,
                         simulation=False,
@@ -51,7 +51,7 @@ def GetPulses(tray, name,
                         needs_trimmer=False, seededRTConfig=seededRTConfig
                         )
     else:
-        tray.AddSegment(BaseProcessing, "BaseProc",
+        tray.AddSegment(BaseProcessing, name + "BaseProc",
                         pulses=filter_globals.CleanedMuonPulses,
                         decode=decode,
                         simulation=simulation,

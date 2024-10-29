@@ -77,7 +77,8 @@ def main(cfg, run_number, scratch):
 
             # run reco pulses without noise
             tray.AddSegment(
-                GetPulses, "GetPulses", decode=False, simulation=True,
+                GetPulses, "GetPulses_WithoutNoise",
+                decode=False, simulation=True,
             )
 
             # rename the created reco pulses, and revert previous ones
