@@ -86,6 +86,8 @@ def main(cfg, run_number, scratch):
             Keys=[
                 "I3MCPulseSeriesMap", "I3MCPulseSeriesMap_WithoutNoise",
                 "I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapParticleIDMap_WithoutNoise",
+                "IceTopRawData", "IceTopRawData_WithoutNoise",
+                "InIceRawData", "InIceRawData_WithoutNoise",
             ],
         )
 
