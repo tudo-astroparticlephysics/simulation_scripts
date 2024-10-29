@@ -61,36 +61,6 @@ def main(cfg, run_number, scratch):
         cfg['det_keep_propagated_mc_tree'] = True
         cfg['det_keep_mc_pulses'] = True
 
-    if "add_no_noise_pulses" in cfg and cfg["add_no_noise_pulses"]:
-        if cfg["det_skip_noise_generation"]:
-            raise ValueError(
-                "Do not use add_no_noise_pulses with "
-                "det_skip_noise_generation"
-            )
-
-        tray.AddSegment(segments.DetectorSim, "Detector5Sim",
-            RandomService='I3RandomService',
-            RunID=run_id,
-            GCDFile=cfg['gcd_pass2'],
-            KeepMCHits=cfg['det_keep_mc_hits'],
-            KeepPropagatedMCTree=cfg['det_keep_propagated_mc_tree'],
-            KeepMCPulses=cfg['det_keep_mc_pulses'],
-            SkipNoiseGenerator=True,
-            LowMem=cfg['det_low_mem'],
-            InputPESeriesMapName=MCPE_SERIES_MAP,
-            BeaconLaunches=cfg['det_add_beacon_launches'],
-            FilterTrigger=cfg['det_filter_trigger'],
-        )
-        tray.Add(
-            "Rename", "RenameNoNoisePulses",
-            Keys=[
-                "I3MCPulseSeriesMap", "I3MCPulseSeriesMap_WithoutNoise",
-                "I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapParticleIDMap_WithoutNoise",
-                "IceTopRawData", "IceTopRawData_WithoutNoise",
-                "InIceRawData", "InIceRawData_WithoutNoise",
-            ],
-        )
-
     tray.AddSegment(segments.DetectorSim, "Detector5Sim",
         RandomService='I3RandomService',
         RunID=run_id,
