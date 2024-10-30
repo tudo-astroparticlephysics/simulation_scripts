@@ -114,7 +114,7 @@ def main(cfg, run_number, scratch):
                 "det_skip_noise_generation"
             )
 
-        tray.AddSegment(segments.DetectorSim, "DetectorSim_WithoutNoise",
+        tray.AddSegment(segments.DetectorSim, "DetectorSimWithoutNoise",
             RandomService='I3RandomService',
             RunID=run_id,
             GCDFile=cfg['gcd_pass2'],
@@ -130,10 +130,15 @@ def main(cfg, run_number, scratch):
         tray.Add(
             "Rename", "RenameNoNoisePulses",
             Keys=[
-                "I3MCPulseSeriesMap", "I3MCPulseSeriesMap_WithoutNoise",
-                "I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapParticleIDMap_WithoutNoise",
-                "IceTopRawData", "IceTopRawData_WithoutNoise",
-                "InIceRawData", "InIceRawData_WithoutNoise",
+                "I3MCPulseSeriesMap", "I3MCPulseSeriesMapWithoutNoise",
+                "I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapParticleIDMapWithoutNoise",
+                "IceTopRawData", "IceTopRawDataWithoutNoise",
+                "InIceRawData", "InIceRawDataWithoutNoise",
+                "BeaconLaunches", "BeaconLaunchesWithoutNoise",
+                "I3EventHeader", "I3EventHeaderWithoutNoise",
+                "I3TriggerHierarchy", "I3TriggerHierarchyWithoutNoise",
+                "I3Triggers", "I3TriggersWithoutNoise",
+                "TimeShift", "TimeShiftWithoutNoise",
             ],
         )
 
