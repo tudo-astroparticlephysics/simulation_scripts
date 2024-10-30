@@ -3,6 +3,9 @@
 #--METAPROJECT /data/user/mhuennefeld/software/icecube/py3-v4.1.0/combo_V01-00-00/build
 #--METAPROJECT combo/V01-00-00 # <-- Causes segfaults, therefore use RC0
 import os
+import sys
+if "ENV_SITE_PACKAGES" in os.environ:
+    sys.path.insert(1, os.environ["ENV_SITE_PACKAGES"])
 
 import click
 import yaml

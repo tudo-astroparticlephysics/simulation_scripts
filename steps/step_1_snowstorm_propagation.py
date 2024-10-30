@@ -24,9 +24,11 @@ Adopted from:
 # OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
-
 import os
 import sys
+if "ENV_SITE_PACKAGES" in os.environ:
+    sys.path.insert(1, os.environ["ENV_SITE_PACKAGES"])
+
 import click
 import yaml
 import numpy as np

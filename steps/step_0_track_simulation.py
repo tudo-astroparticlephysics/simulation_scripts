@@ -1,6 +1,11 @@
 #!/bin/sh /cvmfs/icecube.opensciencegrid.org/py3-v4.3.0/icetray-start
 #METAPROJECT icetray/v1.10.0
 from __future__ import division
+import os
+import sys
+if "ENV_SITE_PACKAGES" in os.environ:
+    sys.path.insert(1, os.environ["ENV_SITE_PACKAGES"])
+
 import time
 import click
 import yaml
