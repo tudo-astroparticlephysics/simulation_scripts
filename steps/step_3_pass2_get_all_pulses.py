@@ -60,9 +60,6 @@ def main(cfg, run_number, scratch):
 
     # get reco pulses
     if cfg['get_reco_pulses']:
-        tray.AddSegment(
-            GetPulses, "GetPulses", decode=False, simulation=True,
-        )
 
         if "add_no_noise_pulses" in cfg and cfg["add_no_noise_pulses"]:
 
@@ -104,6 +101,8 @@ def main(cfg, run_number, scratch):
                 Keys=[
                     # rename created Pulses
                     "MCPulses", "MCPulsesWithoutNoise",
+                    "BadDomsList", "BadDomsListWithoutNoise",
+                    "BadDomsListSLC", "BadDomsListSLCWithoutNoise",
                     # move without noise keys back
                     "I3MCPulseSeriesMap", "I3MCPulseSeriesMapWithoutNoise",
                     "I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapParticleIDMapWithoutNoise",
@@ -118,6 +117,50 @@ def main(cfg, run_number, scratch):
                     "temp_BeaconLaunches", "BeaconLaunches",
                 ],
             )
+
+            # delete created keys that we don't need anymore
+            tray.Add(
+                "Delete", "DeleteNoNoisePulses",
+                Keys=[
+                    "CalibratedIceTopATWD_HLC",
+                    "CalibratedIceTopATWD_SLC",
+                    "CalibratedIceTopFADC_HLC",
+                    "CalibratedWaveformRange",
+                    "CalibratedWaveforms",
+                    "CleanIceTopRawData",
+                    "CleanInIceRawData",
+                    "ClusterCleaningExcludedTanks",
+                    "DSTTriggers",
+                    "GetPulsesBaseProc_SimTrimmer_HighCharge",
+                    "GetPulsesBaseProc_SimTrimmer_I3SuperDST_CalibratedWaveforms_Borked",
+                    "GetPulsesBaseProc_SimTrimmer_I3SuperDST_CalibratedWaveforms_Chi",
+                    "HLCTankPulses",
+                    "I3SuperDST",
+                    "IceTopCalibratedWaveformRange",
+                    "IceTopCalibratedWaveforms",
+                    "IceTopDSTPulses",
+                    "IceTopHLCPulseInfo",
+                    "IceTopHLCVEMPulses",
+                    "IceTopPulses",
+                    "IceTopPulses_HLC",
+                    "IceTopPulses_SLC",
+                    "IceTopRawData",
+                    "IceTopSLCVEMPulses",
+                    "InIceDSTPulses",
+                    "QTriggerHierarchy",
+                    "RawDSTPulses",
+                    "SLCTankPulses",
+                    "SimTrimmer",
+                    "TankPulseMergerExcludedTanks",
+                    "TankPulseMergerExcludedTanksSLC",
+                    "UncleanedInIcePulses",
+                    "UncleanedInIcePulsesTimeRange",
+                ],
+            )
+
+        tray.AddSegment(
+            GetPulses, "GetPulses", decode=False, simulation=True,
+        )
 
     # get mc pulses
     output_keys = []
