@@ -78,14 +78,17 @@ class MoveSuperDST(icetray.I3ConditionalModule):
             frame[output_key] = frame[self.input_key]
 
             for key in frame.keys():
-                if isinstance(frame[key], dataclasses.I3RecoPulseSeriesMapMask):
-                    if frame[key].source == self.input_key:
-                        output_mask = self.output_key_pattern.format(key)
-                        frame[output_mask] = (
-                            dataclasses.I3RecoPulseSeriesMapMask(frame, output_key)
-                        )
-                    assert frame[output_mask].apply(frame) == frame[key].apply(frame)
-                    del frame[key]
+                try:
+                    if isinstance(frame[key], dataclasses.I3RecoPulseSeriesMapMask):
+                        if frame[key].source == self.input_key:
+                            output_mask = self.output_key_pattern.format(key)
+                            frame[output_mask] = (
+                                dataclasses.I3RecoPulseSeriesMapMask(frame, output_key)
+                            )
+                        assert frame[output_mask].apply(frame) == frame[key].apply(frame)
+                        del frame[key]
+                except KeyError:
+                    pass
 
             del frame[self.input_key]
         self.PushFrame(frame)
