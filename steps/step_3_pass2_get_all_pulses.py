@@ -73,12 +73,17 @@ def main(cfg, run_number, scratch):
                     "IceTopRawData", "temp_IceTopRawData",
                     "InIceRawData", "temp_InIceRawData",
                     "BeaconLaunches", "temp_BeaconLaunches",
+                    "I3TriggerHierarchy", "temp_I3TriggerHierarchy",
+                    "I3Triggers", "temp_I3Triggers",
+
                     # Move WithoutNoise to the original key
                     "I3MCPulseSeriesMapWithoutNoise", "I3MCPulseSeriesMap",
-                    "I3MCPulseSeriesMapParticleIDMapWithoutNoise", "I3MCPulseSeriesMapParticleIDMap",
+                    "I3MCPulseSeriesMapWithoutNoiseParticleIDMap", "I3MCPulseSeriesMapParticleIDMap",
                     "IceTopRawDataWithoutNoise", "IceTopRawData",
                     "InIceRawDataWithoutNoise", "InIceRawData",
                     "BeaconLaunchesWithoutNoise", "BeaconLaunches",
+                    "I3TriggerHierarchyWithoutNoise", "I3TriggerHierarchy",
+                    "I3TriggersWithoutNoise", "I3Triggers",
                 ],
             )
 
@@ -105,16 +110,20 @@ def main(cfg, run_number, scratch):
                     "BadDomsListSLC", "BadDomsListSLCWithoutNoise",
                     # move without noise keys back
                     "I3MCPulseSeriesMap", "I3MCPulseSeriesMapWithoutNoise",
-                    "I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapParticleIDMapWithoutNoise",
+                    "I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapWithoutNoiseParticleIDMap",
                     "IceTopRawData", "IceTopRawDataWithoutNoise",
                     "InIceRawData", "InIceRawDataWithoutNoise",
                     "BeaconLaunches", "BeaconLaunchesWithoutNoise",
+                    "I3TriggerHierarchy", "I3TriggerHierarchyWithoutNoise",
+                    "I3Triggers", "I3TriggersWithoutNoise",
                     # revert original keys
                     "temp_I3MCPulseSeriesMap", "I3MCPulseSeriesMap",
                     "temp_I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapParticleIDMap",
                     "temp_IceTopRawData", "IceTopRawData",
                     "temp_InIceRawData", "InIceRawData",
                     "temp_BeaconLaunches", "BeaconLaunches",
+                    "temp_I3TriggerHierarchy", "I3TriggerHierarchy",
+                    "temp_I3Triggers", "I3Triggers",
                 ],
             )
 
@@ -258,10 +267,12 @@ def main(cfg, run_number, scratch):
         'MMCTrackList',
         'I3EventHeader',
         'I3SuperDST',
+        'I3SuperDSTWithoutNoise',
         'RNGState',
         'oversampling',
         'AggregatedPulses',
         'InIceDSTPulses',
+        'InIceDSTPulsesWithowtNoise',
         'InIceDSTPulsesTimeRange',
         'CalibrationErrata',
         'SaturationWindows',

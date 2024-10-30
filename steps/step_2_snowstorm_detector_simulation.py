@@ -131,7 +131,7 @@ def main(cfg, run_number, scratch):
             "Rename", "RenameNoNoisePulses",
             Keys=[
                 "I3MCPulseSeriesMap", "I3MCPulseSeriesMapWithoutNoise",
-                "I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapParticleIDMapWithoutNoise",
+                "I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapWithoutNoiseParticleIDMap",
                 "IceTopRawData", "IceTopRawDataWithoutNoise",
                 "InIceRawData", "InIceRawDataWithoutNoise",
                 "BeaconLaunches", "BeaconLaunchesWithoutNoise",
