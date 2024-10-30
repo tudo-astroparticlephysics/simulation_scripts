@@ -61,6 +61,36 @@ def GetPulses(tray, name,
                         )
 
 
+class MoveSuperDST(icetray.I3ConditionalModule):
+
+    def __init__(self, context):
+        icetray.I3ConditionalModule.__init__(self, context)
+        self.AddParameter('InputKey', 'Input key for pulses.', 'I3SuperDST')
+        self.AddParameter('OutputKeyPattern', 'Output key for noise.', '{}WithoutNoise')
+
+    def Configure(self):
+        self.input_key = self.GetParameter('InputKey')
+        self.output_key_pattern = self.GetParameter('OutputKeyPattern')
+
+    def DAQ(self, frame):
+        if self.input_key in frame:
+            output_key = self.output_key_pattern.format(self.input_key)
+            frame[output_key] = frame[self.input_key]
+
+            for key in frame.keys():
+                if isinstance(frame[key], dataclasses.I3RecoPulseSeriesMapMask):
+                    if frame[key].source == self.input_key:
+                        output_mask = self.output_key_pattern.format(key)
+                        frame[output_mask] = (
+                            dataclasses.I3RecoPulseSeriesMapMask(frame, output_key)
+                        )
+                    assert frame[output_mask].apply(frame) == frame[key].apply(frame)
+                    del frame[key]
+
+            del frame[self.input_key]
+        self.PushFrame(frame)
+
+
 class MergeOversampledEvents(icetray.I3ConditionalModule):
 
     def __init__(self, context):

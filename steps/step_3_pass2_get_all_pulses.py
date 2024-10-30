@@ -4,7 +4,7 @@ import time
 import click
 import yaml
 
-from icecube import icetray
+from icecube import icetray, dataclasses
 from icecube import sim_services  # for 'I3MCPEMerger'
 from icecube.filterscripts import filter_globals
 
@@ -13,6 +13,7 @@ from utils import get_run_folder
 from resources.pulses import (
     GetMCPulses,
     GetPulses,
+    MoveSuperDST,
     MergeOversampledEvents,
     MergePulsesNearbyInTime,
     CompressPulses,
@@ -69,26 +70,52 @@ def main(cfg, run_number, scratch):
             tray.Add(
                 "Rename", "RenameToRunWithoutNoise",
                 Keys=[
-                    "MCPulses", "temp_MCPulses",
-                    "InIceDSTPulses", "temp_InIceDSTPulses",
-                    "MCPulses_WithoutNoise", "MCPulses",
+                    # temporarily save original keys somwhere else
+                    "I3MCPulseSeriesMap", "temp_I3MCPulseSeriesMap",
+                    "I3MCPulseSeriesMapParticleIDMap", "temp_I3MCPulseSeriesMapParticleIDMap",
+                    "IceTopRawData", "temp_IceTopRawData",
+                    "InIceRawData", "temp_InIceRawData",
+                    "BeaconLaunches", "temp_BeaconLaunches",
+                    # Move WithoutNoise to the original key
+                    "I3MCPulseSeriesMapWithoutNoise", "I3MCPulseSeriesMap",
+                    "I3MCPulseSeriesMapParticleIDMapWithoutNoise", "I3MCPulseSeriesMapParticleIDMap",
+                    "IceTopRawDataWithoutNoise", "IceTopRawData",
+                    "InIceRawDataWithoutNoise", "InIceRawData",
+                    "BeaconLaunchesWithoutNoise", "BeaconLaunches",
                 ],
             )
 
             # run reco pulses without noise
             tray.AddSegment(
-                GetPulses, "GetPulses_WithoutNoise",
+                GetPulses, "GetPulsesWithoutNoise",
                 decode=False, simulation=True,
+            )
+
+            # move the created Pulses
+            tray.AddModule(
+                MoveSuperDST, "MoveSuperDST",
+                InputKey="I3SuperDST",
+                OutputKeOutputKeyPatternPrefix="{}WithoutNoise",
             )
 
             # rename the created reco pulses, and revert previous ones
             tray.Add(
                 "Rename", "RenameToRevert",
                 Keys=[
-                    "InIceDSTPulses", "InIceDSTPulses_WithoutNoise",
-                    "MCPulses", "MCPulses_WithoutNoise",
-                    "temp_MCPulses", "MCPulses",
-                    "temp_InIceDSTPulses", "InIceDSTPulses",
+                    # rename created Pulses
+                    "MCPulses", "MCPulsesWithoutNoise",
+                    # move without noise keys back
+                    "I3MCPulseSeriesMap", "I3MCPulseSeriesMapWithoutNoise",
+                    "I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapParticleIDMapWithoutNoise",
+                    "IceTopRawData", "IceTopRawDataWithoutNoise",
+                    "InIceRawData", "InIceRawDataWithoutNoise",
+                    "BeaconLaunches", "BeaconLaunchesWithoutNoise",
+                    # revert original keys
+                    "temp_I3MCPulseSeriesMap", "I3MCPulseSeriesMap",
+                    "temp_I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapParticleIDMap",
+                    "temp_IceTopRawData", "IceTopRawData",
+                    "temp_InIceRawData", "InIceRawData",
+                    "temp_BeaconLaunches", "BeaconLaunches",
                 ],
             )
 
