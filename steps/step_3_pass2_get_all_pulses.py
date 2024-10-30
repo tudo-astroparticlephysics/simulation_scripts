@@ -95,7 +95,7 @@ def main(cfg, run_number, scratch):
             tray.AddModule(
                 MoveSuperDST, "MoveSuperDST",
                 InputKey="I3SuperDST",
-                OutputKeOutputKeyPatternPrefix="{}WithoutNoise",
+                OutputKeyPattern="{}WithoutNoise",
             )
 
             # rename the created reco pulses, and revert previous ones
