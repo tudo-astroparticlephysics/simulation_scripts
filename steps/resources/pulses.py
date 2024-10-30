@@ -502,6 +502,9 @@ class CompressPulses(icetray.I3ConditionalModule):
             n_removed += len(pulse_series) - len(new_pulses[omkey])
             n_total += len(pulse_series)
 
+        if n_total == 0:
+            return new_pulses
+
         if n_removed > 0:
             log_error('Removed {} pulses with time < {}ns.'.format(
                 n_removed, min_time))
