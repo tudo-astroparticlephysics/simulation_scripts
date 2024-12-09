@@ -24,8 +24,8 @@ eval `/cvmfs/icecube.opensciencegrid.org/py3-v4.2.1/setup.sh`
 export PYTHONUSERBASE={python_user_base}
 echo 'Using PYTHONUSERBASE: '${PYTHONUSERBASE}
 
-export ENV_SITE_PACKGES=$(find ${PYTHONUSERBASE}/lib* -maxdepth 2 -type d -name "site-packages")
-export PYTHONPATH=$ENV_SITE_PACKGES:$PYTHONPATH
+export ENV_SITE_PACKAGES=$(find ${PYTHONUSERBASE}/lib* -maxdepth 2 -type d -name "site-packages")
+export PYTHONPATH=$ENV_SITE_PACKAGES:$PYTHONPATH
 export PATH=$PYTHONUSERBASE/bin:$PATH
 echo 'Using PYTHONPATH: '${PYTHONPATH}
 
