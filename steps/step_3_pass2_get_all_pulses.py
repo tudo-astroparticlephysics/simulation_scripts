@@ -277,7 +277,7 @@ def main(cfg, run_number, scratch):
         'oversampling',
         'AggregatedPulses',
         'InIceDSTPulses',
-        'InIceDSTPulsesWithowtNoise',
+        'InIceDSTPulsesWithoutNoise',
         'InIceDSTPulsesTimeRange',
         'CalibrationErrata',
         'SaturationWindows',
