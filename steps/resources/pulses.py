@@ -42,7 +42,7 @@ def GetPulses(tray, name,
     #     Feature extraction, pulse cleaning (seeded RT, and Time Window),
     #     PoleMuonLineit, PoleMuonLlh, Cuts module and Mue on PoleMuonLlh
     if sdstarchive:
-        tray.AddSegment(BaseProcessing, "BaseProc",
+        tray.AddSegment(BaseProcessing, name + "BaseProc",
                         pulses=filter_globals.CleanedMuonPulses,
                         decode=decode,
                         simulation=False,
@@ -51,7 +51,7 @@ def GetPulses(tray, name,
                         needs_trimmer=False, seededRTConfig=seededRTConfig
                         )
     else:
-        tray.AddSegment(BaseProcessing, "BaseProc",
+        tray.AddSegment(BaseProcessing, name + "BaseProc",
                         pulses=filter_globals.CleanedMuonPulses,
                         decode=decode,
                         simulation=simulation,
@@ -59,6 +59,36 @@ def GetPulses(tray, name,
                         seededRTConfig=seededRTConfig,
                         needs_wavedeform_spe_corr=needs_wavedeform_spe_corr
                         )
+
+
+class MoveSuperDST(icetray.I3ConditionalModule):
+
+    def __init__(self, context):
+        icetray.I3ConditionalModule.__init__(self, context)
+        self.AddParameter('InputKey', 'Input key for pulses.', 'I3SuperDST')
+        self.AddParameter('OutputKeyPattern', 'Output key for noise.', '{}WithoutNoise')
+
+    def Configure(self):
+        self.input_key = self.GetParameter('InputKey')
+        self.output_key_pattern = self.GetParameter('OutputKeyPattern')
+
+    def DAQ(self, frame):
+        if self.input_key in frame:
+            output_key = self.output_key_pattern.format(self.input_key)
+            frame[output_key] = frame[self.input_key]
+
+            for key in frame.keys():
+                if frame.type_name(key) == "I3RecoPulseSeriesMapMas":
+                    if frame[key].source == self.input_key:
+                        output_mask = self.output_key_pattern.format(key)
+                        frame[output_mask] = (
+                            dataclasses.I3RecoPulseSeriesMapMask(frame, output_key)
+                        )
+                    assert frame[output_mask].apply(frame) == frame[key].apply(frame)
+                    del frame[key]
+
+            del frame[self.input_key]
+        self.PushFrame(frame)
 
 
 class MergeOversampledEvents(icetray.I3ConditionalModule):
@@ -501,6 +531,9 @@ class CompressPulses(icetray.I3ConditionalModule):
             ])
             n_removed += len(pulse_series) - len(new_pulses[omkey])
             n_total += len(pulse_series)
+
+        if n_total == 0:
+            return new_pulses
 
         if n_removed > 0:
             log_error('Removed {} pulses with time < {}ns.'.format(

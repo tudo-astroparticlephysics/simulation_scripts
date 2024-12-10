@@ -1,10 +1,17 @@
 #!/bin/sh /cvmfs/icecube.opensciencegrid.org/py3-v4.3.0/icetray-start
-#METAPROJECT icetray/v1.10.0
+#METAPROJECT /data/user/mhuennefeld/software/icecube/py3-v4.3.0/v1.12.0__propagate_names/build
+#-METAPROJECT icetray/v1.10.0
+#- revert to official release once "PropagateNames" is merged
+import os
+import sys
+if "ENV_SITE_PACKAGES" in os.environ:
+    sys.path.insert(1, os.environ["ENV_SITE_PACKAGES"])
+
 import time
 import click
 import yaml
 
-from icecube import icetray
+from icecube import icetray, dataclasses
 from icecube import sim_services  # for 'I3MCPEMerger'
 from icecube.filterscripts import filter_globals
 
@@ -13,6 +20,7 @@ from utils import get_run_folder
 from resources.pulses import (
     GetMCPulses,
     GetPulses,
+    MoveSuperDST,
     MergeOversampledEvents,
     MergePulsesNearbyInTime,
     CompressPulses,
@@ -59,6 +67,143 @@ def main(cfg, run_number, scratch):
 
     # get reco pulses
     if cfg['get_reco_pulses']:
+
+        if "add_no_noise_pulses" in cfg and cfg["add_no_noise_pulses"]:
+
+            # save the original MC and reco pulses, rename MCPulses to utilize
+            tray.Add(
+                "Rename", "RenameToRunWithoutNoise",
+                Keys=[
+                    # temporarily save original keys somwhere else
+                    "I3MCPulseSeriesMap", "temp_I3MCPulseSeriesMap",
+                    "I3MCPulseSeriesMapParticleIDMap", "temp_I3MCPulseSeriesMapParticleIDMap",
+                    "IceTopRawData", "temp_IceTopRawData",
+                    "InIceRawData", "temp_InIceRawData",
+                    "BeaconLaunches", "temp_BeaconLaunches",
+                    "I3TriggerHierarchy", "temp_I3TriggerHierarchy",
+                    "I3Triggers", "temp_I3Triggers",
+
+                    # Move WithoutNoise to the original key
+                    "I3MCPulseSeriesMapWithoutNoise", "I3MCPulseSeriesMap",
+                    "I3MCPulseSeriesMapWithoutNoiseParticleIDMap", "I3MCPulseSeriesMapParticleIDMap",
+                    "IceTopRawDataWithoutNoise", "IceTopRawData",
+                    "InIceRawDataWithoutNoise", "InIceRawData",
+                    "BeaconLaunchesWithoutNoise", "BeaconLaunches",
+                    "I3TriggerHierarchyWithoutNoise", "I3TriggerHierarchy",
+                    "I3TriggersWithoutNoise", "I3Triggers",
+                ],
+            )
+
+            # run reco pulses without noise
+            tray.AddSegment(
+                GetPulses, "GetPulsesWithoutNoise",
+                decode=False, simulation=True,
+            )
+
+            # move the created Pulses
+            tray.AddModule(
+                MoveSuperDST, "MoveSuperDST",
+                InputKey="I3SuperDST",
+                OutputKeyPattern="{}WithoutNoise",
+            )
+
+            # rename the created reco pulses, and revert previous ones
+            tray.Add(
+                "Rename", "RenameToRevert",
+                Keys=[
+                    # rename created Pulses
+                    "MCPulses", "MCPulsesWithoutNoise",
+                    "InIceDSTPulses", "InIceDSTPulsesWithoutNoise",
+                    "IceTopDSTPulses", "IceTopDSTPulsesWithoutNoise",
+                    "BadDomsList", "BadDomsListWithoutNoise",
+                    "BadDomsListSLC", "BadDomsListSLCWithoutNoise",
+                    # move without noise keys back
+                    "I3MCPulseSeriesMap", "I3MCPulseSeriesMapWithoutNoise",
+                    "I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapWithoutNoiseParticleIDMap",
+                    "IceTopRawData", "IceTopRawDataWithoutNoise",
+                    "InIceRawData", "InIceRawDataWithoutNoise",
+                    "BeaconLaunches", "BeaconLaunchesWithoutNoise",
+                    "I3TriggerHierarchy", "I3TriggerHierarchyWithoutNoise",
+                    "I3Triggers", "I3TriggersWithoutNoise",
+                    # revert original keys
+                    "temp_I3MCPulseSeriesMap", "I3MCPulseSeriesMap",
+                    "temp_I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapParticleIDMap",
+                    "temp_IceTopRawData", "IceTopRawData",
+                    "temp_InIceRawData", "InIceRawData",
+                    "temp_BeaconLaunches", "BeaconLaunches",
+                    "temp_I3TriggerHierarchy", "I3TriggerHierarchy",
+                    "temp_I3Triggers", "I3Triggers",
+                ],
+            )
+
+            # remove physics frames
+            tray.AddModule(
+                "KeepFromSubstream", "DeleteSubstreamNoNoise",
+                StreamName=filter_globals.InIceSplitter,
+                KeepKeys=['do_not_keep_anything'],
+            )
+            tray.AddModule(
+                "KeepFromSubstream", "DeleteSubstreamNoNoiseNullSplit",
+                StreamName=filter_globals.NullSplitter,
+                KeepKeys=['do_not_keep_anything'],
+            )
+
+            # remove unneeded keys
+            tray.AddModule(
+                "Delete", "DeleteKeysNoNoise",
+                Keys = [
+                    'CalibratedIceTopATWD_HLC',
+                    'CalibratedIceTopATWD_SLC',
+                    'CalibratedIceTopFADC_HLC',
+                    'CalibratedWaveformRange',
+                    'CalibratedWaveforms',
+                    'CleanIceTopRawData',
+                    'CleanInIceRawData',
+                    'ClusterCleaningExcludedTanks',
+                    'DMIceSMTTriggered',
+                    'DSTTriggers',
+                    'DeepCoreSMTTriggered',
+                    'FaintParticleTriggered',
+                    'FixedRateTriggered',
+                    'GetPulsesBaseProc_SimTrimmer_HighCharge',
+                    'GetPulsesBaseProc_SimTrimmer_I3SuperDST_CalibratedWaveforms_Borked',
+                    'GetPulsesBaseProc_SimTrimmer_I3SuperDST_CalibratedWaveforms_Chi',
+                    'GetPulsesWithoutNoiseBaseProc_SimTrimmer_HighCharge',
+                    'GetPulsesWithoutNoiseBaseProc_SimTrimmer_I3SuperDST_CalibratedWaveforms_Borked',
+                    'GetPulsesWithoutNoiseBaseProc_SimTrimmer_I3SuperDST_CalibratedWaveforms_Chi',
+                    'HLCTankPulses',
+                    'I3FlasherSubrunMap',
+                    'IceActSMTTriggered',
+                    'IceTopCalibratedWaveformRange',
+                    'IceTopCalibratedWaveforms',
+                    'IceTopHLCPulseInfo',
+                    'IceTopHLCVEMPulses',
+                    'IceTopPulses',
+                    'IceTopPulses_HLC',
+                    'IceTopPulses_SLC',
+                    'IceTopSLCVEMPulses',
+                    'IceTopSMTTriggered',
+                    'IceTopVolumeTriggered',
+                    'InIceSMTTriggered',
+                    'InIceStringTriggered',
+                    'PhysMinBiasTriggered',
+                    'QTriggerHierarchy',
+                    'RawDSTPulses',
+                    'SLCTankPulses',
+                    'SPEAbove',
+                    'SPEScalingFactors',
+                    'ScintMinBiasTriggered',
+                    'SimTrimmer',
+                    'SlowParticleTriggered',
+                    'TankPulseMergerExcludedTanks',
+                    'TankPulseMergerExcludedTanksSLC',
+                    'UncleanedInIcePulses',
+                    'UncleanedInIcePulsesTimeRange',
+                    'VolumeTriggerFlag',
+        ],
+            )
+
+
         tray.AddSegment(
             GetPulses, "GetPulses", decode=False, simulation=True,
         )
@@ -152,6 +297,7 @@ def main(cfg, run_number, scratch):
 
     keys_to_keep = [
         'TimeShift',
+        'TimeShiftWithoutNoise',
         'I3MCTree_preMuonProp',
         'I3MCTree',
         'I3MCWeightDict',
@@ -159,10 +305,12 @@ def main(cfg, run_number, scratch):
         'MMCTrackList',
         'I3EventHeader',
         'I3SuperDST',
+        'I3SuperDSTWithoutNoise',
         'RNGState',
         'oversampling',
         'AggregatedPulses',
         'InIceDSTPulses',
+        'InIceDSTPulsesWithoutNoise',
         'InIceDSTPulsesTimeRange',
         'CalibrationErrata',
         'SaturationWindows',
@@ -171,6 +319,7 @@ def main(cfg, run_number, scratch):
         'SplitUncleanedInIcePulsesTimeRange',
         'SplitUncleanedInIceDSTPulsesTimeRange',
         'I3TriggerHierarchy',
+        'I3TriggerHierarchyWithoutNoise',
         'GCFilter_GCFilterMJD',
         ]
     keys_to_keep += filter_globals.inice_split_keeps

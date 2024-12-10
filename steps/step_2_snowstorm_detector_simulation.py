@@ -3,6 +3,9 @@
 #--METAPROJECT /data/user/mhuennefeld/software/icecube/py3-v4.1.0/combo_V01-00-00/build
 #--METAPROJECT combo/V01-00-00 # <-- Causes segfaults, therefore use RC0
 import os
+import sys
+if "ENV_SITE_PACKAGES" in os.environ:
+    sys.path.insert(1, os.environ["ENV_SITE_PACKAGES"])
 
 import click
 import yaml
@@ -106,6 +109,41 @@ def main(cfg, run_number, scratch):
         cfg['det_keep_mc_hits'] = True
         cfg['det_keep_propagated_mc_tree'] = True
         cfg['det_keep_mc_pulses'] = True
+
+    if "add_no_noise_pulses" in cfg and cfg["add_no_noise_pulses"]:
+        if cfg["det_skip_noise_generation"]:
+            raise ValueError(
+                "Do not use add_no_noise_pulses with "
+                "det_skip_noise_generation"
+            )
+
+        tray.AddSegment(segments.DetectorSim, "DetectorSimWithoutNoise",
+            RandomService='I3RandomService',
+            RunID=run_id,
+            GCDFile=cfg['gcd_pass2'],
+            KeepMCHits=cfg['det_keep_mc_hits'],
+            KeepPropagatedMCTree=cfg['det_keep_propagated_mc_tree'],
+            KeepMCPulses=cfg['det_keep_mc_pulses'],
+            SkipNoiseGenerator=True,
+            LowMem=cfg['det_low_mem'],
+            InputPESeriesMapName=MCPE_SERIES_MAP,
+            BeaconLaunches=cfg['det_add_beacon_launches'],
+            FilterTrigger=cfg['det_filter_trigger'],
+        )
+        tray.Add(
+            "Rename", "RenameNoNoisePulses",
+            Keys=[
+                "I3MCPulseSeriesMap", "I3MCPulseSeriesMapWithoutNoise",
+                "I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapWithoutNoiseParticleIDMap",
+                "IceTopRawData", "IceTopRawDataWithoutNoise",
+                "InIceRawData", "InIceRawDataWithoutNoise",
+                "BeaconLaunches", "BeaconLaunchesWithoutNoise",
+                "I3EventHeader", "I3EventHeaderWithoutNoise",
+                "I3TriggerHierarchy", "I3TriggerHierarchyWithoutNoise",
+                "I3Triggers", "I3TriggersWithoutNoise",
+                "TimeShift", "TimeShiftWithoutNoise",
+            ],
+        )
 
     tray.AddSegment(segments.DetectorSim, "DetectorSim",
                     RandomService='I3RandomService',

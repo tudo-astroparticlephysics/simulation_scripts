@@ -159,6 +159,8 @@ det_low_mem: False
 det_filter_trigger: True
 # do not run Vuvuzela.
 det_skip_noise_generation: False
+# add noise-free pulses in addition to normal simulation
+add_no_noise_pulses: False
 # convert I3MCTree to linearized version if True
 det_convert_to_linear_tree: True
 # If this is a Genie simulation, then this needs to be set to True
