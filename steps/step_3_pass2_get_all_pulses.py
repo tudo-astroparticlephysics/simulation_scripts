@@ -1,7 +1,7 @@
 #!/bin/sh /cvmfs/icecube.opensciencegrid.org/py3-v4.3.0/icetray-start
 #METAPROJECT /data/user/mhuennefeld/software/icecube/py3-v4.3.0/v1.12.0__propagate_names/build
 #-METAPROJECT icetray/v1.10.0
-#- revert to official release once "OptionToAddNoiseFreePulses" is merged
+#- revert to official release once "PropagateNames" is merged
 import os
 import sys
 if "ENV_SITE_PACKAGES" in os.environ:
