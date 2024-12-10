@@ -70,6 +70,14 @@ def main(cfg, run_number, scratch):
 
         if "add_no_noise_pulses" in cfg and cfg["add_no_noise_pulses"]:
 
+            class AddMissingHierarchy(icetray.I3Module):
+                """Add dummy trigger hierarchy for empty pulses"""
+                def DAQ(self, frame):
+                    if "I3TriggerHierarchyWithoutNoise" not in frame:
+                        frame["I3TriggerHierarchyWithoutNoise"] = dataclasses.I3TriggerHierarchy()
+                    self.PushFrame(frame)
+            tray.AddModule(AddMissingHierarchy, "AddMissingHierarchy")
+
             # save the original MC and reco pulses, rename MCPulses to utilize
             tray.Add(
                 "Rename", "RenameToRunWithoutNoise",
