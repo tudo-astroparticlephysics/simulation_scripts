@@ -110,6 +110,18 @@ def main(cfg, run_number, scratch):
         cfg['det_keep_propagated_mc_tree'] = True
         cfg['det_keep_mc_pulses'] = True
 
+    TimeShiftSkipKeys = [
+        "SnowstormParameterRanges",
+        "SnowstormParameters",
+        "SnowstormParametrizations",
+        "SnowstormProposalDistribution",
+        "WavelengthAcceptance",
+        "WavelengthGenerationBias",
+        "LeptonInjectorProperties",
+        "EventProperties",
+        "MediumProperties",
+    ]
+
     if "add_no_noise_pulses" in cfg and cfg["add_no_noise_pulses"]:
         if cfg["det_skip_noise_generation"]:
             raise ValueError(
@@ -129,6 +141,7 @@ def main(cfg, run_number, scratch):
             InputPESeriesMapName=MCPE_SERIES_MAP,
             BeaconLaunches=cfg['det_add_beacon_launches'],
             FilterTrigger=cfg['det_filter_trigger'],
+            TimeShiftSkipKeys=TimeShiftSkipKeys,
         )
         tray.Add(
             "Rename", "RenameNoNoisePulses",
@@ -157,17 +170,7 @@ def main(cfg, run_number, scratch):
                     InputPESeriesMapName=MCPE_SERIES_MAP,
                     BeaconLaunches=cfg['det_add_beacon_launches'],
                     FilterTrigger=cfg['det_filter_trigger'],
-                    TimeShiftSkipKeys=[
-                        "SnowstormParameterRanges",
-                        "SnowstormParameters",
-                        "SnowstormParametrizations",
-                        "SnowstormProposalDistribution",
-                        "WavelengthAcceptance",
-                        "WavelengthGenerationBias",
-                        "LeptonInjectorProperties",
-                        "EventProperties",
-                        "MediumProperties",
-                    ],
+                    TimeShiftSkipKeys=TimeShiftSkipKeys,
                     )
 
     if not cfg['det_keep_mc_pulses']:
