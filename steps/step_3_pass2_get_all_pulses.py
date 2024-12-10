@@ -111,12 +111,12 @@ def main(cfg, run_number, scratch):
             tray.Add(
                 "Rename", "RenameToRevert",
                 Keys=[
-                    # rename created Pulses
+                    # rename created keys that we want to keep
                     "MCPulses", "MCPulsesWithoutNoise",
                     "InIceDSTPulses", "InIceDSTPulsesWithoutNoise",
                     "IceTopDSTPulses", "IceTopDSTPulsesWithoutNoise",
-                    "BadDomsList", "BadDomsListWithoutNoise",
-                    "BadDomsListSLC", "BadDomsListSLCWithoutNoise",
+                    "CalibrationErrata", "CalibrationErrataWithoutNoise",
+                    "SaturationWindows", "SaturationWindowsWithoutNoise",
                     # move without noise keys back
                     "I3MCPulseSeriesMap", "I3MCPulseSeriesMapWithoutNoise",
                     "I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapWithoutNoiseParticleIDMap",
@@ -200,9 +200,8 @@ def main(cfg, run_number, scratch):
                     'UncleanedInIcePulses',
                     'UncleanedInIcePulsesTimeRange',
                     'VolumeTriggerFlag',
-        ],
+                ],
             )
-
 
         tray.AddSegment(
             GetPulses, "GetPulses", decode=False, simulation=True,
