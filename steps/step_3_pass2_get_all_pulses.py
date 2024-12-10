@@ -1,5 +1,7 @@
 #!/bin/sh /cvmfs/icecube.opensciencegrid.org/py3-v4.3.0/icetray-start
-#METAPROJECT icetray/v1.10.0
+#METAPROJECT /data/user/mhuennefeld/software/icecube/py3-v4.3.0/v1.12.0__propagate_names/build
+#-METAPROJECT icetray/v1.10.0
+#- revert to official release once "OptionToAddNoiseFreePulses" is merged
 import os
 import sys
 if "ENV_SITE_PACKAGES" in os.environ:
@@ -111,6 +113,8 @@ def main(cfg, run_number, scratch):
                 Keys=[
                     # rename created Pulses
                     "MCPulses", "MCPulsesWithoutNoise",
+                    "InIceDSTPulses", "InIceDSTPulsesWithoutNoise",
+                    "IceTopDSTPulses", "IceTopDSTPulsesWithoutNoise",
                     "BadDomsList", "BadDomsListWithoutNoise",
                     "BadDomsListSLC", "BadDomsListSLCWithoutNoise",
                     # move without noise keys back
@@ -132,45 +136,73 @@ def main(cfg, run_number, scratch):
                 ],
             )
 
-            # delete created keys that we don't need anymore
-            tray.Add(
-                "Delete", "DeleteNoNoisePulses",
-                Keys=[
-                    "CalibratedIceTopATWD_HLC",
-                    "CalibratedIceTopATWD_SLC",
-                    "CalibratedIceTopFADC_HLC",
-                    "CalibratedWaveformRange",
-                    "CalibratedWaveforms",
-                    "CleanIceTopRawData",
-                    "CleanInIceRawData",
-                    "ClusterCleaningExcludedTanks",
-                    "DSTTriggers",
-                    "GetPulsesBaseProc_SimTrimmer_HighCharge",
-                    "GetPulsesBaseProc_SimTrimmer_I3SuperDST_CalibratedWaveforms_Borked",
-                    "GetPulsesBaseProc_SimTrimmer_I3SuperDST_CalibratedWaveforms_Chi",
-                    "HLCTankPulses",
-                    "I3SuperDST",
-                    "IceTopCalibratedWaveformRange",
-                    "IceTopCalibratedWaveforms",
-                    "IceTopDSTPulses",
-                    "IceTopHLCPulseInfo",
-                    "IceTopHLCVEMPulses",
-                    "IceTopPulses",
-                    "IceTopPulses_HLC",
-                    "IceTopPulses_SLC",
-                    "IceTopRawData",
-                    "IceTopSLCVEMPulses",
-                    "InIceDSTPulses",
-                    "QTriggerHierarchy",
-                    "RawDSTPulses",
-                    "SLCTankPulses",
-                    "SimTrimmer",
-                    "TankPulseMergerExcludedTanks",
-                    "TankPulseMergerExcludedTanksSLC",
-                    "UncleanedInIcePulses",
-                    "UncleanedInIcePulsesTimeRange",
-                ],
+            # remove physics frames
+            tray.AddModule(
+                "KeepFromSubstream", "DeleteSubstreamNoNoise",
+                StreamName=filter_globals.InIceSplitter,
+                KeepKeys=['do_not_keep_anything'],
             )
+            tray.AddModule(
+                "KeepFromSubstream", "DeleteSubstreamNoNoiseNullSplit",
+                StreamName=filter_globals.NullSplitter,
+                KeepKeys=['do_not_keep_anything'],
+            )
+
+            # remove unneeded keys
+            tray.AddModule(
+                "Delete", "DeleteKeysNoNoise",
+                Keys = [
+                    'CalibratedIceTopATWD_HLC',
+                    'CalibratedIceTopATWD_SLC',
+                    'CalibratedIceTopFADC_HLC',
+                    'CalibratedWaveformRange',
+                    'CalibratedWaveforms',
+                    'CleanIceTopRawData',
+                    'CleanInIceRawData',
+                    'ClusterCleaningExcludedTanks',
+                    'DMIceSMTTriggered',
+                    'DSTTriggers',
+                    'DeepCoreSMTTriggered',
+                    'FaintParticleTriggered',
+                    'FixedRateTriggered',
+                    'GetPulsesBaseProc_SimTrimmer_HighCharge',
+                    'GetPulsesBaseProc_SimTrimmer_I3SuperDST_CalibratedWaveforms_Borked',
+                    'GetPulsesBaseProc_SimTrimmer_I3SuperDST_CalibratedWaveforms_Chi',
+                    'GetPulsesWithoutNoiseBaseProc_SimTrimmer_HighCharge',
+                    'GetPulsesWithoutNoiseBaseProc_SimTrimmer_I3SuperDST_CalibratedWaveforms_Borked',
+                    'GetPulsesWithoutNoiseBaseProc_SimTrimmer_I3SuperDST_CalibratedWaveforms_Chi',
+                    'HLCTankPulses',
+                    'I3FlasherSubrunMap',
+                    'IceActSMTTriggered',
+                    'IceTopCalibratedWaveformRange',
+                    'IceTopCalibratedWaveforms',
+                    'IceTopHLCPulseInfo',
+                    'IceTopHLCVEMPulses',
+                    'IceTopPulses',
+                    'IceTopPulses_HLC',
+                    'IceTopPulses_SLC',
+                    'IceTopSLCVEMPulses',
+                    'IceTopSMTTriggered',
+                    'IceTopVolumeTriggered',
+                    'InIceSMTTriggered',
+                    'InIceStringTriggered',
+                    'PhysMinBiasTriggered',
+                    'QTriggerHierarchy',
+                    'RawDSTPulses',
+                    'SLCTankPulses',
+                    'SPEAbove',
+                    'SPEScalingFactors',
+                    'ScintMinBiasTriggered',
+                    'SimTrimmer',
+                    'SlowParticleTriggered',
+                    'TankPulseMergerExcludedTanks',
+                    'TankPulseMergerExcludedTanksSLC',
+                    'UncleanedInIcePulses',
+                    'UncleanedInIcePulsesTimeRange',
+                    'VolumeTriggerFlag',
+        ],
+            )
+
 
         tray.AddSegment(
             GetPulses, "GetPulses", decode=False, simulation=True,
@@ -265,6 +297,7 @@ def main(cfg, run_number, scratch):
 
     keys_to_keep = [
         'TimeShift',
+        'TimeShiftWithoutNoise',
         'I3MCTree_preMuonProp',
         'I3MCTree',
         'I3MCWeightDict',
@@ -286,6 +319,7 @@ def main(cfg, run_number, scratch):
         'SplitUncleanedInIcePulsesTimeRange',
         'SplitUncleanedInIceDSTPulsesTimeRange',
         'I3TriggerHierarchy',
+        'I3TriggerHierarchyWithoutNoise',
         'GCFilter_GCFilterMJD',
         ]
     keys_to_keep += filter_globals.inice_split_keeps
