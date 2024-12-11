@@ -77,15 +77,21 @@ class MoveSuperDST(icetray.I3ConditionalModule):
             output_key = self.output_key_pattern.format(self.input_key)
             frame[output_key] = frame[self.input_key]
 
-            for key in frame.keys():
-                if frame.type_name(key) == "I3RecoPulseSeriesMapMas":
+            for key in list(frame.keys()):
+                if frame.type_name(key) == "I3RecoPulseSeriesMapMask":
                     if frame[key].source == self.input_key:
                         output_mask = self.output_key_pattern.format(key)
-                        frame[output_mask] = (
-                            dataclasses.I3RecoPulseSeriesMapMask(frame, output_key)
-                        )
-                    assert frame[output_mask].apply(frame) == frame[key].apply(frame)
-                    del frame[key]
+                        new_mask = dataclasses.I3RecoPulseSeriesMapMask(frame, output_key)
+                        for idx, omkey in enumerate(frame[self.input_key].unpack().keys()):
+                            omkey_bits = frame[key].bits[idx]
+                            if len(omkey_bits) == 0:
+                                new_mask.set(omkey, False)
+                            else:
+                                for idx_bit, bit in enumerate(omkey_bits):
+                                    new_mask.set(omkey, idx_bit, bit)
+                        frame[output_mask] = new_mask
+                        assert frame[output_mask].apply(frame) == frame[key].apply(frame)
+                        del frame[key]
 
             del frame[self.input_key]
         self.PushFrame(frame)
@@ -443,6 +449,129 @@ class GetMCPulses(icetray.I3ConditionalModule):
         frame[self._output_key] = mc_pulse_map
 
 
+def discard_early_pulses(
+    pulses, min_time=-512, max_removed=100, max_fraction=0.45,
+):
+    """Discard pulses that are too early.
+
+    I3SuperDST expects pulses to have times later than -512ns. This
+    function removes pulses that are too early.
+
+    Parameters
+    ----------
+    pulses : I3RecoPulseSeriesMap, I3MCPulseSeriesMap, or similar
+        The pulses to filter.
+    min_time : float, optional
+        The minimum time in ns a pulse must have to be kept.
+    max_removed : int, optional
+        The maximum number of pulses that are allowed to be removed.
+        If more pulses are removed, an error is raised.
+    max_fraction : float, optional
+        The maximum fraction of pulses that are allowed to be removed.
+        If more pulses are removed, an error is raised.
+
+    Returns
+    -------
+    I3RecoPulseSeriesMap, I3MCPulseSeriesMap, or similar
+        The filtered pulses.
+    int
+        The number of removed pulses.
+    """
+    n_removed = 0
+    n_total = 0
+    new_pulses = type(pulses)()
+    for omkey, pulse_series in pulses.items():
+        new_pulses[omkey] = type(pulse_series)([
+            pulse for pulse in pulse_series if pulse.time > min_time
+        ])
+        n_removed += len(pulse_series) - len(new_pulses[omkey])
+        n_total += len(pulse_series)
+
+    if n_total == 0:
+        return new_pulses, n_removed
+
+    if n_removed > 0:
+        log_error('Removed {} pulses with time < {}ns.'.format(
+            n_removed, min_time))
+
+    fraction_removed = n_removed / n_total
+    if n_removed > max_removed or fraction_removed > max_fraction:
+        print(pulses)
+        log_fatal(
+            'Removed {} pulses from {} [{:6.3f} %], but only {}'
+            '[{:6.3f} %] pulses are allowed to be removed.'.format(
+                n_removed,
+                n_total,
+                fraction_removed*100,
+                max_removed,
+                max_fraction*100,
+        ))
+
+    return new_pulses, n_removed
+
+
+class RemoveEarlyPulses(icetray.I3ConditionalModule):
+    """Remove pulses earlier than a given time."""
+
+    def __init__(self, context):
+        icetray.I3ConditionalModule.__init__(self, context)
+        self.AddParameter('InputKeys', 'Input keys for pulses.', [])
+        self.AddParameter(
+            'OutputKeys',
+            'Output keys for pulses. If None, replace original keys',
+            None,
+        )
+        self.AddParameter('MinTime', 'Minimum time in ns.', -512.)
+        self.AddParameter(
+            'RunOnQFrames',
+            'If True, run on Q-frames, otherwise P-frames',
+            True,
+        )
+
+    def Configure(self):
+        self._input_keys = self.GetParameter('InputKeys')
+        self._output_keys = self.GetParameter('OutputKeys')
+        self._min_time = self.GetParameter('MinTime')
+        self._run_on_q_frames = self.GetParameter('RunOnQFrames')
+
+        if self._output_keys is None:
+            self._output_keys = self._input_keys
+
+    def remove_pulses(self, frame):
+        for in_key, out_key in zip(self._input_keys, self._output_keys):
+            pulses = frame[in_key]
+            pulses_trimmed, _ = discard_early_pulses(
+                pulses, min_time=self._min_time,
+            )
+            if out_key in frame:
+                del frame[out_key]
+            frame[out_key] = pulses_trimmed
+
+    def DAQ(self, frame):
+        """Merge pulses on DAQ frames.
+
+        Parameters
+        ----------
+        frame : I3Frame
+            The current I3Frame.
+        """
+        if self._run_on_q_frames:
+            self.remove_pulses(frame)
+        self.PushFrame(frame)
+
+    def Physics(self, frame):
+        """Merge pulses on Physics frames.
+
+        Parameters
+        ----------
+        frame : I3Frame
+            The current I3Frame.
+        """
+        if not self._run_on_q_frames:
+            self.remove_pulses(frame)
+        self.PushFrame(frame)
+
+
 class CompressPulses(icetray.I3ConditionalModule):
     """Compress charge and time from pulses.
 
@@ -497,69 +626,12 @@ class CompressPulses(icetray.I3ConditionalModule):
             self.compress_pulses(frame)
         self.PushFrame(frame)
 
-    def discard_early_pulses(
-        self, pulses, min_time=-512, max_removed=100, max_fraction=0.45,
-    ):
-        """Discard pulses that are too early.
-
-        I3SuperDST expects pulses to have times later than -512ns. This
-        function removes pulses that are too early.
-
-        Parameters
-        ----------
-        pulses : I3RecoPulseSeriesMap
-            The pulses to filter.
-        min_time : float, optional
-            The minimum time in ns a pulse must have to be kept.
-        max_removed : int, optional
-            The maximum number of pulses that are allowed to be removed.
-            If more pulses are removed, an error is raised.
-        max_fraction : float, optional
-            The maximum fraction of pulses that are allowed to be removed.
-            If more pulses are removed, an error is raised.
-
-        Returns
-        -------
-        Same as input, but with pulses that are too early removed.
-        """
-        n_removed = 0
-        n_total = 0
-        new_pulses = type(pulses)()
-        for omkey, pulse_series in pulses.items():
-            new_pulses[omkey] = type(pulse_series)([
-                pulse for pulse in pulse_series if pulse.time > min_time
-            ])
-            n_removed += len(pulse_series) - len(new_pulses[omkey])
-            n_total += len(pulse_series)
-
-        if n_total == 0:
-            return new_pulses
-
-        if n_removed > 0:
-            log_error('Removed {} pulses with time < {}ns.'.format(
-                n_removed, min_time))
-
-        fraction_removed = n_removed / n_total
-        if n_removed > max_removed or fraction_removed > max_fraction:
-            print(pulses)
-            log_fatal(
-                'Removed {} pulses from {} [{:6.3f} %], but only {}'
-                '[{:6.3f} %] pulses are allowed to be removed.'.format(
-                    n_removed,
-                    n_total,
-                    fraction_removed*100,
-                    max_removed,
-                    max_fraction*100,
-            ))
-
-        return new_pulses
-
     def compress_pulses(self, frame):
         for pulse_key, output_key in zip(
             self._pulse_keys, self._output_keys,
         ):
             pulses = frame[pulse_key]
-            pulses_trimmed = self.discard_early_pulses(pulses)
+            pulses_trimmed, _ = discard_early_pulses(pulses)
             if output_key in frame:
                 del frame[output_key]
             frame[output_key] = dataclasses.I3SuperDST(pulses_trimmed)

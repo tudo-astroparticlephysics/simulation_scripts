@@ -73,8 +73,12 @@ def main(cfg, run_number, scratch):
             class AddMissingHierarchy(icetray.I3Module):
                 """Add dummy trigger hierarchy for empty pulses"""
                 def DAQ(self, frame):
+                    if "I3TriggersWithoutNoise" not in frame:
+                        frame["I3TriggersWithoutNoise"] = frame["I3Triggers"]
                     if "I3TriggerHierarchyWithoutNoise" not in frame:
-                        frame["I3TriggerHierarchyWithoutNoise"] = dataclasses.I3TriggerHierarchy()
+                        frame["I3TriggerHierarchyWithoutNoise"] = frame["I3TriggerHierarchy"]
+                    if "I3EventHeaderWithoutNoise" not in frame:
+                        frame["I3EventHeaderWithoutNoise"] = frame["I3EventHeader"]
                     self.PushFrame(frame)
             tray.AddModule(AddMissingHierarchy, "AddMissingHierarchy")
 
@@ -83,6 +87,8 @@ def main(cfg, run_number, scratch):
                 "Rename", "RenameToRunWithoutNoise",
                 Keys=[
                     # temporarily save original keys somwhere else
+                    "I3MCPESeriesMap", "temp_I3MCPESeriesMap",
+                    "I3MCPESeriesMapParticleIDMap", "temp_I3MCPESeriesMapParticleIDMap",
                     "I3MCPulseSeriesMap", "temp_I3MCPulseSeriesMap",
                     "I3MCPulseSeriesMapParticleIDMap", "temp_I3MCPulseSeriesMapParticleIDMap",
                     "IceTopRawData", "temp_IceTopRawData",
@@ -90,8 +96,11 @@ def main(cfg, run_number, scratch):
                     "BeaconLaunches", "temp_BeaconLaunches",
                     "I3TriggerHierarchy", "temp_I3TriggerHierarchy",
                     "I3Triggers", "temp_I3Triggers",
+                    "I3EventHeader", "temp_I3EventHeader",
 
                     # Move WithoutNoise to the original key
+                    "I3MCPESeriesMapWithoutNoise", "I3MCPESeriesMap",
+                    "I3MCPESeriesMapWithoutNoiseParticleIDMap", "I3MCPESeriesMapParticleIDMap",
                     "I3MCPulseSeriesMapWithoutNoise", "I3MCPulseSeriesMap",
                     "I3MCPulseSeriesMapWithoutNoiseParticleIDMap", "I3MCPulseSeriesMapParticleIDMap",
                     "IceTopRawDataWithoutNoise", "IceTopRawData",
@@ -99,6 +108,7 @@ def main(cfg, run_number, scratch):
                     "BeaconLaunchesWithoutNoise", "BeaconLaunches",
                     "I3TriggerHierarchyWithoutNoise", "I3TriggerHierarchy",
                     "I3TriggersWithoutNoise", "I3Triggers",
+                    "I3EventHeaderWithoutNoise", "I3EventHeader",
                 ],
             )
 
@@ -115,35 +125,6 @@ def main(cfg, run_number, scratch):
                 OutputKeyPattern="{}WithoutNoise",
             )
 
-            # rename the created reco pulses, and revert previous ones
-            tray.Add(
-                "Rename", "RenameToRevert",
-                Keys=[
-                    # rename created keys that we want to keep
-                    "MCPulses", "MCPulsesWithoutNoise",
-                    "InIceDSTPulses", "InIceDSTPulsesWithoutNoise",
-                    "IceTopDSTPulses", "IceTopDSTPulsesWithoutNoise",
-                    "CalibrationErrata", "CalibrationErrataWithoutNoise",
-                    "SaturationWindows", "SaturationWindowsWithoutNoise",
-                    # move without noise keys back
-                    "I3MCPulseSeriesMap", "I3MCPulseSeriesMapWithoutNoise",
-                    "I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapWithoutNoiseParticleIDMap",
-                    "IceTopRawData", "IceTopRawDataWithoutNoise",
-                    "InIceRawData", "InIceRawDataWithoutNoise",
-                    "BeaconLaunches", "BeaconLaunchesWithoutNoise",
-                    "I3TriggerHierarchy", "I3TriggerHierarchyWithoutNoise",
-                    "I3Triggers", "I3TriggersWithoutNoise",
-                    # revert original keys
-                    "temp_I3MCPulseSeriesMap", "I3MCPulseSeriesMap",
-                    "temp_I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapParticleIDMap",
-                    "temp_IceTopRawData", "IceTopRawData",
-                    "temp_InIceRawData", "InIceRawData",
-                    "temp_BeaconLaunches", "BeaconLaunches",
-                    "temp_I3TriggerHierarchy", "I3TriggerHierarchy",
-                    "temp_I3Triggers", "I3Triggers",
-                ],
-            )
-
             # remove physics frames
             tray.AddModule(
                 "KeepFromSubstream", "DeleteSubstreamNoNoise",
@@ -154,6 +135,40 @@ def main(cfg, run_number, scratch):
                 "KeepFromSubstream", "DeleteSubstreamNoNoiseNullSplit",
                 StreamName=filter_globals.NullSplitter,
                 KeepKeys=['do_not_keep_anything'],
+            )
+
+            # rename the created reco pulses, and revert previous ones
+            tray.Add(
+                "Rename", "RenameToRevert",
+                Keys=[
+                    # rename created keys that we want to keep
+                    "InIceDSTPulses", "InIceDSTPulsesWithoutNoise",
+                    "IceTopDSTPulses", "IceTopDSTPulsesWithoutNoise",
+                    "CalibrationErrata", "CalibrationErrataWithoutNoise",
+                    "SaturationWindows", "SaturationWindowsWithoutNoise",
+                    # move without noise keys back
+                    "I3MCPESeriesMap", "I3MCPESeriesMapWithoutNoise",
+                    "I3MCPESeriesMapParticleIDMap", "I3MCPESeriesMapWithoutNoiseParticleIDMap",
+                    "I3MCPulseSeriesMap", "I3MCPulseSeriesMapWithoutNoise",
+                    "I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapWithoutNoiseParticleIDMap",
+                    "IceTopRawData", "IceTopRawDataWithoutNoise",
+                    "InIceRawData", "InIceRawDataWithoutNoise",
+                    "BeaconLaunches", "BeaconLaunchesWithoutNoise",
+                    "I3TriggerHierarchy", "I3TriggerHierarchyWithoutNoise",
+                    "I3Triggers", "I3TriggersWithoutNoise",
+                    "I3EventHeader", "I3EventHeaderWithoutNoise",
+                    # revert original keys
+                    "temp_I3MCPESeriesMap", "I3MCPESeriesMap",
+                    "temp_I3MCPESeriesMapParticleIDMap", "I3MCPESeriesMapParticleIDMap",
+                    "temp_I3MCPulseSeriesMap", "I3MCPulseSeriesMap",
+                    "temp_I3MCPulseSeriesMapParticleIDMap", "I3MCPulseSeriesMapParticleIDMap",
+                    "temp_IceTopRawData", "IceTopRawData",
+                    "temp_InIceRawData", "InIceRawData",
+                    "temp_BeaconLaunches", "BeaconLaunches",
+                    "temp_I3TriggerHierarchy", "I3TriggerHierarchy",
+                    "temp_I3Triggers", "I3Triggers",
+                    "temp_I3EventHeader", "I3EventHeader",
+                ],
             )
 
             # remove unneeded keys

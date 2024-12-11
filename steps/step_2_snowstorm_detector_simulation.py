@@ -15,6 +15,8 @@ from I3Tray import I3Tray
 from icecube import icetray, dataclasses, dataio, phys_services
 from utils import create_random_services, get_run_folder
 
+from resources.pulses import RemoveEarlyPulses
+
 # Load libraries
 from icecube import clsim
 from icecube import phys_services
@@ -61,10 +63,10 @@ def main(cfg, run_number, scratch):
         dataset_number=cfg['dataset_number'],
         run_number=cfg['run_number'],
         seed=cfg['seed'],
-        n_services=1,
+        n_services=2,
         use_gslrng=cfg['random_service_use_gslrng'])
-    random_service = random_services[0]
-    tray.context['I3RandomService'] = random_service
+    tray.context['I3RandomService'] = random_services[0]
+    tray.context['I3RandomServiceForNoiseFree'] = random_services[1]
 
     tray.Add('I3Reader', FilenameList=[cfg['gcd_pass2'], infile])
 
@@ -129,8 +131,11 @@ def main(cfg, run_number, scratch):
                 "det_skip_noise_generation"
             )
 
+        # copy original MCPEs
+        tray.Add("Copy", Keys=[MCPE_SERIES_MAP, "MCPEsOriginal"])
+
         tray.AddSegment(segments.DetectorSim, "DetectorSimWithoutNoise",
-            RandomService='I3RandomService',
+            RandomService='I3RandomServiceForNoiseFree',
             RunID=run_id,
             GCDFile=cfg['gcd_pass2'],
             KeepMCHits=cfg['det_keep_mc_hits'],
@@ -155,8 +160,12 @@ def main(cfg, run_number, scratch):
                 "I3TriggerHierarchy", "I3TriggerHierarchyWithoutNoise",
                 "I3Triggers", "I3TriggersWithoutNoise",
                 "TimeShift", "TimeShiftWithoutNoise",
+                "DOMSets", "DOMSetsWithoutNoise",
             ],
         )
+        # restore original MCPEs
+        tray.Add("Delete", Keys=[MCPE_SERIES_MAP, MCPE_SERIES_MAP + "WithoutNoise"])
+        tray.Add("Rename", Keys=["MCPEsOriginal", MCPE_SERIES_MAP])
 
     tray.AddSegment(segments.DetectorSim, "DetectorSim",
                     RandomService='I3RandomService',
@@ -172,6 +181,49 @@ def main(cfg, run_number, scratch):
                     FilterTrigger=cfg['det_filter_trigger'],
                     TimeShiftSkipKeys=TimeShiftSkipKeys,
                     )
+
+    if "add_no_noise_pulses" in cfg and cfg["add_no_noise_pulses"]:
+        class UpdateTimeShift(icetray.I3Module):
+            def DAQ(self, frame):
+
+                # combine time shift and remove the old keys
+                time_shift1 = frame["TimeShift"].value
+                time_shift2 = frame["TimeShiftWithoutNoise"].value
+                del frame["TimeShift"]
+                del frame["TimeShiftWithoutNoise"]
+                frame["TimeShift"] = dataclasses.I3Double(
+                    time_shift1 + time_shift2
+                )
+
+                # update event header
+                if "I3EventHeaderWithoutNoise" in frame:
+                    event_header = dataclasses.I3EventHeader(
+                        frame["I3EventHeaderWithoutNoise"]
+                    )
+                    event_header.start_time -= time_shift1
+                    event_header.end_time -= time_shift1
+                    event_header.event_id = frame["I3EventHeader"].event_id
+                    del frame["I3EventHeaderWithoutNoise"]
+                else:
+                    event_header = dataclasses.I3EventHeader(
+                        frame["I3EventHeader"]
+                    )
+                frame["I3EventHeaderWithoutNoise"] = event_header
+
+                self.PushFrame(frame)
+        tray.AddModule(UpdateTimeShift, "UpdateTimeShift")
+
+        # it seems that adding the noise-free pulses in parallel
+        # has some effect on the time shift and injected noise.
+        # We remove the early pulses (<-512ns) here to avoid this.
+        # (I3SuperDST can only express times >-512ns)
+        tray.AddModule(
+            RemoveEarlyPulses, "RemoveEarlyPulses",
+            InputKeys=[
+                "InIceRawData",
+                "InIceRawDataWithoutNoise",
+            ],
+        )
 
     if not cfg['det_keep_mc_pulses']:
         tray.Add("Delete", Keys=['I3MCPulseSeriesMapPrimaryIDMap'])
