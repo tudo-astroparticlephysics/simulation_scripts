@@ -223,6 +223,7 @@ def main(cfg, run_number, scratch):
                 "InIceRawData",
                 "InIceRawDataWithoutNoise",
             ],
+            MinTime=-300,
         )
 
     if not cfg['det_keep_mc_pulses']:
