@@ -196,7 +196,7 @@ cascade_ppc_v1_10_0:
   steps:
     0: step_0_cascade_simulation_py3_v4_3_0_icetray_v1_10_0
     1: step_1_ppc_photon_propagation_py3_v4_3_0_icetray_v1_10_0
-    2: step_2_snowstorm_detector_simulation_py3_v4_3_0_icetray_v1_10_0
+    2: step_2_snowstorm_detector_simulation_py3_v4_3_0_icetray_v1_12_0_custom
     3: step_3_pass2_get_all_pulses
 
 multi_cascade_injection_snowstorm:
@@ -278,7 +278,7 @@ event_import_snowstorm_v1_10_0:
   steps:
     0: step_0_import_events_py3_v4_3_0_icetray_v1_10_0
     1: step_1_snowstorm_propagation_py3_v4_3_0_icetray_v1_10_0
-    2: step_2_snowstorm_detector_simulation_py3_v4_3_0_icetray_v1_10_0
+    2: step_2_snowstorm_detector_simulation_py3_v4_3_0_icetray_v1_12_0_custom
     3: step_3_pass2_get_all_pulses
 
 event_import_ppc:
