@@ -7,7 +7,7 @@ import yaml
 import time
 
 from I3Tray import I3Tray
-from icecube import icetray, dataio
+from icecube import icetray, dataio, simclasses
 
 from utils import create_random_services, get_run_folder
 
@@ -17,9 +17,9 @@ from utils import create_random_services, get_run_folder
 @click.argument('run_number', type=int)
 @click.option('--scratch/--no-scratch', default=True)
 def main(cfg, run_number, scratch):
-    
+
     start_time = time.time()
-    
+
     with open(cfg, 'r') as stream:
         cfg = yaml.full_load(stream)
     cfg['run_number'] = run_number
@@ -49,9 +49,9 @@ def main(cfg, run_number, scratch):
     }
     ppc_environment_variables = dict(default_ppc_environment_variables)
     ppc_environment_variables.update(ppc_config['environment_variables'])
-    
+
     ice_model = os.path.basename(ppc_environment_variables['ICEMODELDIR'])
-    
+
     # ------------------------------------------------------------------------
     # Sanity checks to ensure that the environment variables are set correctly
     # ------------------------------------------------------------------------
@@ -78,7 +78,7 @@ def main(cfg, run_number, scratch):
                     "The BFRM environment variable must be set to 0 for"
                     " the older ice models."
                 )
-                
+
     elif ice_model in [
         "spice_ftp-v3m",
     ]:
@@ -150,6 +150,24 @@ def main(cfg, run_number, scratch):
     tray.context["I3RandomService"] = random_service
     tray.AddModule("i3ppc", 'ppc', **ppc_arguments)
 
+    # add empty MCPESeriesMap
+    def add_empty_pes(frame, MCPESeriesName="MCPESeriesMap"):
+        if MCPESeriesName not in frame:
+            frame[MCPESeriesName] = simclasses.I3MCPESeriesMap()
+    tray.Add(add_empty_pes, streams=[icetray.I3Frame.DAQ])
+
+    # sort the pulses in time
+    # (This does not seem to be the case for PPC simulations)
+    def sort_pulses(frame, MCPESeriesName="MCPESeriesMap"):
+        new_map = simclasses.I3MCPESeriesMap()
+        for omkey, pulses in frame[MCPESeriesName]:
+            new_map[omkey] = simclasses.I3MCPESeries(
+                sorted(pulses, key=lambda pulse: pulse.time)
+            )
+        del frame[MCPESeriesName]
+        frame[MCPESeriesName] = new_map
+    tray.Add(sort_pulses, streams=[icetray.I3Frame.DAQ])
+
     # rename MCPESeriesMap to I3MCPESeriesMap
     tray.Add("Rename", keys=["MCPESeriesMap", "I3MCPESeriesMap"])
 
@@ -168,7 +186,7 @@ def main(cfg, run_number, scratch):
     tray.AddModule("TrashCan", "the can")
     tray.Execute()
     tray.Finish()
-    
+
     end_time = time.time()
     print("That took "+str(end_time - start_time)+" seconds.")
 
